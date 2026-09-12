@@ -1,6 +1,6 @@
 # Kế Hoạch Triển Khai Friend APIs
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Xây dựng trọn vẹn hệ thống RESTful API quản lý bạn bè (`/api/friends`) bao gồm Lời mời kết bạn, Danh sách bạn bè, Chặn người dùng, và tích hợp Real-time Socket.IO events.
 
@@ -40,7 +40,7 @@
   export type PaginationQueryInput = z.infer<typeof PaginationQuerySchema>["query"];
   ```
 
-- [ ] **Step 1: Viết failing test cho các schemas validation**
+- [x] **Step 1: Viết failing test cho các schemas validation**
 
 Tạo file `backend/tests/schemas/friend.schema.test.ts`:
 ```typescript
@@ -154,7 +154,7 @@ describe("Friend Schemas Validation", () => {
 });
 ```
 
-- [ ] **Step 2: Chạy test để xác nhận test thất bại**
+- [x] **Step 2: Chạy test để xác nhận test thất bại**
 
 Chạy:
 ```bash
@@ -162,7 +162,7 @@ npx vitest run tests/schemas/friend.schema.test.ts
 ```
 Kỳ vọng: FAIL vì file `src/schemas/friend.schema.ts` chưa tồn tại.
 
-- [ ] **Step 3: Triển khai `backend/src/schemas/friend.schema.ts`**
+- [x] **Step 3: Triển khai `backend/src/schemas/friend.schema.ts`**
 
 Tạo file `backend/src/schemas/friend.schema.ts`:
 ```typescript
@@ -220,7 +220,7 @@ export type FriendQueryInput = z.infer<typeof FriendQuerySchema>["query"];
 export type PaginationQueryInput = z.infer<typeof PaginationQuerySchema>["query"];
 ```
 
-- [ ] **Step 4: Chạy test để xác nhận test vượt qua**
+- [x] **Step 4: Chạy test để xác nhận test vượt qua**
 
 Chạy:
 ```bash
@@ -228,7 +228,7 @@ npx vitest run tests/schemas/friend.schema.test.ts
 ```
 Kỳ vọng: PASS (7/7 tests).
 
-- [ ] **Step 5: Commit thay đổi**
+- [x] **Step 5: Commit thay đổi**
 
 ```bash
 git add src/schemas/friend.schema.ts tests/schemas/friend.schema.test.ts
@@ -257,7 +257,7 @@ git commit -m "feat(schemas): add Zod validation schemas for Friend APIs"
   export const blockRepository: IBlockRepository;
   ```
 
-- [ ] **Step 1: Viết failing test kiểm tra Repositories**
+- [x] **Step 1: Viết failing test kiểm tra Repositories**
 
 Tạo file `backend/tests/repositories/friend.repositories.test.ts`:
 ```typescript
@@ -295,7 +295,7 @@ describe("Friend Repositories Instantiation & Methods", () => {
 });
 ```
 
-- [ ] **Step 2: Chạy test để xác nhận test thất bại**
+- [x] **Step 2: Chạy test để xác nhận test thất bại**
 
 Chạy:
 ```bash
@@ -303,7 +303,7 @@ npx vitest run tests/repositories/friend.repositories.test.ts
 ```
 Kỳ vọng: FAIL vì 3 file repository chưa tồn tại.
 
-- [ ] **Step 3: Triển khai 3 repositories**
+- [x] **Step 3: Triển khai 3 repositories**
 
 1. Tạo `backend/src/repositories/friend-request.repository.ts`:
 ```typescript
@@ -698,7 +698,7 @@ export class BlockRepository implements IBlockRepository {
 export const blockRepository = new BlockRepository();
 ```
 
-- [ ] **Step 4: Chạy test để xác nhận test vượt qua**
+- [x] **Step 4: Chạy test để xác nhận test vượt qua**
 
 Chạy:
 ```bash
@@ -706,7 +706,7 @@ npx vitest run tests/repositories/friend.repositories.test.ts
 ```
 Kỳ vọng: PASS (3/3 tests).
 
-- [ ] **Step 5: Commit thay đổi**
+- [x] **Step 5: Commit thay đổi**
 
 ```bash
 git add src/repositories/friend-request.repository.ts src/repositories/friend.repository.ts src/repositories/block.repository.ts tests/repositories/friend.repositories.test.ts
@@ -742,7 +742,7 @@ git commit -m "feat(repositories): implement FriendRequest, Friend, and Block re
   export const friendService: IFriendService;
   ```
 
-- [ ] **Step 1: Viết failing test cho FriendService**
+- [x] **Step 1: Viết failing test cho FriendService**
 
 Tạo file `backend/tests/services/friend.service.test.ts`:
 ```typescript
@@ -870,7 +870,7 @@ describe("FriendService Business Logic", () => {
 });
 ```
 
-- [ ] **Step 2: Chạy test để xác nhận test thất bại**
+- [x] **Step 2: Chạy test để xác nhận test thất bại**
 
 Chạy:
 ```bash
@@ -878,7 +878,7 @@ npx vitest run tests/services/friend.service.test.ts
 ```
 Kỳ vọng: FAIL vì file `src/services/friend.service.ts` chưa tồn tại.
 
-- [ ] **Step 3: Triển khai `backend/src/services/friend.service.ts`**
+- [x] **Step 3: Triển khai `backend/src/services/friend.service.ts`**
 
 Tạo file `backend/src/services/friend.service.ts`:
 ```typescript
@@ -1205,7 +1205,7 @@ export class FriendService {
 export const friendService = new FriendService();
 ```
 
-- [ ] **Step 4: Chạy test để xác nhận test vượt qua**
+- [x] **Step 4: Chạy test để xác nhận test vượt qua**
 
 Chạy:
 ```bash
@@ -1213,7 +1213,7 @@ npx vitest run tests/services/friend.service.test.ts
 ```
 Kỳ vọng: PASS (8/8 tests).
 
-- [ ] **Step 5: Commit thay đổi**
+- [x] **Step 5: Commit thay đổi**
 
 ```bash
 git add src/services/friend.service.ts tests/services/friend.service.test.ts
@@ -1233,7 +1233,7 @@ git commit -m "feat(services): implement FriendService with business logic and t
 **Interfaces:**
 - Produces: `friendController`, `friendRoutes`, mounted under `/api/friends`
 
-- [ ] **Step 1: Viết test kiểm tra cấu hình Route và Controller**
+- [x] **Step 1: Viết test kiểm tra cấu hình Route và Controller**
 
 Tạo file `backend/tests/routes/friend.routes.test.ts`:
 ```typescript
@@ -1264,7 +1264,7 @@ describe("Friend Routes & Controller Configuration", () => {
 });
 ```
 
-- [ ] **Step 2: Chạy test để xác nhận test thất bại**
+- [x] **Step 2: Chạy test để xác nhận test thất bại**
 
 Chạy:
 ```bash
@@ -1272,7 +1272,7 @@ npx vitest run tests/routes/friend.routes.test.ts
 ```
 Kỳ vọng: FAIL vì `friend.routes.ts` và `friend.controller.ts` chưa tồn tại.
 
-- [ ] **Step 3: Triển khai Controller, Route và mount vào `src/routes/index.ts`**
+- [x] **Step 3: Triển khai Controller, Route và mount vào `src/routes/index.ts`**
 
 1. Tạo `backend/src/controllers/friend.controller.ts`:
 ```typescript
@@ -1526,7 +1526,7 @@ apiRouter.use("/friends", friendRoutes);
 export { apiRouter };
 ```
 
-- [ ] **Step 4: Chạy test để xác nhận test vượt qua**
+- [x] **Step 4: Chạy test để xác nhận test vượt qua**
 
 Chạy:
 ```bash
@@ -1534,7 +1534,7 @@ npx vitest run tests/routes/friend.routes.test.ts
 ```
 Kỳ vọng: PASS (2/2 tests).
 
-- [ ] **Step 5: Commit thay đổi**
+- [x] **Step 5: Commit thay đổi**
 
 ```bash
 git add src/controllers/friend.controller.ts src/routes/friend.routes.ts src/routes/index.ts tests/routes/friend.routes.test.ts
@@ -1551,7 +1551,7 @@ git commit -m "feat(routes): implement friendController, friendRoutes and mount 
 **Interfaces:**
 - Consumes: `createApp()`, JWT generation utils, Mongoose Models, `/api/friends/*`
 
-- [ ] **Step 1: Viết bộ test tích hợp HTTP hoàn chỉnh**
+- [x] **Step 1: Viết bộ test tích hợp HTTP hoàn chỉnh**
 
 Tạo file `backend/tests/friend.test.ts`:
 ```typescript
@@ -1653,7 +1653,7 @@ describe("Friend APIs Integration (/api/friends)", () => {
 });
 ```
 
-- [ ] **Step 2: Chạy test tích hợp**
+- [x] **Step 2: Chạy test tích hợp**
 
 Chạy:
 ```bash
@@ -1661,7 +1661,7 @@ npx vitest run tests/friend.test.ts
 ```
 Kỳ vọng: PASS (6/6 tests).
 
-- [ ] **Step 3: Chạy toàn bộ test suite và TypeScript type-check**
+- [x] **Step 3: Chạy toàn bộ test suite và TypeScript type-check**
 
 Chạy:
 ```bash
@@ -1670,7 +1670,7 @@ npm run type-check
 ```
 Kỳ vọng: 100% tests vượt qua và không có lỗi biên dịch TypeScript.
 
-- [ ] **Step 4: Commit hoàn tất**
+- [x] **Step 4: Commit hoàn tất**
 
 ```bash
 git add tests/friend.test.ts
