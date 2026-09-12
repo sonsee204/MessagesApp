@@ -96,7 +96,7 @@ export class FriendController {
       const page = Number(req.query.page) || 1;
       const limit = Number(req.query.limit) || 20;
       const search = typeof req.query.search === "string" ? req.query.search : undefined;
-      const onlineOnly = req.query.onlineOnly === "true" || req.query.onlineOnly === true;
+      const onlineOnly = req.query.onlineOnly === "true";
 
       const result = await this.service.getFriends(userId, {
         page,
