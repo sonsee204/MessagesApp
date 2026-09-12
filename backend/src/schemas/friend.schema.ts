@@ -1,7 +1,13 @@
 import { z } from "zod";
 
+// Biểu thức chính quy kiểm tra định dạng MongoDB ObjectId hợp lệ (24 ký tự hex)
 const OBJECT_ID_REGEX = /^[0-9a-fA-F]{24}$/;
 
+/**
+ * Schema xác thực dữ liệu khi gửi lời mời kết bạn
+ * - receiverId: ID người nhận (bắt buộc, đúng định dạng ObjectId)
+ * - note: Lời nhắn kèm theo (tùy chọn, tối đa 200 ký tự)
+ */
 export const SendFriendRequestSchema = z.object({
   body: z.object({
     receiverId: z
@@ -15,6 +21,11 @@ export const SendFriendRequestSchema = z.object({
   }),
 });
 
+/**
+ * Schema xác thực query phân trang chung cho danh sách lời mời và danh sách chặn
+ * - page: Số trang (mặc định: 1, tối thiểu: 1)
+ * - limit: Số lượng phần tử trên mỗi trang (mặc định: 20, tối đa: 100)
+ */
 export const PaginationQuerySchema = z.object({
   query: z.object({
     page: z.coerce.number().int().min(1).default(1),
@@ -22,6 +33,12 @@ export const PaginationQuerySchema = z.object({
   }),
 });
 
+/**
+ * Schema xác thực query truy vấn danh sách bạn bè
+ * - page, limit: Phân trang danh sách
+ * - search: Từ khóa tìm kiếm theo tên đăng nhập hoặc tên hiển thị
+ * - onlineOnly: Lọc chỉ những bạn bè đang hoạt động trực tuyến
+ */
 export const FriendQuerySchema = z.object({
   query: z.object({
     page: z.coerce.number().int().min(1).default(1),
@@ -31,6 +48,9 @@ export const FriendQuerySchema = z.object({
   }),
 });
 
+/**
+ * Schema xác thực URL parameter chứa requestId (chấp nhận/từ chối/hủy lời mời)
+ */
 export const RequestIdParamSchema = z.object({
   params: z.object({
     requestId: z
@@ -39,6 +59,9 @@ export const RequestIdParamSchema = z.object({
   }),
 });
 
+/**
+ * Schema xác thực URL parameter chứa targetUserId (chặn/bỏ chặn/hủy kết bạn/trạng thái quan hệ)
+ */
 export const TargetUserParamSchema = z.object({
   params: z.object({
     targetUserId: z
@@ -47,6 +70,7 @@ export const TargetUserParamSchema = z.object({
   }),
 });
 
+// Kiểu dữ liệu TypeScript trích xuất tự động từ Schema
 export type SendFriendRequestInput = z.infer<typeof SendFriendRequestSchema>["body"];
 export type FriendQueryInput = z.infer<typeof FriendQuerySchema>["query"];
 export type PaginationQueryInput = z.infer<typeof PaginationQuerySchema>["query"];

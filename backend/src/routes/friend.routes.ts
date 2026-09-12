@@ -10,6 +10,10 @@ import {
   TargetUserParamSchema,
 } from "../schemas/friend.schema";
 
+/**
+ * Định tuyến các API liên quan đến Bạn bè, Lời mời kết bạn và Chặn người dùng
+ * Base Path: /api/friends
+ */
 const router = Router();
 
 // Yêu cầu xác thực JWT trên tất cả routes

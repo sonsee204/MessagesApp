@@ -1,5 +1,10 @@
 import { Schema, model, Document, Types, Model } from "mongoose";
 
+/**
+ * Interface biểu diễn tài liệu Quan hệ bạn bè trong MongoDB
+ * Lưu ý kiến trúc: Để tránh lưu 2 bản ghi trùng lặp cho quan hệ 2 chiều,
+ * luôn quy ước userA < userB theo thứ tự chuỗi hex ObjectId.
+ */
 export interface IFriend extends Document {
   userA: Types.ObjectId;
   userB: Types.ObjectId;
@@ -8,6 +13,10 @@ export interface IFriend extends Document {
   updatedAt: Date;
 }
 
+/**
+ * Chuẩn hóa cặp ID người dùng để luôn đảm bảo userA < userB theo thứ tự từ điển,
+ * giúp truy vấn quan hệ hai chiều chỉ cần 1 bản ghi duy nhất trong cơ sở dữ liệu.
+ */
 export function normalizeFriendIds(
   id1: Types.ObjectId | string,
   id2: Types.ObjectId | string
@@ -58,10 +67,10 @@ const FriendSchema = new Schema<IFriend>(
   }
 );
 
-// Ensure unique bidirectional friendship pair
+// Đảm bảo tính duy nhất của cặp bạn bè hai chiều (userA, userB)
 FriendSchema.index({ userA: 1, userB: 1 }, { unique: true });
 
-// Query indexes for listing friends for a user
+// Đánh index tối ưu hóa truy vấn danh sách bạn bè theo từng người dùng sắp xếp theo thời gian kết bạn
 FriendSchema.index({ userA: 1, createdAt: -1 });
 FriendSchema.index({ userB: 1, createdAt: -1 });
 

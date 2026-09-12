@@ -2,11 +2,17 @@ import { ClientSession, Types } from "mongoose";
 import { FriendModel, IFriend, normalizeFriendIds } from "../models/friend.model";
 import { PaginationOptions } from "./friend-request.repository";
 
+/**
+ * Tùy chọn tìm kiếm danh sách bạn bè
+ */
 export interface FriendQueryOptions extends PaginationOptions {
   search?: string;
   onlineOnly?: boolean;
 }
 
+/**
+ * Cấu trúc dữ liệu chi tiết của từng người bạn trong danh sách trả về
+ */
 export interface FriendItemResult {
   friendshipId: string;
   friendSince: Date;
@@ -21,23 +27,34 @@ export interface FriendItemResult {
   };
 }
 
+/**
+ * Interface định nghĩa các thao tác dữ liệu liên quan đến Quan hệ bạn bè
+ */
 export interface IFriendRepository {
+  /** Tạo bản ghi quan hệ bạn bè 2 chiều với cặp userA < userB đã chuẩn hóa */
   createFriendship(
     user1: string,
     user2: string,
     friendRequestId?: string,
     session?: ClientSession
   ): Promise<IFriend>;
+  /** Kiểm tra xem 2 người dùng có đang là bạn bè của nhau không */
   isFriend(user1: string, user2: string): Promise<boolean>;
+  /** Xóa quan hệ bạn bè giữa 2 người dùng (hỗ trợ session transaction) */
   removeFriendship(user1: string, user2: string, session?: ClientSession): Promise<boolean>;
+  /** Truy vấn danh sách bạn bè kết hợp aggregate thông tin user, lọc online và tìm kiếm */
   findFriends(
     userId: string,
     options: FriendQueryOptions
   ): Promise<{ items: FriendItemResult[]; total: number }>;
+  /** Đếm tổng số lượng bạn bè của một người dùng */
   countFriends(userId: string): Promise<number>;
 }
 
 export class FriendRepository implements IFriendRepository {
+  /**
+   * Tạo bản ghi bạn bè mới, chuẩn hóa userA < userB và liên kết với requestId (nếu có)
+   */
   async createFriendship(
     user1: string,
     user2: string,
@@ -53,6 +70,9 @@ export class FriendRepository implements IFriendRepository {
     return doc.save({ session });
   }
 
+  /**
+   * Kiểm tra quan hệ bạn bè 2 chiều giữa 2 user
+   */
   async isFriend(user1: string, user2: string): Promise<boolean> {
     if (user1 === user2) return false;
     const [userA, userB] = normalizeFriendIds(user1, user2);
@@ -60,6 +80,9 @@ export class FriendRepository implements IFriendRepository {
     return count > 0;
   }
 
+  /**
+   * Xóa bản ghi bạn bè giữa 2 người dùng
+   */
   async removeFriendship(user1: string, user2: string, session?: ClientSession): Promise<boolean> {
     if (user1 === user2) return false;
     const [userA, userB] = normalizeFriendIds(user1, user2);
@@ -67,6 +90,14 @@ export class FriendRepository implements IFriendRepository {
     return result.deletedCount > 0;
   }
 
+  /**
+   * Lấy danh sách bạn bè của người dùng bằng MongoDB Aggregation Pipeline:
+   * 1. $match tìm các quan hệ bạn bè chứa userId ở userA hoặc userB
+   * 2. $project xác định friendId là người đối diện
+   * 3. $lookup join bảng users để lấy hồ sơ người bạn
+   * 4. Hỗ trợ lọc theo onlineOnly và tìm kiếm theo tên displayName/username
+   * 5. Sắp xếp theo ngày kết bạn mới nhất và phân trang skip/limit
+   */
   async findFriends(
     userId: string,
     options: FriendQueryOptions
@@ -153,6 +184,9 @@ export class FriendRepository implements IFriendRepository {
     return { items, total };
   }
 
+  /**
+   * Đếm tổng số lượng bạn bè mà một người dùng đang có
+   */
   async countFriends(userId: string): Promise<number> {
     const userObjId = new Types.ObjectId(userId);
     return FriendModel.countDocuments({

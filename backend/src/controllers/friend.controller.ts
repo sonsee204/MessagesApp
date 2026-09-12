@@ -1,9 +1,18 @@
 import { Request, Response, NextFunction } from "express";
 import { friendService, FriendService } from "../services/friend.service";
 
+/**
+ * Controller tiếp nhận và điều phối các yêu cầu HTTP cho module Bạn bè (Friend APIs)
+ */
 export class FriendController {
   constructor(private service: FriendService = friendService) {}
 
+  /**
+   * POST /api/friends/requests
+   * Gửi lời mời kết bạn
+   * - Body: { receiverId: string, note?: string }
+   * - Phản hồi: 201 Created kèm dữ liệu lời mời kết bạn vừa tạo
+   */
   sendRequest = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const senderId = req.user!.userId;
@@ -18,6 +27,12 @@ export class FriendController {
     }
   };
 
+  /**
+   * GET /api/friends/requests/received
+   * Lấy danh sách lời mời kết bạn nhận được đang chờ phản hồi
+   * - Query: { page?: number, limit?: number }
+   * - Phản hồi: 200 OK kèm danh sách và phân trang
+   */
   getReceivedRequests = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = req.user!.userId;
@@ -33,6 +48,12 @@ export class FriendController {
     }
   };
 
+  /**
+   * GET /api/friends/requests/sent
+   * Lấy danh sách lời mời kết bạn đã gửi đi đang chờ đối phương phản hồi
+   * - Query: { page?: number, limit?: number }
+   * - Phản hồi: 200 OK kèm danh sách và phân trang
+   */
   getSentRequests = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = req.user!.userId;
@@ -48,6 +69,12 @@ export class FriendController {
     }
   };
 
+  /**
+   * POST /api/friends/requests/:requestId/accept
+   * Chấp nhận lời mời kết bạn
+   * - Params: { requestId: string }
+   * - Phản hồi: 200 OK kèm thông tin tình bạn mới được thiết lập
+   */
   acceptRequest = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = req.user!.userId;
@@ -62,6 +89,12 @@ export class FriendController {
     }
   };
 
+  /**
+   * POST /api/friends/requests/:requestId/reject
+   * Từ chối lời mời kết bạn
+   * - Params: { requestId: string }
+   * - Phản hồi: 200 OK kèm thông báo từ chối thành công
+   */
   rejectRequest = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = req.user!.userId;
@@ -76,6 +109,12 @@ export class FriendController {
     }
   };
 
+  /**
+   * DELETE /api/friends/requests/:requestId/cancel
+   * Hủy lời mời kết bạn đã gửi đi
+   * - Params: { requestId: string }
+   * - Phản hồi: 200 OK kèm thông báo hủy thành công
+   */
   cancelRequest = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = req.user!.userId;
@@ -90,6 +129,12 @@ export class FriendController {
     }
   };
 
+  /**
+   * GET /api/friends
+   * Lấy danh sách bạn bè của người dùng hiện tại
+   * - Query: { page?: number, limit?: number, search?: string, onlineOnly?: boolean }
+   * - Phản hồi: 200 OK kèm danh sách bạn bè và thông tin phân trang
+   */
   getFriends = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = req.user!.userId;
@@ -113,6 +158,12 @@ export class FriendController {
     }
   };
 
+  /**
+   * DELETE /api/friends/:targetUserId
+   * Hủy kết bạn với một người dùng
+   * - Params: { targetUserId: string }
+   * - Phản hồi: 200 OK kèm thông báo hủy kết bạn thành công
+   */
   removeFriend = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = req.user!.userId;
@@ -127,6 +178,12 @@ export class FriendController {
     }
   };
 
+  /**
+   * GET /api/friends/status/:targetUserId
+   * Kiểm tra trạng thái quan hệ 2 chiều với một người dùng
+   * - Params: { targetUserId: string }
+   * - Phản hồi: 200 OK kèm status (NONE, PENDING_SENT, PENDING_RECEIVED, FRIENDS, BLOCKED)
+   */
   getRelationshipStatus = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = req.user!.userId;
@@ -141,6 +198,12 @@ export class FriendController {
     }
   };
 
+  /**
+   * POST /api/friends/blocks/:targetUserId
+   * Chặn người dùng (hủy bạn bè và lời mời kết bạn liên quan)
+   * - Params: { targetUserId: string }
+   * - Phản hồi: 201 Created kèm thông báo chặn thành công
+   */
   blockUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const blockerId = req.user!.userId;
@@ -155,6 +218,12 @@ export class FriendController {
     }
   };
 
+  /**
+   * DELETE /api/friends/blocks/:targetUserId
+   * Bỏ chặn người dùng
+   * - Params: { targetUserId: string }
+   * - Phản hồi: 200 OK kèm thông báo bỏ chặn thành công
+   */
   unblockUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const blockerId = req.user!.userId;
@@ -169,6 +238,12 @@ export class FriendController {
     }
   };
 
+  /**
+   * GET /api/friends/blocks
+   * Lấy danh sách những người dùng bị người này chặn
+   * - Query: { page?: number, limit?: number }
+   * - Phản hồi: 200 OK kèm danh sách chặn có phân trang
+   */
   getBlockedUsers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const blockerId = req.user!.userId;
