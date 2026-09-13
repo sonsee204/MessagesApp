@@ -7,6 +7,7 @@ import {
   UserPlus,
   AlertTriangle,
   ArrowLeft,
+  RefreshCw,
 } from "lucide-react";
 import { useFriendStore } from "../stores/friend.store";
 import { FriendItem } from "./FriendItem";
@@ -36,6 +37,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
     blockedUsers,
     activeTab,
     isLoading,
+    error,
     searchQuery,
     setActiveTab,
     setSearchQuery,
@@ -233,6 +235,29 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               />
             </div>
 
+            {/* Trạng thái 3: Lỗi tải dữ liệu (Error + nút Thử lại) */}
+            {!isLoading && error && (
+              <div className="flex-1 flex flex-col items-center justify-center text-center p-8 border-2 border-dashed border-uupm-danger/40 rounded-xs my-auto bg-uupm-danger/5">
+                <AlertTriangle className="w-12 h-12 text-uupm-danger-text mb-3 stroke-[1.5]" />
+                <p className="text-sm font-black text-uupm-ink">
+                  Không thể tải dữ liệu bạn bè
+                </p>
+                <p className="text-xs text-uupm-ink-muted mt-1 font-medium max-w-sm">
+                  {error}
+                </p>
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  onClick={() => void fetchAll()}
+                  className="mt-4"
+                  leftIcon={<RefreshCw className="w-4 h-4" />}
+                >
+                  Thử lại
+                </Button>
+              </div>
+            )}
+
             {/* Trạng thái 1: Đang tải dữ liệu (Loading Skeleton) */}
             {isLoading ? (
               <div className="space-y-3 py-4">
@@ -253,7 +278,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
             ) : null}
 
             {/* Trạng thái 2 & 4: Danh sách dữ liệu cho từng tab */}
-            {!isLoading && activeTab === "online" && (
+            {!isLoading && !error && activeTab ==="online" && (
               <div className="flex-1 flex flex-col">
                 <div className="text-xs font-black uppercase tracking-wider text-uupm-ink-muted mb-2">
                   Trực tuyến — {filteredFriends.length}
@@ -285,7 +310,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               </div>
             )}
 
-            {!isLoading && activeTab === "all" && (
+            {!isLoading && !error && activeTab ==="all" && (
               <div className="flex-1 flex flex-col">
                 <div className="text-xs font-black uppercase tracking-wider text-uupm-ink-muted mb-2">
                   Tất cả bạn bè — {filteredFriends.length}
@@ -325,7 +350,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               </div>
             )}
 
-            {!isLoading && activeTab === "pending" && (
+            {!isLoading && !error && activeTab ==="pending" && (
               <div className="space-y-6">
                 {/* Nhóm 1: Lời mời nhận được */}
                 <div>
@@ -378,7 +403,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               </div>
             )}
 
-            {!isLoading && activeTab === "blocked" && (
+            {!isLoading && !error && activeTab ==="blocked" && (
               <div className="flex-1 flex flex-col">
                 <div className="text-xs font-black uppercase tracking-wider text-uupm-ink-muted mb-2">
                   Người dùng bị chặn — {filteredBlockedUsers.length}

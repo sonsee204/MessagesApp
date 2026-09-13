@@ -24,6 +24,12 @@ export interface RelationshipStatusResponse {
   targetUserId: string;
   status: RelationshipStatus;
   requestId?: string;
+  /**
+   * Chiều của quan hệ chặn (chỉ có ý nghĩa khi status === "BLOCKED"):
+   * - true: chính người dùng hiện tại đã chặn đối phương -> được phép bỏ chặn
+   * - false: đối phương chặn người dùng hiện tại -> không thể bỏ chặn từ phía mình
+   */
+  blockedByMe?: boolean;
 }
 
 /**

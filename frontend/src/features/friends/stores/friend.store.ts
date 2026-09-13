@@ -12,6 +12,15 @@ import { getSocket } from "../../../lib/socket";
 import { toast } from "../../../stores/toast.store";
 
 /**
+ * Cờ cấp module đánh dấu các listener Socket.IO của Friend Store đã được đăng ký hay chưa.
+ * useChatSocket có thể gọi initSocketListeners() nhiều lần trên cùng một socket singleton
+ * (effect chạy lại khi isAuthenticated/accessToken đổi), nếu không chặn sẽ khiến handler
+ * bị xếp chồng và toast bắn lặp một lần cho mỗi lần đăng ký.
+ * Cờ được bật khi đăng ký và tắt khi cleanup, nhờ đó một lần reconnect thật sự vẫn đăng ký lại được.
+ */
+let friendSocketListenersRegistered = false;
+
+/**
  * Interface định nghĩa Trạng thái và Hành động của Friend Store
  */
 export interface FriendState {
@@ -27,14 +36,17 @@ export interface FriendState {
   activeTab: FriendsTab;
   // Trạng thái tải dữ liệu
   isLoading: boolean;
+  // Thông báo lỗi khi tải dữ liệu thất bại (null nghĩa là không có lỗi)
+  error: string | null;
   // Từ khóa tìm kiếm bạn bè
   searchQuery: string;
 
   // === CÁC HÀNH ĐỘNG TẢI DỮ LIỆU ===
-  fetchFriends: (options?: FriendQueryOptions) => Promise<void>;
-  fetchReceivedRequests: (options?: PaginationOptions) => Promise<void>;
-  fetchSentRequests: (options?: PaginationOptions) => Promise<void>;
-  fetchBlockedUsers: (options?: PaginationOptions) => Promise<void>;
+  // Các hàm fetch trả về true nếu tải thành công, false nếu thất bại (để fetchAll tổng hợp lỗi)
+  fetchFriends: (options?: FriendQueryOptions) => Promise<boolean>;
+  fetchReceivedRequests: (options?: PaginationOptions) => Promise<boolean>;
+  fetchSentRequests: (options?: PaginationOptions) => Promise<boolean>;
+  fetchBlockedUsers: (options?: PaginationOptions) => Promise<boolean>;
   fetchAll: () => Promise<void>;
   setActiveTab: (tab: FriendsTab) => void;
   setSearchQuery: (query: string) => void;
@@ -62,68 +74,89 @@ export const useFriendStore = create<FriendState>((set, get) => ({
   blockedUsers: [],
   activeTab: "online",
   isLoading: false,
+  error: null,
   searchQuery: "",
 
   /**
    * Tải danh sách bạn bè từ Backend
+   * @returns true nếu tải thành công, false nếu thất bại (lỗi được ghi nhận, không ném ra ngoài)
    */
   fetchFriends: async (options?: FriendQueryOptions) => {
     try {
       const data = await friendService.getFriends(options);
       set({ friends: data.items });
+      return true;
     } catch (error) {
       console.error("Lỗi khi tải danh sách bạn bè:", error);
+      return false;
     }
   },
 
   /**
    * Tải danh sách lời mời kết bạn nhận được
+   * @returns true nếu tải thành công, false nếu thất bại
    */
   fetchReceivedRequests: async (options?: PaginationOptions) => {
     try {
       const data = await friendService.getReceivedRequests(options);
       set({ receivedRequests: data.items });
+      return true;
     } catch (error) {
       console.error("Lỗi khi tải lời mời nhận được:", error);
+      return false;
     }
   },
 
   /**
    * Tải danh sách lời mời kết bạn đã gửi
+   * @returns true nếu tải thành công, false nếu thất bại
    */
   fetchSentRequests: async (options?: PaginationOptions) => {
     try {
       const data = await friendService.getSentRequests(options);
       set({ sentRequests: data.items });
+      return true;
     } catch (error) {
       console.error("Lỗi khi tải lời mời đã gửi:", error);
+      return false;
     }
   },
 
   /**
    * Tải danh sách người dùng bị chặn
+   * @returns true nếu tải thành công, false nếu thất bại
    */
   fetchBlockedUsers: async (options?: PaginationOptions) => {
     try {
       const data = await friendService.getBlockedUsers(options);
       set({ blockedUsers: data.items });
+      return true;
     } catch (error) {
       console.error("Lỗi khi tải danh sách chặn:", error);
+      return false;
     }
   },
 
   /**
-   * Tải đồng thời tất cả các nhóm dữ liệu để chuẩn bị cho màn hình FriendsView
+   * Tải đồng thời tất cả các nhóm dữ liệu để chuẩn bị cho màn hình FriendsView.
+   * Nếu BẤT KỲ nhóm nào tải thất bại, ghi nhận thông báo lỗi vào state để giao diện
+   * hiển thị trạng thái Error + nút "Thử lại" thay vì hiển thị nhầm trạng thái rỗng.
    */
   fetchAll: async () => {
-    set({ isLoading: true });
+    set({ isLoading: true, error: null });
     try {
-      await Promise.all([
+      const results = await Promise.all([
         get().fetchFriends(),
         get().fetchReceivedRequests(),
         get().fetchSentRequests(),
         get().fetchBlockedUsers(),
       ]);
+      // Chỉ cần 1 trong 4 nhóm thất bại là hiển thị trạng thái lỗi
+      set({
+        error: results.every(Boolean)
+          ? null
+          : "Không thể tải dữ liệu bạn bè. Vui lòng kiểm tra kết nối mạng và thử lại.",
+      });
     } finally {
       set({ isLoading: false });
     }
@@ -276,6 +309,12 @@ export const useFriendStore = create<FriendState>((set, get) => ({
     const socket = getSocket();
     if (!socket) return () => {};
 
+    // Chống đăng ký trùng: socket là singleton nên nếu effect của useChatSocket chạy lại
+    // mà không dọn dẹp trước, handler sẽ bị xếp chồng và toast bắn lặp.
+    // Trả về hàm no-op để caller không vô tình gỡ listener của lần đăng ký đang hoạt động.
+    if (friendSocketListenersRegistered) return () => {};
+    friendSocketListenersRegistered = true;
+
     // 1. Nhận lời mời kết bạn mới
     const handleRequestReceived = (request: FriendRequestItem) => {
       set((state) => {
@@ -349,7 +388,9 @@ export const useFriendStore = create<FriendState>((set, get) => ({
       }));
     };
 
-    // 6. Bị chặn bởi người dùng khác
+    // 6. Bị chặn bởi người dùng khác.
+    // GUARD: chỉ đồng bộ danh bạ/lời mời, TUYỆT ĐỐI không đụng vào chat store
+    // (không tự đóng cuộc hội thoại). Giao diện chat tự hiển thị trạng thái bị chặn.
     const handleFriendBlocked = (payload: { blockerId: string }) => {
       set((state) => ({
         friends: state.friends.filter((f) => f.user.id !== payload.blockerId),
@@ -372,12 +413,15 @@ export const useFriendStore = create<FriendState>((set, get) => ({
     socket.on("friend:blocked", handleFriendBlocked);
 
     return () => {
+      // Gỡ TOÀN BỘ handler đã đăng ký để một lần reconnect thật sự có thể đăng ký lại từ đầu
       socket.off("friend:request_received", handleRequestReceived);
       socket.off("friend:request_accepted", handleRequestAccepted);
       socket.off("friend:request_rejected", handleRequestRejected);
       socket.off("friend:request_canceled", handleRequestCanceled);
       socket.off("friend:removed", handleFriendRemoved);
       socket.off("friend:blocked", handleFriendBlocked);
+      // Mở lại cờ để lần đăng ký kế tiếp (sau reconnect) được thực thi
+      friendSocketListenersRegistered = false;
     };
   },
 }));

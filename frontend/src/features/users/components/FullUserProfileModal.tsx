@@ -22,6 +22,7 @@ import { Button } from "../../../components/ui/Button";
 import { toast } from "../../../stores/toast.store";
 import { useAuthStore } from "../../../stores/auth.store";
 import { useChatStore } from "../../chat/stores/chat.store";
+import { useFriendStore } from "../../friends/stores/friend.store";
 import { friendService, RelationshipStatus } from "../services/friend.service";
 import { cn } from "../../../lib/utils";
 
@@ -51,12 +52,30 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
   const conversations = useChatStore((state) => state.conversations);
   const selectConversation = useChatStore((state) => state.selectConversation);
 
+  // Toàn bộ THAO TÁC GHI (gửi/chấp nhận/từ chối/hủy lời mời, hủy kết bạn, chặn/bỏ chặn)
+  // đều đi qua Friend Store thay vì gọi service trực tiếp, để danh sách bạn bè dùng chung
+  // trong store luôn được cập nhật đồng bộ (tránh tình trạng modal đã hủy kết bạn nhưng
+  // FriendsView vẫn còn hiển thị người đó). Các action này đã tự hiển thị toast thành công/thất bại.
+  const sendFriendRequest = useFriendStore((state) => state.sendFriendRequest);
+  const acceptFriendRequest = useFriendStore((state) => state.acceptFriendRequest);
+  const rejectFriendRequest = useFriendStore((state) => state.rejectFriendRequest);
+  const cancelFriendRequest = useFriendStore((state) => state.cancelFriendRequest);
+  const removeFriend = useFriendStore((state) => state.removeFriend);
+  const blockUser = useFriendStore((state) => state.blockUser);
+  const unblockUser = useFriendStore((state) => state.unblockUser);
+
   // Trạng thái tab đang chọn bên cột phải
   const [activeTab, setActiveTab] = useState<ProfileTab>("activity");
   // Trạng thái quan hệ bạn bè 2 chiều với người dùng này
   const [relationshipStatus, setRelationshipStatus] = useState<RelationshipStatus>("NONE");
   const [pendingRequestId, setPendingRequestId] = useState<string | undefined>(undefined);
+  // Chiều chặn: true nếu chính mình là bên chủ động chặn đối phương (được phép bỏ chặn)
+  const [blockedByMe, setBlockedByMe] = useState<boolean>(false);
   const [isLoadingStatus, setIsLoadingStatus] = useState<boolean>(false);
+  // Lỗi khi không tra cứu được trạng thái quan hệ (mất kết nối, hết hạn phiên...)
+  const [statusError, setStatusError] = useState<string | null>(null);
+  // Khóa kích hoạt tải lại trạng thái quan hệ khi người dùng bấm "Thử lại"
+  const [statusReloadKey, setStatusReloadKey] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   // Menu mở rộng hành động (More actions)
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
@@ -68,12 +87,16 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
 
   const isMe = currentUser?.id === user?.id;
 
-  // Lấy trạng thái quan hệ bạn bè và mã lời mời khi mở modal hoặc khi user thay đổi
+  // Lấy trạng thái quan hệ bạn bè và mã lời mời khi mở modal hoặc khi user thay đổi.
+  // Đây là lượt ĐỌC duy nhất còn dùng trực tiếp friendService vì cần `requestId` mà store không có.
+  // Nếu tra cứu thất bại, ghi nhận lỗi và KHÔNG hiển thị nút hành động nào (tránh hiển thị
+  // nhầm "Thêm Bạn" cho một người đã là bạn khi token hết hạn hoặc máy chủ gặp sự cố).
   useEffect(() => {
     if (!isOpen || !user?.id || isMe) return;
 
     let isMounted = true;
     setIsLoadingStatus(true);
+    setStatusError(null);
 
     friendService
       .getRelationshipInfo(user.id)
@@ -81,12 +104,19 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
         if (isMounted) {
           setRelationshipStatus(res.status);
           setPendingRequestId(res.requestId);
+          setBlockedByMe(res.blockedByMe ?? false);
         }
       })
-      .catch(() => {
+      .catch((err: unknown) => {
         if (isMounted) {
           setRelationshipStatus("NONE");
           setPendingRequestId(undefined);
+          setBlockedByMe(false);
+          setStatusError(
+            err instanceof Error
+              ? err.message
+              : "Không thể tải trạng thái quan hệ bạn bè."
+          );
         }
       })
       .finally(() => {
@@ -96,7 +126,7 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [isOpen, user?.id, isMe]);
+  }, [isOpen, user?.id, isMe, statusReloadKey]);
 
   // Đóng modal khi nhấn phím Escape
   useEffect(() => {
@@ -133,22 +163,25 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
     if (!user.id || isSubmitting) return;
     setIsSubmitting(true);
     try {
-      await friendService.sendFriendRequest(user.id);
+      await sendFriendRequest(user.id);
       setRelationshipStatus("PENDING_SENT");
-      toast.success(`Đã gửi lời mời kết bạn tới ${displayName}`, "Lời mời kết bạn");
       // Tải lại thông tin để cập nhật requestId mới tạo
       const info = await friendService.getRelationshipInfo(user.id);
       setPendingRequestId(info.requestId);
+      setBlockedByMe(info.blockedByMe ?? false);
     } catch (error: unknown) {
       const errorMsg = error instanceof Error ? error.message : "Không thể gửi lời mời kết bạn";
-      // Xử lý tình huống đối phương hoặc bản thân đã có lời mời (HTTP 409 Conflict)
+      // Xử lý tình huống đối phương hoặc bản thân đã có lời mời (HTTP 409 Conflict):
+      // đồng bộ lại trạng thái thực tế từ máy chủ. (Toast lỗi đã do store hiển thị.)
       if (errorMsg.includes("đã gửi lời mời") || errorMsg.includes("409")) {
-        const info = await friendService.getRelationshipInfo(user.id);
-        setRelationshipStatus(info.status);
-        setPendingRequestId(info.requestId);
-        toast.info(errorMsg, "Thông báo quan hệ");
-      } else {
-        toast.error(errorMsg, "Thao tác thất bại");
+        try {
+          const info = await friendService.getRelationshipInfo(user.id);
+          setRelationshipStatus(info.status);
+          setPendingRequestId(info.requestId);
+          setBlockedByMe(info.blockedByMe ?? false);
+        } catch {
+          // Bỏ qua: giữ nguyên trạng thái hiện tại nếu không tra cứu lại được
+        }
       }
     } finally {
       setIsSubmitting(false);
@@ -166,18 +199,14 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
         reqId = info.requestId;
       }
       if (reqId) {
-        await friendService.acceptFriendRequest(reqId);
+        await acceptFriendRequest(reqId);
         setRelationshipStatus("FRIENDS");
         setPendingRequestId(undefined);
-        toast.success(`Đã chấp nhận lời mời kết bạn của ${displayName}`, "Kết bạn thành công");
       } else {
         toast.error("Không tìm thấy mã lời mời kết bạn", "Thao tác thất bại");
       }
-    } catch (error: unknown) {
-      toast.error(
-        error instanceof Error ? error.message : "Không thể chấp nhận lời mời kết bạn",
-        "Thao tác thất bại"
-      );
+    } catch {
+      // Store đã hiển thị toast lỗi tương ứng; chỉ cần mở khóa nút bấm
     } finally {
       setIsSubmitting(false);
     }
@@ -194,18 +223,14 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
         reqId = info.requestId;
       }
       if (reqId) {
-        await friendService.rejectFriendRequest(reqId);
+        await rejectFriendRequest(reqId);
         setRelationshipStatus("NONE");
         setPendingRequestId(undefined);
-        toast.info(`Đã từ chối lời mời kết bạn của ${displayName}`, "Từ chối lời mời");
       } else {
         setRelationshipStatus("NONE");
       }
-    } catch (error: unknown) {
-      toast.error(
-        error instanceof Error ? error.message : "Không thể từ chối lời mời kết bạn",
-        "Thao tác thất bại"
-      );
+    } catch {
+      // Store đã hiển thị toast lỗi tương ứng
     } finally {
       setIsSubmitting(false);
     }
@@ -216,16 +241,12 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
     if (!user.id || isSubmitting) return;
     setIsSubmitting(true);
     try {
-      await friendService.removeFriend(user.id);
+      await removeFriend(user.id);
       setRelationshipStatus("NONE");
       setIsUnfriendConfirmOpen(false);
       setIsMenuOpen(false);
-      toast.info(`Đã hủy kết bạn với ${displayName}`, "Hủy kết bạn");
-    } catch (error: unknown) {
-      toast.error(
-        error instanceof Error ? error.message : "Không thể hủy kết bạn",
-        "Thao tác thất bại"
-      );
+    } catch {
+      // Store đã hiển thị toast lỗi tương ứng
     } finally {
       setIsSubmitting(false);
     }
@@ -242,18 +263,14 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
         reqId = info.requestId;
       }
       if (reqId) {
-        await friendService.cancelFriendRequest(reqId);
+        await cancelFriendRequest(reqId);
         setRelationshipStatus("NONE");
         setPendingRequestId(undefined);
-        toast.info(`Đã hủy lời mời kết bạn tới ${displayName}`, "Hủy lời mời");
       } else {
         setRelationshipStatus("NONE");
       }
-    } catch (error: unknown) {
-      toast.error(
-        error instanceof Error ? error.message : "Không thể hủy lời mời kết bạn",
-        "Thao tác thất bại"
-      );
+    } catch {
+      // Store đã hiển thị toast lỗi tương ứng
     } finally {
       setIsSubmitting(false);
     }
@@ -264,20 +281,18 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
     if (!user.id) return;
     try {
       if (relationshipStatus === "BLOCKED") {
-        await friendService.unblockUser(user.id);
+        await unblockUser(user.id);
         setRelationshipStatus("NONE");
-        toast.success(`Đã bỏ chặn ${displayName}`, "Bỏ chặn thành công");
+        setBlockedByMe(false);
       } else {
-        await friendService.blockUser(user.id);
+        await blockUser(user.id);
         setRelationshipStatus("BLOCKED");
-        toast.warning(`Đã chặn ${displayName}`, "Đã chặn người dùng");
+        // Vừa chặn thành công nghĩa là chính mình là bên chủ động chặn
+        setBlockedByMe(true);
       }
       setIsMenuOpen(false);
-    } catch (error: unknown) {
-      toast.error(
-        error instanceof Error ? error.message : "Thao tác thất bại",
-        "Lỗi quan hệ"
-      );
+    } catch {
+      // Store đã hiển thị toast lỗi tương ứng
     }
   };
 
@@ -401,6 +416,29 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
           <div className="px-5 py-2.5 flex items-center gap-2">
             {!isMe ? (
               <>
+                {/* Trạng thái lỗi: không tra cứu được quan hệ -> chỉ hiện nút Thử lại,
+                    tuyệt đối không hiển thị nút hành động dựa trên trạng thái không xác định */}
+                {statusError && !isLoadingStatus ? (
+                  <div className="flex-1 flex items-center gap-2 min-w-0">
+                    <span
+                      className="flex-1 text-[11px] font-bold text-uupm-danger-text truncate"
+                      title={statusError}
+                    >
+                      Không tải được trạng thái quan hệ
+                    </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setStatusReloadKey((k) => k + 1)}
+                      className="shrink-0 justify-center text-xs font-black"
+                      leftIcon={<AlertTriangle className="w-3.5 h-3.5" />}
+                    >
+                      Thử lại
+                    </Button>
+                  </div>
+                ) : (
+                  <>
                 {/* Nút quan hệ bạn bè đa trạng thái */}
                 {relationshipStatus === "NONE" && (
                   <Button
@@ -472,7 +510,20 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
                   </Button>
                 )}
 
-                {relationshipStatus === "BLOCKED" && (
+                {/* Đang bị đối phương chặn: hiển thị nhãn KHÔNG bấm được vì thao tác bỏ chặn
+                    là có hướng, chỉ bên chủ động chặn mới thực hiện được */}
+                {relationshipStatus === "BLOCKED" && !blockedByMe && (
+                  <span
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xs border-2 border-uupm-line bg-uupm-page text-xs font-black text-uupm-ink-muted cursor-not-allowed select-none"
+                    title="Người dùng này đã chặn bạn. Bạn không thể bỏ chặn từ phía mình."
+                    aria-disabled="true"
+                  >
+                    <ShieldAlert className="w-3.5 h-3.5" />
+                    Bạn đã bị chặn
+                  </span>
+                )}
+
+                {relationshipStatus === "BLOCKED" && blockedByMe && (
                   <Button
                     type="button"
                     variant="danger"
@@ -539,17 +590,34 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
                         </button>
                       )}
 
+                      {/* Chỉ cho phép bỏ chặn khi CHÍNH MÌNH là bên đã chặn;
+                          nếu bị đối phương chặn thì chỉ hiển thị nhãn thông tin */}
                       <button
                         type="button"
-                        onClick={handleToggleBlock}
-                        className="w-full px-3 py-1.5 text-left text-xs font-bold text-uupm-danger-text hover:bg-uupm-danger/10 flex items-center gap-2 cursor-pointer border-t border-uupm-line/20"
+                        onClick={relationshipStatus === "BLOCKED" && !blockedByMe ? undefined : handleToggleBlock}
+                        disabled={relationshipStatus === "BLOCKED" && !blockedByMe}
+                        aria-disabled={relationshipStatus === "BLOCKED" && !blockedByMe}
+                        className={cn(
+                          "w-full px-3 py-1.5 text-left text-xs font-bold flex items-center gap-2 border-t border-uupm-line/20",
+                          relationshipStatus === "BLOCKED" && !blockedByMe
+                            ? "text-uupm-ink-muted cursor-not-allowed opacity-60"
+                            : "text-uupm-danger-text hover:bg-uupm-danger/10 cursor-pointer"
+                        )}
                       >
                         <ShieldAlert className="w-3.5 h-3.5" />
-                        <span>{relationshipStatus === "BLOCKED" ? "Bỏ chặn" : "Chặn người dùng"}</span>
+                        <span>
+                          {relationshipStatus === "BLOCKED"
+                            ? blockedByMe
+                              ? "Bỏ chặn"
+                              : "Bạn đã bị chặn"
+                            : "Chặn người dùng"}
+                        </span>
                       </button>
                     </div>
                   )}
                 </div>
+                  </>
+                )}
               </>
             ) : (
               <div className="w-full py-1 text-center text-xs font-black text-uupm-accent-text bg-uupm-accent-soft rounded-xs border border-uupm-line">

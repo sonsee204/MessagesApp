@@ -1,3 +1,4 @@
+import axios from "axios";
 import { apiClient } from "../../../lib/axios";
 import { ApiResponse } from "../../../types/auth.types";
 import { formatApiError } from "../../../lib/error-formatter";
@@ -115,7 +116,11 @@ export const friendService = {
 
   /**
    * Lấy thông tin trạng thái quan hệ 2 chiều chi tiết kèm requestId nếu có
+   * Chỉ mã lỗi 404 (chưa từng có quan hệ) mới được hạ cấp thành "NONE".
+   * Mọi lỗi khác (401 hết hạn token, 403, 5xx, lỗi mạng) đều được NÉM RA để
+   * caller hiển thị trạng thái lỗi thay vì hiển thị nhầm nút "Thêm Bạn" cho một người đã là bạn.
    * @param targetUserId ID của người dùng cần tra cứu
+   * @throws Error khi Backend phản hồi lỗi khác 404 hoặc không thể kết nối
    */
   async getRelationshipInfo(targetUserId: string): Promise<RelationshipStatusResponse> {
     try {
@@ -126,10 +131,17 @@ export const friendService = {
         response.data.data || {
           targetUserId,
           status: "NONE",
+          blockedByMe: false,
         }
       );
-    } catch {
-      return { targetUserId, status: "NONE" };
+    } catch (error) {
+      // Chỉ 404 mới coi như "chưa có quan hệ"; các lỗi còn lại ném lên cho caller xử lý
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        return { targetUserId, status: "NONE", blockedByMe: false };
+      }
+      throw new Error(
+        formatApiError(error, "Không thể tải trạng thái quan hệ bạn bè.")
+      );
     }
   },
 

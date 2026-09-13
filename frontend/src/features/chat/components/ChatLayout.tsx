@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { MessageSquare, ShieldCheck, Sparkles } from "lucide-react";
+import { MessageSquare, ShieldCheck, Sparkles, ShieldAlert } from "lucide-react";
 import { useAuthStore } from "../../../stores/auth.store";
 import { useChatStore } from "../stores/chat.store";
 import { useChatSocket } from "../hooks/useChatSocket";
@@ -10,6 +10,7 @@ import { MessageInput } from "./MessageInput";
 import { UserProfilePanel } from "./UserProfilePanel";
 import { NewConversationModal } from "./NewConversationModal";
 import { FriendsView } from "../../friends/components/FriendsView";
+import { useFriendStore } from "../../friends/stores/friend.store";
 import { FullUserProfileModal } from "../../users/components/FullUserProfileModal";
 import { userService } from "../../users/services/user.service";
 import { User } from "../../../types/auth.types";
@@ -45,6 +46,11 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({ onLogout }) => {
     createConversation,
   } = useChatStore();
 
+  // Danh sách người dùng do CHÍNH mình chặn (có hướng) và hành động tải lại danh sách này.
+  // Dùng để phát hiện đối tác trong cuộc hội thoại đang mở đã bị mình chặn.
+  const blockedUsers = useFriendStore((state) => state.blockedUsers);
+  const fetchBlockedUsers = useFriendStore((state) => state.fetchBlockedUsers);
+
   // Khởi tạo và kết nối Socket.IO
   const { emitTyping } = useChatSocket();
 
@@ -68,6 +74,12 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({ onLogout }) => {
     fetchConversations();
   }, [fetchConversations]);
 
+  // Tải danh sách người dùng đã chặn để nhận biết hội thoại có đối tác bị chặn.
+  // Lưu ý: blockUser() phía Friend Store đã tự tải lại danh sách này rồi.
+  useEffect(() => {
+    void fetchBlockedUsers();
+  }, [fetchBlockedUsers]);
+
   // Lấy dữ liệu cuộc trò chuyện hiện tại đang được chọn
   const activeConversation = conversations.find((c) => c.id === activeConversationId);
   const activeMessages = activeConversationId ? messages[activeConversationId] || [] : [];
@@ -87,6 +99,19 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({ onLogout }) => {
       : null;
   const isPartnerOnline = Boolean(partner && onlineUsers[partner.id]);
   const partnerDisplayName = partner?.displayName || partner?.username || activeConversation?.title || "cuộc trò chuyện";
+
+  // Trạng thái chặn của đối tác trong cuộc hội thoại đang mở (theo chiều MÌNH chặn họ).
+  // Dùng để khóa ô nhập tin và hiển thị thông báo thay vì để lại một hội thoại "ma".
+  const partnerIsBlocked = Boolean(
+    partner &&
+      blockedUsers.some((b) => {
+        const blockedId =
+          typeof b.blockedId === "object" && b.blockedId !== null
+            ? b.blockedId._id || b.blockedId.id
+            : b.blockedId;
+        return blockedId === partner.id;
+      })
+  );
 
   // Xử lý gửi tin nhắn
   const handleSendMessage = async (content: string) => {
@@ -233,13 +258,22 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({ onLogout }) => {
               onLoadOlder={handleLoadOlder}
             />
 
-            {/* Khung nhập tin nhắn nổi với nút '+' và emoji */}
-            <MessageInput
-              conversationId={activeConversation.id}
-              partnerName={partnerDisplayName}
-              onSendMessage={handleSendMessage}
-              onTyping={handleTyping}
-            />
+            {/* Đối tác đã bị chặn: hiển thị thông báo và khóa ô nhập tin nhắn
+                (giữ nguyên hội thoại theo đúng phạm vi được duyệt, không tự đóng) */}
+            {partnerIsBlocked ? (
+              <div className="px-4 py-3 border-t-2 border-uupm-line bg-uupm-page flex items-center gap-2 text-xs font-bold text-uupm-ink-muted">
+                <ShieldAlert className="w-4 h-4 shrink-0 text-uupm-danger-text" />
+                <span>Bạn đã chặn người dùng này. Bỏ chặn để tiếp tục trò chuyện.</span>
+              </div>
+            ) : (
+              /* Khung nhập tin nhắn nổi với nút '+' và emoji */
+              <MessageInput
+                conversationId={activeConversation.id}
+                partnerName={partnerDisplayName}
+                onSendMessage={handleSendMessage}
+                onTyping={handleTyping}
+              />
+            )}
           </>
         ) : activeView === "friends" ? (
           /* Màn hình trung tâm Bạn bè kiểu Discord */

@@ -233,7 +233,11 @@ export const NotificationListModal: React.FC = () => {
 
   /**
    * Xử lý lời mời kết bạn trực tiếp từ thông báo.
-   * Sau khi BE xác nhận thành công, đánh dấu thông báo đã đọc để ẩn cặp nút thao tác.
+   * Đánh dấu thông báo đã đọc trong CẢ HAI trường hợp thành công lẫn thất bại:
+   * - Thành công: ẩn cặp nút thao tác như hành vi cũ.
+   * - Thất bại: lời mời có thể đã bị hủy/từ chối ở nơi khác, hàng thông báo đã cũ (stale);
+   *   giữ nguyên cặp nút sẽ khiến người dùng bấm lặp và nhận lỗi validation.
+   *   Toast lỗi đã do friend store hiển thị nên người dùng vẫn biết thao tác không thành công.
    */
   const handleFriendRequestAction = useCallback(
     async (notificationId: string, friendRequestId: string, action: "accept" | "reject") => {
@@ -245,10 +249,11 @@ export const NotificationListModal: React.FC = () => {
         } else {
           await rejectFriendRequest(friendRequestId);
         }
-        await markAsRead(notificationId);
       } catch {
-        // Lỗi đã được friend store hiển thị qua toast; giữ nguyên thông báo để người dùng thử lại
+        // Lỗi đã được friend store hiển thị qua toast
       } finally {
+        // Luôn đánh dấu đã đọc để hàng thông báo stale không còn chào mời thao tác
+        await markAsRead(notificationId);
         setProcessingRequestId(null);
       }
     },
