@@ -8,6 +8,7 @@ export interface User {
   email: string;
   displayName: string;
   avatarUrl?: string | null;
+  bannerUrl?: string | null;
   bio?: string;
   statusMessage?: string;
   role?: "USER" | "ADMIN";
