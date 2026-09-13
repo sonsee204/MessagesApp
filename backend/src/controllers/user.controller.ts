@@ -1,7 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import { userRepository } from "../repositories/user.repository";
-import { NotFoundError, UnauthorizedError } from "../core/errors";
+import { NotFoundError, UnauthorizedError, ValidationError } from "../core/errors";
 import { comparePassword, hashPassword } from "../utils/auth";
+import { saveImage, deleteImageByUrl } from "../utils/image-storage";
+import { ImageKind } from "../config/upload";
 
 /**
  * Controller xử lý các tác vụ liên quan đến tài khoản người dùng
@@ -156,6 +158,72 @@ export class UserController {
       next(error);
     }
   }
+
+  /**
+   * Xử lý chung cho cả ảnh đại diện và ảnh bìa — một luồng, hai tham số hình học.
+   *
+   * THỨ TỰ BẮT BUỘC: ghi tệp mới -> cập nhật CSDL -> mới xoá tệp cũ.
+   * Nếu xoá trước mà bước CSDL thất bại, người dùng MẤT ẢNH HOÀN TOÀN.
+   * Làm đúng thứ tự này thì trường hợp xấu nhất chỉ là còn lại một tệp rác.
+   *
+   * Phản hồi HTTP 200 OK kèm hồ sơ người dùng đã cập nhật.
+   */
+  private replaceImage = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+    kind: ImageKind
+  ): Promise<void> => {
+    try {
+      const userId = req.user!.userId;
+
+      // Kiểm tra tệp đến từ middleware multer hay không
+      if (!req.file) {
+        throw new ValidationError("Vui lòng chọn một tệp ảnh");
+      }
+
+      // Đọc URL CŨ trước khi ghi CSDL — sau khi ghi thì giá trị này đã bị thay
+      const field = kind === "avatar" ? "avatarUrl" : "bannerUrl";
+      const previousUrl = req.currentUser ? (req.currentUser[field] as string | null) : null;
+
+      // Bước 1: xử lý ảnh và ghi tệp mới xuống đĩa
+      const newUrl = await saveImage(req.file.buffer, kind, userId);
+
+      // Bước 2: trỏ CSDL sang tệp mới
+      const updatedUser = await userRepository.updateImage(userId, field, newUrl);
+      if (!updatedUser) {
+        throw new NotFoundError("Không tìm thấy người dùng");
+      }
+
+      // Bước 3: dọn tệp cũ. Hàm này không bao giờ ném lỗi nên không thể làm hỏng request.
+      await deleteImageByUrl(previousUrl);
+
+      res.status(200).json({
+        success: true,
+        data: updatedUser,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * [POST /api/users/avatar]
+   * Tải lên ảnh đại diện mới (multipart/form-data, trường tên "file")
+   * Phản hồi HTTP 200 OK kèm hồ sơ người dùng đã cập nhật
+   */
+  uploadAvatar = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    return this.replaceImage(req, res, next, "avatar");
+  };
+
+  /**
+   * [POST /api/users/banner]
+   * Tải lên ảnh bìa trang hồ sơ (multipart/form-data, trường tên "file")
+   * Phản hồi HTTP 200 OK kèm hồ sơ người dùng đã cập nhật
+   */
+  uploadBanner = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    return this.replaceImage(req, res, next, "banner");
+  };
 }
 
 export const userController = new UserController();

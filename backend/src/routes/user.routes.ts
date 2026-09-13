@@ -2,6 +2,7 @@ import { Router } from "express";
 import { userController } from "../controllers/user.controller";
 import { requireAuth } from "../middlewares/auth";
 import { validate } from "../middlewares/validate";
+import { upload } from "../middlewares/upload";
 import {
   UpdateProfileSchema,
   ChangePasswordSchema,
@@ -23,6 +24,13 @@ router.patch("/profile", validate(UpdateProfileSchema), userController.updatePro
 
 // Tuyến đường đổi mật khẩu người dùng
 router.put("/change-password", validate(ChangePasswordSchema), userController.changePassword);
+
+// Tuyến đường tải ảnh đại diện và ảnh bìa lên máy chủ.
+// KHÔNG đi qua middleware validate(): với multipart/form-data, req.body chỉ được
+// multer điền SAU khi multer chạy, nên validate đứng trước sẽ thấy body rỗng và
+// strip sạch dữ liệu. Hai route này cũng không đọc req.body — tệp nằm ở req.file.
+router.post("/avatar", upload.single("file"), userController.uploadAvatar);
+router.post("/banner", upload.single("file"), userController.uploadBanner);
 
 // Tuyến đường tìm kiếm người dùng theo từ khóa và phân trang
 router.get("/search", validate(SearchUsersQuerySchema), userController.searchUsers);

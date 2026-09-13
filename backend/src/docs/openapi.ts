@@ -77,6 +77,7 @@ const UserPublicSchema = z
     email: z.string().email().openapi({ example: "user@example.com" }),
     displayName: z.string().nullable().openapi({ example: "Hà Xuân Sơn" }),
     avatarUrl: z.string().nullable().openapi({ description: "Đường dẫn ảnh đại diện" }),
+    bannerUrl: z.string().nullable().openapi({ description: "Đường dẫn ảnh bìa trang hồ sơ" }),
     bio: z.string().nullable().openapi({ description: "Tiểu sử người dùng" }),
     statusMessage: z.string().nullable().openapi({ description: "Trạng thái hiện tại" }),
     role: z.enum(["USER", "ADMIN"]).openapi({ description: "Vai trò trong hệ thống" }),
@@ -363,6 +364,60 @@ registry.registerPath({
       description: "Cập nhật thành công",
       content: { "application/json": { schema: z.object({ success: z.literal(true), data: UserPublicSchema }) } },
     },
+    ...errors("400", "401", "404", "500"),
+  },
+});
+
+// Multipart upload không dùng toRequest() vì body là tệp nhị phân, không phải JSON.
+// Khai báo requestBody thủ công theo đúng chuẩn OpenAPI 3 cho multipart/form-data.
+const avatarUploadRequestBody = {
+  required: true,
+  content: {
+    "multipart/form-data": {
+      schema: z.object({
+        file: z.any().openapi({ type: "string", format: "binary" }),
+      }),
+    },
+  },
+};
+
+// Mọi endpoint của module này trả cùng một vỏ bọc { success, data }.
+// Khai báo một lần để hai path bên dưới không lặp lại cùng một chuỗi schema.
+const withUserData = (description: string) => ({
+  description,
+  content: {
+    "application/json": {
+      schema: z.object({ success: z.literal(true), data: UserPublicSchema }),
+    },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/users/avatar",
+  tags: ["Users"],
+  summary: "Tải lên ảnh đại diện",
+  description:
+    "Nhận multipart/form-data với trường 'file'. Ảnh được cắt vuông 256x256 và nén sang WEBP. Tối đa 5MB, chấp nhận JPG/PNG/WEBP.",
+  security: [{ [bearerAuth.name]: [] }],
+  request: avatarUploadRequestBody,
+  responses: {
+    200: withUserData("Tải ảnh đại diện thành công"),
+    ...errors("400", "401", "404", "500"),
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/users/banner",
+  tags: ["Users"],
+  summary: "Tải lên ảnh bìa trang hồ sơ",
+  description:
+    "Nhận multipart/form-data với trường 'file'. Ảnh được thu nhỏ về tối đa 1200x400 và nén sang WEBP. Tối đa 5MB, chấp nhận JPG/PNG/WEBP.",
+  security: [{ [bearerAuth.name]: [] }],
+  request: avatarUploadRequestBody,
+  responses: {
+    200: withUserData("Tải ảnh bìa thành công"),
     ...errors("400", "401", "404", "500"),
   },
 });

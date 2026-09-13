@@ -50,7 +50,7 @@ export class MongooseConversationRepository implements IConversationRepository {
    */
   async findById(id: string): Promise<IConversation | null> {
     return ConversationModel.findById(id)
-      .populate("participants", "username displayName avatarUrl isOnline lastSeenAt")
+      .populate("participants", "username displayName avatarUrl bannerUrl bio statusMessage isOnline lastSeenAt createdAt")
       .populate("lastMessage")
       .exec();
   }
@@ -61,7 +61,7 @@ export class MongooseConversationRepository implements IConversationRepository {
   async findByUserId(userId: string): Promise<IConversation[]> {
     const objectId = new Types.ObjectId(userId);
     return ConversationModel.find({ participants: objectId })
-      .populate("participants", "username displayName avatarUrl isOnline lastSeenAt")
+      .populate("participants", "username displayName avatarUrl bannerUrl bio statusMessage isOnline lastSeenAt createdAt")
       .populate("lastMessage")
       .sort({ lastMessageAt: -1 })
       .exec();
@@ -77,7 +77,7 @@ export class MongooseConversationRepository implements IConversationRepository {
       type: "DIRECT",
       participants: { $all: [o1, o2], $size: 2 },
     })
-      .populate("participants", "username displayName avatarUrl isOnline lastSeenAt")
+      .populate("participants", "username displayName avatarUrl bannerUrl bio statusMessage isOnline lastSeenAt createdAt")
       .exec();
   }
 
@@ -100,7 +100,7 @@ export class MongooseConversationRepository implements IConversationRepository {
 
     return conversation.populate(
       "participants",
-      "username displayName avatarUrl isOnline lastSeenAt"
+      "username displayName avatarUrl bannerUrl bio statusMessage isOnline lastSeenAt createdAt"
     );
   }
 

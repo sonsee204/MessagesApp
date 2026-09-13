@@ -6,6 +6,7 @@ export interface IUser extends Document {
   passwordHash: string;
   displayName: string;
   avatarUrl?: string;
+  bannerUrl?: string;
   bio?: string;
   statusMessage?: string;
   role: "USER" | "ADMIN";
@@ -46,6 +47,11 @@ const UserSchema = new Schema<IUser>(
       maxlength: 50,
     },
     avatarUrl: {
+      type: String,
+      default: null,
+    },
+    // Ảnh bìa trang hồ sơ; null = dùng nền mặc định
+    bannerUrl: {
       type: String,
       default: null,
     },

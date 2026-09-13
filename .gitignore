@@ -57,3 +57,13 @@ desktop.ini
 # 8. Sản phẩm biên dịch của file cấu hình Vite (sinh ra bởi `tsc -b`)
 frontend/vite.config.js
 frontend/vite.config.d.ts
+
+# 9. Ảnh người dùng tải lên (dữ liệu, không phải mã nguồn) — giữ lại .gitkeep để thư mục tồn tại
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# 10. Ảnh chụp màn hình kiểm thử & bộ nhớ cache công cụ tạm thời
+*.png
+frontend/*.png
+.playwright-mcp/
+

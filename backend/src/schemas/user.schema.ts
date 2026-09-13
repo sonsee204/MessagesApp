@@ -1,6 +1,21 @@
 import { z } from "zod";
 
 /**
+ * Kiểm tra đường dẫn ảnh hợp lệ.
+ * Chấp nhận HAI dạng:
+ *  1. URL tuyệt đối (http/https) — ảnh ngoài hoặc dữ liệu cũ do người dùng dán vào.
+ *  2. Đường dẫn nội bộ bắt đầu bằng /api/uploads/ — do chính backend sinh ra sau khi
+ *     xử lý tệp tải lên. z.string().url() thuần sẽ TỪ CHỐI dạng này vì nó là đường dẫn
+ *     tương đối, nên phải kiểm tra riêng.
+ */
+const imagePathSchema = z
+  .string()
+  .refine(
+    (val) => /^https?:\/\/\S+$/.test(val) || val.startsWith("/api/uploads/"),
+    "Đường dẫn ảnh không hợp lệ"
+  );
+
+/**
  * Schema cập nhật thông tin cá nhân (Profile)
  */
 export const UpdateProfileSchema = z.object({
@@ -11,11 +26,9 @@ export const UpdateProfileSchema = z.object({
       .min(1, "Tên hiển thị không được để trống")
       .max(50, "Tên hiển thị tối đa 50 ký tự")
       .optional(),
-    avatarUrl: z
-      .string()
-      .url("Đường dẫn ảnh đại diện không hợp lệ")
-      .nullable()
-      .optional(),
+    avatarUrl: imagePathSchema.nullable().optional(),
+    // Ảnh bìa trang hồ sơ; null nghĩa là xoá về nền mặc định
+    bannerUrl: imagePathSchema.nullable().optional(),
     bio: z
       .string()
       .trim()

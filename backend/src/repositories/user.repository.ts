@@ -7,7 +7,9 @@ export interface IUserRepository {
   findByIdentifier(identifier: string, includePassword?: boolean): Promise<IUser | null>;
   create(userData: Partial<IUser>): Promise<IUser>;
   updateOnlineStatus(id: string, isOnline: boolean): Promise<IUser | null>;
-  updateProfile(id: string, data: Partial<Pick<IUser, "displayName" | "avatarUrl" | "bio" | "statusMessage">>): Promise<IUser | null>;
+  updateProfile(id: string, data: Partial<Pick<IUser, "displayName" | "avatarUrl" | "bannerUrl" | "bio" | "statusMessage">>): Promise<IUser | null>;
+  /** Cập nhật riêng ảnh đại diện hoặc ảnh bìa sau khi tệp đã lưu thành công */
+  updateImage(id: string, field: "avatarUrl" | "bannerUrl", url: string | null): Promise<IUser | null>;
   updatePassword(id: string, passwordHash: string): Promise<void>;
   searchUsers(keyword: string, currentUserId: string, page: number, limit: number): Promise<{ users: IUser[]; total: number }>;
 }
@@ -58,9 +60,22 @@ export class MongooseUserRepository implements IUserRepository {
 
   async updateProfile(
     id: string,
-    data: Partial<Pick<IUser, "displayName" | "avatarUrl" | "bio" | "statusMessage">>
+    data: Partial<Pick<IUser, "displayName" | "avatarUrl" | "bannerUrl" | "bio" | "statusMessage">>
   ): Promise<IUser | null> {
     return UserModel.findByIdAndUpdate(id, { $set: data }, { new: true }).exec();
+  }
+
+  /**
+   * Cập nhật riêng một trường ảnh (avatarUrl hoặc bannerUrl).
+   * Tách khỏi updateProfile vì luồng tải ảnh không đi qua middleware validate,
+   * và cần đọc URL cũ trước đó để dọn tệp.
+   */
+  async updateImage(
+    id: string,
+    field: "avatarUrl" | "bannerUrl",
+    url: string | null
+  ): Promise<IUser | null> {
+    return UserModel.findByIdAndUpdate(id, { $set: { [field]: url } }, { new: true }).exec();
   }
 
   async updatePassword(id: string, passwordHash: string): Promise<void> {

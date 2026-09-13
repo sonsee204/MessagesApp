@@ -5,3 +5,4 @@ export * from "./message.model";
 export * from "./friend-request.model";
 export * from "./friend.model";
 export * from "./block.model";
+export * from "./notification.model";

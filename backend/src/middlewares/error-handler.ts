@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { AppError } from "../core/errors";
 import { logger } from "../core/logger";
 import { env } from "../config/env";
+import { MAX_FILE_SIZE } from "../config/upload";
 
 /**
  * Middleware xử lý lỗi tập trung toàn hệ thống (Global Error Handler)
@@ -86,6 +87,42 @@ export function errorHandler(
       success: false,
       error: {
         code,
+        message,
+        details: [],
+      },
+    });
+    return;
+  }
+
+  // 4b. Xử lý lỗi tải tệp do multer ném ra.
+  // LƯU Ý: MulterError dùng `code` dạng CHUỖI (ví dụ "LIMIT_FILE_SIZE"), không phải
+  // mã số 11000 của MongoDB, nên không khớp nhánh nào phía trên. Nếu thiếu nhánh này,
+  // tệp quá lớn sẽ bị báo thành lỗi 500 "sự cố nội bộ" thay vì thông báo đúng nguyên nhân.
+  // Dùng err.name thay vì instanceof để không phải import multer vào tầng xử lý lỗi.
+  if (err.name === "MulterError") {
+    const multerErr = err as unknown as { code: string };
+
+    // Ánh xạ mã lỗi multer sang thông điệp tiếng Việt dễ hiểu cho người dùng cuối
+    const MULTER_MESSAGES: Record<string, string> = {
+      LIMIT_FILE_SIZE: `Tệp vượt quá dung lượng cho phép (tối đa ${MAX_FILE_SIZE / 1024 / 1024}MB)`,
+      LIMIT_UNEXPECTED_FILE: "Tên trường tệp không hợp lệ, chỉ chấp nhận trường 'file'",
+      LIMIT_FILE_COUNT: "Chỉ được tải lên một tệp mỗi lần",
+    };
+    const message = MULTER_MESSAGES[multerErr.code] ?? "Tệp tải lên không hợp lệ";
+
+    logger.logError({
+      code: multerErr.code,
+      statusCode: 400,
+      message,
+      method,
+      path,
+      ip,
+    });
+
+    res.status(400).json({
+      success: false,
+      error: {
+        code: multerErr.code,
         message,
         details: [],
       },

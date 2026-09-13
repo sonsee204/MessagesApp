@@ -16,14 +16,15 @@ describe("Swagger / OpenAPI documentation", () => {
     expect(openApiDocument.servers?.[0].url).toBe("/api");
   });
 
-  it("khai báo đủ 29 thao tác (operation) trên 26 đường dẫn của hệ thống", () => {
+  it("khai báo đủ 31 thao tác (operation) trên 28 đường dẫn của hệ thống", () => {
     const operations = Object.values(openApiDocument.paths ?? {}).flatMap((p) =>
       Object.keys(p as Record<string, unknown>)
     );
 
-    // 5 auth + 4 users + 3 conversations + 4 messages + 12 friends + 1 health
-    expect(operations).toHaveLength(29);
-    expect(Object.keys(openApiDocument.paths ?? {})).toHaveLength(26);
+    // 29 thao tác gốc + POST /users/avatar + POST /users/banner
+    expect(operations).toHaveLength(31);
+    // 26 path gốc + /users/avatar + /users/banner
+    expect(Object.keys(openApiDocument.paths ?? {})).toHaveLength(28);
   });
 
   it("mọi tuyến đường đều có tag và mô tả", () => {
@@ -47,6 +48,7 @@ describe("Swagger / OpenAPI documentation", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.openapi).toBe("3.0.3");
-    expect(Object.keys(res.body.paths)).toHaveLength(26);
+    // 26 path gốc + /users/avatar + /users/banner
+    expect(Object.keys(res.body.paths)).toHaveLength(28);
   });
 });
