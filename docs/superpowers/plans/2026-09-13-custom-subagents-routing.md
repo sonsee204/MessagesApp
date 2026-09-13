@@ -26,7 +26,7 @@
 - Model: `haiku`
 - Allowed Tools: `Read`, `Glob`, `Grep`, `WebSearch`, `WebFetch`
 
-- [ ] **Step 1: Tạo file cấu hình `.claude/agents/quick-worker.md`**
+- [x] **Step 1: Tạo file cấu hình `.claude/agents/quick-worker.md`**
 
 Nội dung file:
 ```markdown
@@ -52,11 +52,11 @@ Bạn là **quick-worker**, một subagent siêu nhẹ chuyên trách các tác 
 - **Ngôn ngữ**: Phản hồi kết quả bằng Tiếng Việt.
 ```
 
-- [ ] **Step 2: Xác minh cú pháp frontmatter YAML**
+- [x] **Step 2: Xác minh cú pháp frontmatter YAML**
 
 Kiểm tra file đã được tạo với frontmatter chuẩn: `name: quick-worker`, `model: haiku`.
 
-- [ ] **Step 3: Commit Task 1**
+- [x] **Step 3: Commit Task 1**
 
 ```bash
 git add .claude/agents/quick-worker.md
@@ -74,7 +74,7 @@ git commit -m "feat(agents): create quick-worker subagent for lightweight tier"
 - Model: `sonnet`
 - Allowed Tools: `Read`, `Edit`, `Write`, `Glob`, `Grep`, `Bash`, `PowerShell`
 
-- [ ] **Step 1: Tạo file cấu hình `.claude/agents/feature-builder.md`**
+- [x] **Step 1: Tạo file cấu hình `.claude/agents/feature-builder.md`**
 
 Nội dung file:
 ```markdown
@@ -103,11 +103,11 @@ Bạn là **feature-builder**, một lập trình viên Fullstack chuyên triể
 - **Sửa đổi chuẩn xác**: Sử dụng công cụ `Edit` để thay đổi mã nguồn chính xác theo từng đoạn ngắn.
 ```
 
-- [ ] **Step 2: Xác minh cú pháp frontmatter YAML**
+- [x] **Step 2: Xác minh cú pháp frontmatter YAML**
 
 Kiểm tra file có `name: feature-builder`, `model: sonnet`.
 
-- [ ] **Step 3: Commit Task 2**
+- [x] **Step 3: Commit Task 2**
 
 ```bash
 git add .claude/agents/feature-builder.md
@@ -125,7 +125,7 @@ git commit -m "feat(agents): create feature-builder subagent for standard tier"
 - Model: `opus`
 - Allowed Tools: `Read`, `Edit`, `Write`, `Glob`, `Grep`, `Bash`, `PowerShell`
 
-- [ ] **Step 1: Tạo file cấu hình `.claude/agents/deep-architect.md`**
+- [x] **Step 1: Tạo file cấu hình `.claude/agents/deep-architect.md`**
 
 Nội dung file:
 ```markdown
@@ -154,11 +154,11 @@ Bạn là **deep-architect**, một Chuyên gia Kiến trúc Hệ thống Cao c�
 - **Bắt buộc comment Tiếng Việt**: Ghi chú kiến trúc và mã nguồn bằng Tiếng Việt súc tích, chuẩn xác.
 ```
 
-- [ ] **Step 2: Xác minh cú pháp frontmatter YAML**
+- [x] **Step 2: Xác minh cú pháp frontmatter YAML**
 
 Kiểm tra file có `name: deep-architect`, `model: opus`.
 
-- [ ] **Step 3: Commit Task 3**
+- [x] **Step 3: Commit Task 3**
 
 ```bash
 git add .claude/agents/deep-architect.md
@@ -173,7 +173,7 @@ git commit -m "feat(agents): create deep-architect subagent for complex tier"
 - Create: `.claude/rules/task-routing.md`
 - Modify: `CLAUDE.md`
 
-- [ ] **Step 1: Tạo file `.claude/rules/task-routing.md`**
+- [x] **Step 1: Tạo file `.claude/rules/task-routing.md`**
 
 Nội dung:
 ```markdown
@@ -203,14 +203,14 @@ Nội dung:
    - Nếu `feature-builder` sửa thất bại quá 2 lần -> leo thang lên `deep-architect`.
 ```
 
-- [ ] **Step 2: Cập nhật `CLAUDE.md` để kích hoạt quy tắc điều phối**
+- [x] **Step 2: Cập nhật `CLAUDE.md` để kích hoạt quy tắc điều phối**
 
 Sửa mục `## 🧩 Domain Rules & Skills Mapping` trong `CLAUDE.md`, thêm dòng:
 ```markdown
 - **Task Routing**: Tuân thủ nghiêm ngặt quy tắc tự động phân loại và dispatch subagents tại `.claude/rules/task-routing.md`.
 ```
 
-- [ ] **Step 3: Commit Task 4**
+- [x] **Step 3: Commit Task 4**
 
 ```bash
 git add .claude/rules/task-routing.md CLAUDE.md
@@ -221,16 +221,16 @@ git commit -m "feat(governance): add task-routing rule and link in CLAUDE.md"
 
 ### Task 5: Kiểm Thử Xác Minh Tính Năng Điều Phối (Verification Testing)
 
-- [ ] **Step 1: Test Tier 1 (Haiku Routing)**
+- [x] **Step 1: Test Tier 1 (Haiku Routing)**
   - Chạy lệnh dispatch thủ công hoặc qua câu lệnh mẫu kiểm tra đọc file.
   - Xác nhận `quick-worker` thực thi và hoàn thành mà không có lỗi.
-- [ ] **Step 2: Test Tier 2 (Sonnet Routing)**
+- [x] **Step 2: Test Tier 2 (Sonnet Routing)**
   - Chạy thử nghiệm phân loại tác vụ tạo hàm tiện ích hoặc kiểm tra logic.
   - Xác nhận `feature-builder` thực thi đúng quy chuẩn code comment Tiếng Việt.
-- [ ] **Step 3: Test Tier 3 (Opus Routing)**
+- [x] **Step 3: Test Tier 3 (Opus Routing)**
   - Chạy thử nghiệm phân tích bài toán race-condition Socket.IO.
   - Xác nhận `deep-architect` suy luận và đưa ra khuyến nghị chuẩn.
-- [ ] **Step 4: Commit tổng kết hoàn tất tính năng**
+- [x] **Step 4: Commit tổng kết hoàn tất tính năng**
 
 ```bash
 git add docs/superpowers/plans/2026-09-13-custom-subagents-routing.md
