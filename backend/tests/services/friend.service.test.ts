@@ -135,6 +135,28 @@ describe("FriendService Business Logic", () => {
       const res = await friendService.getRelationshipStatus("u1", "u2");
       expect(res.status).toBe("FRIENDS");
     });
+
+    it("trả về blockedByMe = false khi ĐỐI PHƯƠNG chặn mình (chiều chặn có hướng)", async () => {
+      // isBlocked 2 chiều = true nhưng chiều "mình chặn đối phương" = false
+      mockBlockRepo.isBlocked.mockResolvedValue(true);
+      mockBlockRepo.isBlockedBy.mockResolvedValue(false);
+
+      const res = await friendService.getRelationshipStatus("u1", "u2");
+
+      expect(res.status).toBe("BLOCKED");
+      expect(res.blockedByMe).toBe(false);
+      expect(mockBlockRepo.isBlockedBy).toHaveBeenCalledWith("u1", "u2");
+    });
+
+    it("trả về blockedByMe = true khi CHÍNH MÌNH là bên chặn đối phương", async () => {
+      mockBlockRepo.isBlocked.mockResolvedValue(true);
+      mockBlockRepo.isBlockedBy.mockResolvedValue(true);
+
+      const res = await friendService.getRelationshipStatus("u1", "u2");
+
+      expect(res.status).toBe("BLOCKED");
+      expect(res.blockedByMe).toBe(true);
+    });
   });
 
   describe("Socket.IO Real-time Events Emission", () => {
@@ -148,18 +170,45 @@ describe("FriendService Business Logic", () => {
       } as any);
     });
 
-    it("phát sự kiện friend:request_received khi gửi lời mời kết bạn", async () => {
-      mockUserRepo.findById.mockResolvedValue({ id: "u2", displayName: "User 2" });
+    it("phát sự kiện friend:request_received kèm hồ sơ người gửi đã POPULATE và note", async () => {
+      // Hồ sơ người gửi phải là object đã populate (có displayName/username), KHÔNG phải ObjectId thô,
+      // để store phía client hiển thị đúng tên trong toast lời mời kết bạn.
+      const senderUser = {
+        _id: "u1",
+        id: "u1",
+        username: "alice",
+        displayName: "Alice Nguyen",
+      };
+      mockUserRepo.findById.mockResolvedValue(senderUser);
       mockBlockRepo.isBlocked.mockResolvedValue(false);
       mockFriendRepo.isFriend.mockResolvedValue(false);
       mockFriendRequestRepo.findPending.mockResolvedValue(null);
-      mockFriendRequestRepo.create.mockResolvedValue({ _id: "req1", senderId: "u1", receiverId: "u2" });
+      mockFriendRequestRepo.create.mockResolvedValue({
+        _id: "req1",
+        senderId: "u1",
+        receiverId: "u2",
+        note: "Hello",
+      });
 
       await friendService.sendFriendRequest("u1", "u2", "Hello");
 
-      expect(emitToUserSpy).toHaveBeenCalledWith("u2", "friend:request_received", expect.objectContaining({
-        _id: "req1",
-      }));
+      expect(emitToUserSpy).toHaveBeenCalledWith(
+        "u2",
+        "friend:request_received",
+        expect.objectContaining({
+          _id: "req1",
+          note: "Hello",
+          // senderId và sender đều phải mang hồ sơ đã populate
+          senderId: expect.objectContaining({
+            displayName: "Alice Nguyen",
+            username: "alice",
+          }),
+          sender: expect.objectContaining({
+            displayName: "Alice Nguyen",
+            username: "alice",
+          }),
+        })
+      );
     });
 
     it("phát sự kiện friend:request_accepted cho cả người gửi và người nhận khi chấp nhận kết bạn", async () => {

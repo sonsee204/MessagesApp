@@ -183,6 +183,7 @@ export class FriendController {
    * Kiểm tra trạng thái quan hệ 2 chiều với một người dùng
    * - Params: { targetUserId: string }
    * - Phản hồi: 200 OK kèm status (NONE, PENDING_SENT, PENDING_RECEIVED, FRIENDS, BLOCKED)
+   *   và blockedByMe (true nếu chính người dùng hiện tại là bên chủ động chặn đối phương)
    */
   getRelationshipStatus = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {

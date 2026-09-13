@@ -123,9 +123,11 @@ export class FriendService {
       note,
     });
 
-    // 8. Phát thông báo thời gian thực cho người nhận lời mời
+    // 8. Lấy hồ sơ người gửi (populate) để tái sử dụng cho cả Notification lẫn sự kiện Socket.IO
+    const senderUser = await this.userRepo.findById(senderId);
+
+    // 8.1 Phát thông báo lưu trữ (Notification) cho người nhận lời mời
     try {
-      const senderUser = await this.userRepo.findById(senderId);
       const senderName =
         senderUser?.displayName || senderUser?.username || "Một người dùng";
       await this.notifService.createNotification({
@@ -142,8 +144,22 @@ export class FriendService {
       // Tiếp tục hoạt động nếu gửi thông báo thất bại
     }
 
-    // Phát sự kiện Socket.IO thời gian thực tới người nhận lời mời
-    emitToUser(receiverId, "friend:request_received", request);
+    // 9. Phát sự kiện Socket.IO thời gian thực tới người nhận lời mời.
+    // Payload giữ đủ 2 dạng khóa mà client đang đọc:
+    // - `_id` (kèm `id`) để định danh lời mời
+    // - `senderId` và `sender` đều mang hồ sơ người gửi ĐÃ POPULATE (không phải ObjectId thô),
+    //   nhờ đó store phía client hiển thị đúng tên người gửi trong toast thay vì "Một người dùng".
+    // - `note` là lời nhắn kèm theo lời mời (theo đúng contract của kế hoạch ban đầu).
+    const requestPlain = (request as any).toObject
+      ? (request as any).toObject()
+      : { ...(request as any) };
+    emitToUser(receiverId, "friend:request_received", {
+      ...requestPlain,
+      _id: requestPlain._id ?? requestPlain.id,
+      senderId: senderUser,
+      sender: senderUser,
+      note: requestPlain.note ?? note,
+    });
 
     return request;
   }
@@ -398,38 +414,50 @@ export class FriendService {
   async getRelationshipStatus(
     userId: string,
     targetUserId: string
-  ): Promise<{ targetUserId: string; status: RelationshipStatus; requestId?: string }> {
+  ): Promise<{
+    targetUserId: string;
+    status: RelationshipStatus;
+    requestId?: string;
+    /** true nếu CHÍNH người dùng hiện tại là bên chủ động chặn đối phương (chiều chặn có hướng) */
+    blockedByMe: boolean;
+  }> {
     if (userId === targetUserId) {
-      return { targetUserId, status: "NONE" };
+      return { targetUserId, status: "NONE", blockedByMe: false };
     }
 
-    // Kiểm tra quan hệ chặn
-    const isBlocked = await this.blockRepo.isBlocked(userId, targetUserId);
+    // Kiểm tra quan hệ chặn 2 chiều: nếu có bất kỳ chiều chặn nào thì trạng thái là BLOCKED.
+    // Đồng thời xác định chiều chặn để client biết mình có quyền bỏ chặn hay không:
+    // - blockedByMe = true  -> chính mình đã chặn đối phương, được phép bỏ chặn
+    // - blockedByMe = false -> đối phương chặn mình, nút "Bỏ chặn" sẽ vô hiệu (unblock là thao tác có hướng)
+    const [isBlocked, blockedByMe] = await Promise.all([
+      this.blockRepo.isBlocked(userId, targetUserId),
+      this.blockRepo.isBlockedBy(userId, targetUserId),
+    ]);
     if (isBlocked) {
-      return { targetUserId, status: "BLOCKED" };
+      return { targetUserId, status: "BLOCKED", blockedByMe };
     }
 
     // Kiểm tra quan hệ bạn bè
     const isFriend = await this.friendRepo.isFriend(userId, targetUserId);
     if (isFriend) {
-      return { targetUserId, status: "FRIENDS" };
+      return { targetUserId, status: "FRIENDS", blockedByMe: false };
     }
 
     // Kiểm tra lời mời mình đã gửi (kèm mã requestId để client có thể hủy khi cần)
     const sentPending = await this.friendRequestRepo.findPending(userId, targetUserId);
     if (sentPending) {
       const reqId = sentPending._id ? sentPending._id.toString() : (sentPending as { id?: string }).id;
-      return { targetUserId, status: "PENDING_SENT", requestId: reqId };
+      return { targetUserId, status: "PENDING_SENT", requestId: reqId, blockedByMe: false };
     }
 
     // Kiểm tra lời mời người kia gửi cho mình (kèm mã requestId để client có thể chấp nhận ngay)
     const receivedPending = await this.friendRequestRepo.findPending(targetUserId, userId);
     if (receivedPending) {
       const reqId = receivedPending._id ? receivedPending._id.toString() : (receivedPending as { id?: string }).id;
-      return { targetUserId, status: "PENDING_RECEIVED", requestId: reqId };
+      return { targetUserId, status: "PENDING_RECEIVED", requestId: reqId, blockedByMe: false };
     }
 
-    return { targetUserId, status: "NONE" };
+    return { targetUserId, status: "NONE", blockedByMe: false };
   }
 
   /**
