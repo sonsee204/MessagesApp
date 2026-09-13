@@ -14,16 +14,18 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 export const Card = React.forwardRef<HTMLDivElement, CardProps>(
   ({ className, variant = "default", children, ...props }, ref) => {
     const variantStyles = {
-      default: "bg-white",
-      raised: "bg-[#f0fdf4]",
-      strong: "bg-[#add8e6]",
+      default: "bg-uupm-surface",
+      // Dùng alpha của token thay vì hex pastel cứng: màu tự đổi theo theme và
+      // vẫn hoà với nền vì là chính màu accent pha loãng.
+      raised: "bg-uupm-accent/10",
+      strong: "bg-uupm-accent-soft",
     };
 
     return (
       <div
         ref={ref}
         className={cn(
-          "rounded-md border-2 border-[#2d3748] shadow-uupm-1 text-[#0f172a] overflow-hidden transition-all",
+          "rounded-md border-2 border-uupm-line shadow-uupm-1 text-uupm-ink overflow-hidden transition-all",
           variantStyles[variant],
           className
         )}
@@ -48,7 +50,7 @@ export const CardTitle = React.forwardRef<HTMLHeadingElement, React.HTMLAttribut
   ({ className, ...props }, ref) => (
     <h2
       ref={ref}
-      className={cn("text-2xl font-black text-[#0f172a] tracking-tight", className)}
+      className={cn("text-2xl font-black text-uupm-ink tracking-tight", className)}
       {...props}
     />
   )
@@ -59,7 +61,7 @@ export const CardDescription = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, ...props }, ref) => (
-  <p ref={ref} className={cn("text-sm font-semibold text-slate-500", className)} {...props} />
+  <p ref={ref} className={cn("text-sm font-semibold text-uupm-ink-muted", className)} {...props} />
 ));
 CardDescription.displayName = "CardDescription";
 
@@ -72,7 +74,7 @@ CardContent.displayName = "CardContent";
 
 export const CardFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn("p-6 pt-4 flex items-center justify-between border-t border-slate-100", className)} {...props} />
+    <div ref={ref} className={cn("p-6 pt-4 flex items-center justify-between border-t border-uupm-ink-muted/40", className)} {...props} />
   )
 );
 CardFooter.displayName = "CardFooter";

@@ -50,10 +50,10 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="block text-xs font-black text-[#0f172a] tracking-wider uppercase select-none"
+            className="block text-xs font-black text-uupm-ink tracking-wider uppercase select-none"
           >
             {label}
-            {props.required && <span className="text-[#ef4444] ml-1 font-black">*</span>}
+            {props.required && <span className="text-uupm-danger-text ml-1 font-black">*</span>}
           </label>
         )}
 
@@ -61,7 +61,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         <div className="relative flex items-center">
           {/* Biểu tượng bên trái */}
           {leftIcon && (
-            <div className="absolute left-3.5 flex items-center pointer-events-none text-slate-500">
+            <div className="absolute left-3.5 flex items-center pointer-events-none text-uupm-ink-muted">
               {leftIcon}
             </div>
           )}
@@ -82,24 +82,24 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             }
             className={cn(
               // Kích thước chuẩn UI/UX Pro Max: cao tối thiểu 48px, đệm tay thoải mái
-              "w-full h-12 min-h-[48px] px-3.5 text-sm font-bold text-[#0f172a] bg-white rounded-xs border-2 transition-all placeholder:text-slate-400 placeholder:font-normal",
+              "w-full h-12 min-h-[48px] px-3.5 text-sm font-bold text-uupm-ink bg-uupm-surface rounded-xs border-2 transition-all placeholder:text-uupm-ink-muted placeholder:font-normal",
               // Tùy biến khoảng thụt đầu dòng theo icon
               leftIcon ? "pl-11" : "pl-3.5",
               isPassword ? "pr-12" : isValid ? "pr-10" : "pr-3.5",
               // Trạng thái bình thường: Viền 2px #2d3748, hover đậm hơn, focus viền đen bóng đổ
               !error && [
-                "border-[#2d3748]",
-                "hover:border-[#0f172a]",
-                "focus:border-[#0f172a] focus:shadow-uupm-2 focus:outline-none focus:ring-2 focus:ring-blue-500",
+                "border-uupm-line",
+                "hover:border-uupm-line",
+                "focus:border-uupm-line focus:shadow-uupm-2 focus:outline-none focus:ring-2 focus:ring-blue-500",
               ],
               // Trạng thái lỗi (Error State): Viền đỏ #ef4444, bóng đổ khối đỏ
               error && [
-                "border-[#ef4444]",
-                "shadow-[4px_4px_0px_0px_#ef4444]",
-                "focus:border-[#ef4444] focus:outline-none focus:ring-2 focus:ring-[#ef4444]/40",
+                "border-uupm-danger",
+                "shadow-[4px_4px_0px_0px_hsl(var(--uupm-danger))]",
+                "focus:border-uupm-danger focus:outline-none focus:ring-2 focus:ring-uupm-danger/40",
               ],
               // Trạng thái vô hiệu hóa
-              disabled && "bg-slate-100 text-slate-400 border-slate-300 cursor-not-allowed",
+              disabled && "bg-uupm-surface-hover text-uupm-ink-muted border-uupm-ink-muted/40 cursor-not-allowed",
               className
             )}
             {...props}
@@ -107,7 +107,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
           {/* Biểu tượng trạng thái Hợp lệ (dấu tích xanh) */}
           {!isPassword && isValid && !error && (
-            <div className="absolute right-3.5 flex items-center pointer-events-none text-[#22c55e]">
+            <div className="absolute right-3.5 flex items-center pointer-events-none text-uupm-accent">
               <CheckCircle2 className="w-4 h-4" />
             </div>
           )}
@@ -119,7 +119,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
               disabled={disabled}
               onClick={() => setShowPassword((prev) => !prev)}
               aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-              className="absolute right-1.5 w-10 h-10 flex items-center justify-center text-slate-500 hover:text-[#0f172a] active:text-[#22c55e] transition-colors rounded-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              className="absolute right-1.5 w-10 h-10 flex items-center justify-center text-uupm-ink-muted hover:text-uupm-ink active:text-uupm-accent transition-colors rounded-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -131,7 +131,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           <p
             id={`${inputId}-error`}
             role="alert"
-            className="flex items-center gap-1.5 text-xs font-bold text-[#ef4444] mt-1 animate-in fade-in slide-in-from-top-1"
+            className="flex items-center gap-1.5 text-xs font-bold text-uupm-danger-text mt-1 animate-in fade-in slide-in-from-top-1"
           >
             <AlertCircle className="w-3.5 h-3.5 shrink-0" />
             <span>{error}</span>
@@ -140,7 +140,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
         {/* Văn bản hướng dẫn phụ (Helper Text) */}
         {!error && helperText && (
-          <p id={`${inputId}-helper`} className="text-xs font-semibold text-slate-500 mt-1">
+          <p id={`${inputId}-helper`} className="text-xs font-semibold text-uupm-ink-muted mt-1">
             {helperText}
           </p>
         )}

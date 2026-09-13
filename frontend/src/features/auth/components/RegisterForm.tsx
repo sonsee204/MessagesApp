@@ -31,8 +31,8 @@ interface RegisterFormProps {
  * - Điểm 3: Mạnh (Xanh lá)
  */
 function evaluatePasswordStrength(password: string): { score: number; label: string; color: string } {
-  if (!password) return { score: 0, label: "Chưa nhập", color: "bg-slate-200" };
-  if (password.length < 6) return { score: 1, label: "Quá ngắn (Yếu)", color: "bg-[#ef4444]" };
+  if (!password) return { score: 0, label: "Chưa nhập", color: "bg-uupm-surface-strong" };
+  if (password.length < 6) return { score: 1, label: "Quá ngắn (Yếu)", color: "bg-uupm-danger" };
 
   let score = 1;
   const hasNumbers = /\d/.test(password);
@@ -44,11 +44,11 @@ function evaluatePasswordStrength(password: string): { score: number; label: str
 
   switch (score) {
     case 3:
-      return { score: 3, label: "Mạnh - Rất an toàn", color: "bg-[#22c55e]" };
+      return { score: 3, label: "Mạnh - Rất an toàn", color: "bg-uupm-accent" };
     case 2:
-      return { score: 2, label: "Trung bình - Đạt chuẩn", color: "bg-[#f59e0b]" };
+      return { score: 2, label: "Trung bình - Đạt chuẩn", color: "bg-uupm-warn-soft-ink" };
     default:
-      return { score: 1, label: "Yếu - Nên thêm số/chữ hoa", color: "bg-[#ef4444]" };
+      return { score: 1, label: "Yếu - Nên thêm số/chữ hoa", color: "bg-uupm-danger" };
   }
 }
 
@@ -130,9 +130,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
       {serverError && (
         <div
           role="alert"
-          className="p-4 rounded-xs bg-[#fef2f2] border-2 border-[#ef4444] text-[#991b1b] flex items-start gap-3 shadow-[3px_3px_0px_0px_#ef4444] animate-in fade-in slide-in-from-top-1"
+          className="p-4 rounded-xs bg-uupm-danger/10 border-2 border-uupm-danger text-uupm-danger-text flex items-start gap-3 shadow-[3px_3px_0px_0px_hsl(var(--uupm-danger))] animate-in fade-in slide-in-from-top-1"
         >
-          <ShieldAlert className="w-5 h-5 shrink-0 text-[#ef4444] mt-0.5" />
+          <ShieldAlert className="w-5 h-5 shrink-0 text-uupm-danger-text mt-0.5" />
           <div className="text-xs font-bold leading-relaxed">{serverError}</div>
         </div>
       )}
@@ -141,9 +141,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
       {successMessage && (
         <div
           role="status"
-          className="p-4 rounded-xs bg-[#f0fdf4] border-2 border-[#22c55e] text-[#166534] flex items-center gap-3 shadow-[3px_3px_0px_0px_#22c55e] animate-in fade-in slide-in-from-top-1"
+          className="p-4 rounded-xs bg-uupm-accent/10 border-2 border-uupm-accent text-uupm-accent flex items-center gap-3 shadow-[3px_3px_0px_0px_hsl(var(--uupm-accent))] animate-in fade-in slide-in-from-top-1"
         >
-          <CheckCircle2 className="w-5 h-5 shrink-0 text-[#22c55e]" />
+          <CheckCircle2 className="w-5 h-5 shrink-0 text-uupm-accent" />
           <div className="text-xs font-black">{successMessage}</div>
         </div>
       )}
@@ -204,25 +204,25 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
 
         {/* Thanh đo độ mạnh mật khẩu (Password Strength Meter) Tactile */}
         {passwordValue.length > 0 && (
-          <div className="mt-2 p-2 rounded-xs bg-slate-50 border-2 border-[#2d3748] shadow-[2px_2px_0px_0px_#2d3748]">
-            <div className="flex items-center justify-between text-[11px] font-black uppercase mb-1.5 text-[#0f172a]">
+          <div className="mt-2 p-2 rounded-xs bg-uupm-surface-hover border-2 border-uupm-line shadow-[2px_2px_0px_0px_hsl(var(--uupm-line))]">
+            <div className="flex items-center justify-between text-[11px] font-black uppercase mb-1.5 text-uupm-ink">
               <span>Độ an toàn mật khẩu:</span>
               <span className="font-extrabold">{passwordStrength.label}</span>
             </div>
             <div className="grid grid-cols-3 gap-1.5 h-2">
               <div
-                className={`rounded-xs transition-all border border-[#2d3748] ${
-                  passwordStrength.score >= 1 ? passwordStrength.color : "bg-slate-200"
+                className={`rounded-xs transition-all border border-uupm-line ${
+                  passwordStrength.score >= 1 ? passwordStrength.color : "bg-uupm-surface-strong"
                 }`}
               />
               <div
-                className={`rounded-xs transition-all border border-[#2d3748] ${
-                  passwordStrength.score >= 2 ? passwordStrength.color : "bg-slate-200"
+                className={`rounded-xs transition-all border border-uupm-line ${
+                  passwordStrength.score >= 2 ? passwordStrength.color : "bg-uupm-surface-strong"
                 }`}
               />
               <div
-                className={`rounded-xs transition-all border border-[#2d3748] ${
-                  passwordStrength.score >= 3 ? passwordStrength.color : "bg-slate-200"
+                className={`rounded-xs transition-all border border-uupm-line ${
+                  passwordStrength.score >= 3 ? passwordStrength.color : "bg-uupm-surface-strong"
                 }`}
               />
             </div>
@@ -246,7 +246,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
         />
         {/* Phản hồi trực quan khi khớp mật khẩu */}
         {isPasswordMatch && (
-          <p className="flex items-center gap-1.5 text-xs font-black text-[#16a34a] mt-1 animate-in fade-in">
+          <p className="flex items-center gap-1.5 text-xs font-black text-uupm-accent-hover mt-1 animate-in fade-in">
             <CheckCircle2 className="w-3.5 h-3.5" />
             <span>Mật khẩu xác nhận trùng khớp hoàn hảo!</span>
           </p>
@@ -258,22 +258,22 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
         <label className="flex items-start gap-3 cursor-pointer select-none group">
           <input
             type="checkbox"
-            className="w-5 h-5 mt-0.5 rounded-xs border-2 border-[#2d3748] text-[#22c55e] focus:ring-2 focus:ring-blue-500 cursor-pointer accent-[#22c55e] shrink-0 shadow-[1px_1px_0px_0px_#2d3748]"
+            className="w-5 h-5 mt-0.5 rounded-xs border-2 border-uupm-line text-uupm-accent focus:ring-2 focus:ring-blue-500 cursor-pointer accent-uupm-accent shrink-0 shadow-[1px_1px_0px_0px_hsl(var(--uupm-line))]"
             {...register("agreeTerms")}
           />
-          <span className="text-xs font-bold text-[#0f172a] leading-relaxed group-hover:text-black">
+          <span className="text-xs font-bold text-uupm-ink leading-relaxed group-hover:text-uupm-ink">
             Tôi xác nhận đã đọc và đồng ý với{" "}
-            <span className="font-black underline underline-offset-2 hover:text-[#16a34a]">
+            <span className="font-black underline underline-offset-2 hover:text-uupm-accent-hover">
               Điều khoản dịch vụ
             </span>{" "}
             cùng{" "}
-            <span className="font-black underline underline-offset-2 hover:text-[#16a34a]">
+            <span className="font-black underline underline-offset-2 hover:text-uupm-accent-hover">
               Chính sách bảo mật
             </span>.
           </span>
         </label>
         {errors.agreeTerms && (
-          <p className="text-xs font-bold text-[#ef4444] mt-1.5 flex items-center gap-1.5">
+          <p className="text-xs font-bold text-uupm-danger-text mt-1.5 flex items-center gap-1.5">
             <AlertCircle className="w-3.5 h-3.5 shrink-0" />
             <span>{errors.agreeTerms.message}</span>
           </p>
@@ -294,13 +294,13 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
 
       {/* Liên kết chuyển sang Đăng nhập */}
       {onSwitchToLogin && (
-        <div className="text-center pt-3 border-t-2 border-slate-100">
-          <p className="text-xs font-bold text-slate-500">
+        <div className="text-center pt-3 border-t-2 border-uupm-ink-muted/40">
+          <p className="text-xs font-bold text-uupm-ink-muted">
             Đã có tài khoản?{" "}
             <button
               type="button"
               onClick={onSwitchToLogin}
-              className="font-black text-[#0f172a] hover:text-[#16a34a] hover:underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-xs"
+              className="font-black text-uupm-ink hover:text-uupm-accent-hover hover:underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-xs"
             >
               Đăng nhập ngay
             </button>

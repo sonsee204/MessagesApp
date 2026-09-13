@@ -90,21 +90,21 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-150">
       {/* Khung Hộp thoại Neo-brutalist */}
-      <div className="w-full max-w-md bg-white border-2 border-[#2d3748] rounded-md shadow-uupm-1 overflow-hidden select-none">
+      <div className="w-full max-w-md bg-uupm-surface border-2 border-uupm-line rounded-md shadow-uupm-1 overflow-hidden select-none">
         {/* Header Modal */}
-        <div className="px-6 py-4 bg-[#add8e6] border-b-2 border-[#2d3748] flex items-center justify-between">
+        <div className="px-6 py-4 bg-uupm-accent-soft border-b-2 border-uupm-line flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <MessageSquarePlus className="w-5 h-5 text-[#0f172a]" />
-            <h3 className="text-base font-black text-[#0f172a] uppercase tracking-wide">
+            <MessageSquarePlus className="w-5 h-5 text-uupm-ink" />
+            <h3 className="text-base font-black text-uupm-ink uppercase tracking-wide">
               Cuộc trò chuyện mới
             </h3>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-xs bg-white hover:bg-slate-100 border-2 border-[#2d3748] shadow-uupm-active flex items-center justify-center text-[#0f172a] cursor-pointer"
+            className="w-8 h-8 rounded-xs bg-uupm-surface hover:bg-uupm-surface-hover border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink cursor-pointer"
             aria-label="Đóng hộp thoại"
           >
             <X className="w-4 h-4" />
@@ -115,13 +115,13 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
         <div className="p-6 space-y-4">
           {/* Ô nhập tìm kiếm */}
           <div className="relative">
-            <Search className="w-5 h-5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-5 h-5 text-uupm-ink-muted absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Tìm theo username hoặc email..."
-              className="w-full pl-10 pr-4 py-2.5 text-sm font-semibold bg-[#f8fafc] rounded-xs border-2 border-[#2d3748] shadow-uupm-active focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-4 py-2.5 text-sm font-semibold bg-uupm-page rounded-xs border-2 border-uupm-line shadow-uupm-active focus:bg-uupm-surface focus:outline-none focus:ring-2 focus:ring-blue-500"
               autoFocus
             />
           </div>
@@ -129,18 +129,19 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
           {/* Danh sách kết quả tìm kiếm */}
           <div className="max-h-64 overflow-y-auto space-y-2 pr-1">
             {isSearching ? (
-              <div className="py-8 flex flex-col items-center justify-center text-slate-500 gap-2">
-                <Loader2 className="w-6 h-6 animate-spin text-[#22c55e]" />
+              <div className="py-8 flex flex-col items-center justify-center text-uupm-ink-muted gap-2">
+                <Loader2 className="w-6 h-6 animate-spin text-uupm-accent" />
                 <span className="text-xs font-bold">Đang tìm kiếm người dùng...</span>
               </div>
             ) : searchResults.length > 0 ? (
               searchResults.map((user) => (
                 <div
                   key={user.id}
-                  className="p-3 bg-white hover:bg-slate-50 border-2 border-[#2d3748] rounded-xs shadow-uupm-active flex items-center justify-between gap-3 transition-all"
+                  className="p-3 bg-uupm-surface hover:bg-uupm-surface-hover border-2 border-uupm-line rounded-xs shadow-uupm-active flex items-center justify-between gap-3 transition-all"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-xs bg-[#fef08a] border-2 border-[#2d3748] flex items-center justify-center font-black text-sm shrink-0">
+                    {/* Cặp nền vàng + chữ phải cùng theme (xem ConversationSidebar). */}
+                    <div className="w-10 h-10 rounded-xs bg-uupm-warn-soft border-2 border-uupm-line flex items-center justify-center font-black text-sm shrink-0">
                       {user.avatarUrl ? (
                         <img
                           src={user.avatarUrl}
@@ -148,14 +149,14 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
                           className="w-full h-full object-cover rounded-xs"
                         />
                       ) : (
-                        <UserIcon className="w-5 h-5 text-[#0f172a]" />
+                        <UserIcon className="w-5 h-5 text-uupm-warn-soft-ink" />
                       )}
                     </div>
                     <div className="min-w-0">
-                      <h4 className="text-sm font-black text-[#0f172a] truncate">
+                      <h4 className="text-sm font-black text-uupm-ink truncate">
                         {user.displayName || user.username}
                       </h4>
-                      <p className="text-[11px] font-semibold text-slate-500 truncate">
+                      <p className="text-[11px] font-semibold text-uupm-ink-muted truncate">
                         @{user.username} • {user.email}
                       </p>
                     </div>
@@ -173,11 +174,11 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
                 </div>
               ))
             ) : searchQuery.trim() ? (
-              <div className="py-8 text-center text-slate-500 text-xs font-bold">
+              <div className="py-8 text-center text-uupm-ink-muted text-xs font-bold">
                 Không tìm thấy người dùng nào phù hợp với &quot;{searchQuery}&quot;
               </div>
             ) : (
-              <div className="py-8 text-center text-slate-400 text-xs font-bold">
+              <div className="py-8 text-center text-uupm-ink-muted text-xs font-bold">
                 Nhập tên đăng nhập hoặc email để tìm kiếm bạn bè
               </div>
             )}

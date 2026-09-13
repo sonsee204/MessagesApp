@@ -97,7 +97,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   return (
     <div
       ref={containerRef}
-      className="flex-1 overflow-y-auto px-2 md:px-4 py-4 bg-white select-text"
+      className="flex-1 overflow-y-auto px-2 md:px-4 py-4 bg-uupm-surface select-text"
     >
       {/* Container cân đối trọng tâm hiển thị khi ẩn/hiện Cột 3 */}
       <div className="w-full max-w-5xl xl:max-w-6xl mx-auto flex flex-col justify-end min-h-full space-y-0.5">
@@ -120,11 +120,11 @@ export const MessageList: React.FC<MessageListProps> = ({
         {/* Màn hình hiển thị khi chưa có tin nhắn nào trong hội thoại */}
         {messages.length === 0 && !isLoadingMore && (
           <div className="flex-1 flex flex-col items-center justify-center text-center p-8 select-none my-auto">
-            <div className="w-14 h-14 rounded-xs bg-[#add8e6] border-2 border-[#2d3748] shadow-uupm-2 flex items-center justify-center mb-4">
-              <MessageSquare className="w-7 h-7 text-[#0f172a]" />
+            <div className="w-14 h-14 rounded-xs bg-uupm-accent-soft border-2 border-uupm-line shadow-uupm-2 flex items-center justify-center mb-4">
+              <MessageSquare className="w-7 h-7 text-uupm-ink" />
             </div>
-            <h3 className="text-base font-black text-[#0f172a]">Chưa có tin nhắn nào</h3>
-            <p className="text-xs font-semibold text-slate-500 mt-1 max-w-xs">
+            <h3 className="text-base font-black text-uupm-ink">Chưa có tin nhắn nào</h3>
+            <p className="text-xs font-semibold text-uupm-ink-muted mt-1 max-w-xs">
               Hãy bắt đầu cuộc trò chuyện bằng cách gửi một lời chào thân thiện bên dưới!
             </p>
           </div>
@@ -162,10 +162,10 @@ export const MessageList: React.FC<MessageListProps> = ({
                 <div className="relative flex items-center justify-center my-6 select-none">
                   {/* Đường kẻ ngang 2px viền #2d3748 */}
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t-2 border-[#2d3748]/20" />
+                    <div className="w-full border-t-2 border-uupm-line/20" />
                   </div>
                   {/* Viên thuốc ngày tháng nổi bật */}
-                  <span className="relative px-3 py-1 rounded-xs bg-[#f8fafc] border-2 border-[#2d3748] shadow-uupm-active text-[11px] font-black text-slate-700 uppercase tracking-wider">
+                  <span className="relative px-3 py-1 rounded-xs bg-uupm-page border-2 border-uupm-line shadow-uupm-active text-[11px] font-black text-uupm-ink-soft uppercase tracking-wider">
                     {formatDateDivider(message.createdAt)}
                   </span>
                 </div>

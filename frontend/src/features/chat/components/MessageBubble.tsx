@@ -37,7 +37,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     >
       {/* Avatar của người gửi (Chỉ hiển thị khi nhận tin từ người khác) */}
       {!isMe && showAvatar && (
-        <div className="w-8 h-8 rounded-xs bg-[#add8e6] border-2 border-[#2d3748] shadow-uupm-active flex items-center justify-center shrink-0 mb-1 overflow-hidden">
+        <div className="w-8 h-8 rounded-xs bg-uupm-accent-soft border-2 border-uupm-line shadow-uupm-active flex items-center justify-center shrink-0 mb-1 overflow-hidden">
           {message.sender?.avatarUrl ? (
             <img
               src={message.sender.avatarUrl}
@@ -45,7 +45,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               className="w-full h-full object-cover"
             />
           ) : (
-            <UserIcon className="w-4 h-4 text-[#0f172a]" />
+            <UserIcon className="w-4 h-4 text-uupm-ink" />
           )}
         </div>
       )}
@@ -58,13 +58,13 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         className={cn(
           "max-w-[75%] md:max-w-[65%] p-3 rounded-xs border-2 select-text",
           isMe
-            ? "bg-[#22c55e] text-[#0f172a] border-[#2d3748] shadow-uupm-active rounded-br-none"
-            : "bg-white text-[#0f172a] border-[#2d3748] shadow-uupm-active rounded-bl-none"
+            ? "bg-uupm-accent text-uupm-accent-text border-uupm-line shadow-uupm-active rounded-br-none"
+            : "bg-uupm-surface text-uupm-ink border-uupm-line shadow-uupm-active rounded-bl-none"
         )}
       >
         {/* Tên người gửi trong phòng chat nhóm */}
         {!isMe && message.sender && (
-          <p className="text-[11px] font-black text-slate-600 mb-1">
+          <p className="text-[11px] font-black text-uupm-ink-soft mb-1">
             {message.sender.displayName || message.sender.username}
           </p>
         )}
@@ -78,7 +78,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         <div
           className={cn(
             "text-[10px] font-bold mt-1 text-right",
-            isMe ? "text-[#0f172a]/75" : "text-slate-400"
+            isMe ? "text-uupm-ink/75" : "text-uupm-ink-muted"
           )}
         >
           {formatTime(message.createdAt)}

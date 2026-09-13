@@ -1,10 +1,29 @@
 <!doctype html>
-<html lang="vi" class="dark">
+<html lang="vi">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AppMessaging - Ứng Dụng Nhắn Tin Thời Gian Thực</title>
+    <!--
+      Đặt theme TRƯỚC khi trình duyệt vẽ giao diện (chống nhấp nháy trắng/đen - FOUC).
+      Phải nằm inline trong <head>: nếu chờ React nạp xong mới đặt lớp `dark` thì
+      người dùng sẽ thấy một khung hình sai màu trước khi giao diện ổn định.
+      Khóa lưu trữ và thứ tự ưu tiên phải khớp với src/stores/theme.store.ts.
+    -->
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem("appmessaging-theme");
+          var useDark =
+            saved === "dark" ||
+            (!saved && window.matchMedia("(prefers-color-scheme: dark)").matches);
+          if (useDark) document.documentElement.classList.add("dark");
+        } catch (e) {
+          /* localStorage bị chặn: giữ nguyên theme sáng mặc định */
+        }
+      })();
+    </script>
     <!-- Google Fonts: Nunito cho phong cách UI/UX Pro Max -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

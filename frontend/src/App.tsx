@@ -64,10 +64,10 @@ export function App() {
   // Màn hình chờ khởi tạo khi đang kiểm tra khôi phục phiên làm việc
   if (isCheckingSession) {
     return (
-      <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3 p-6 bg-white border-2 border-[#2d3748] rounded-xs shadow-uupm-2">
-          <div className="w-8 h-8 border-4 border-[#22c55e] border-t-transparent rounded-full animate-spin" />
-          <p className="text-xs font-black text-[#0f172a] uppercase tracking-wider">
+      <div className="min-h-screen bg-uupm-page flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3 p-6 bg-uupm-surface border-2 border-uupm-line rounded-xs shadow-uupm-2">
+          <div className="w-8 h-8 border-4 border-uupm-accent border-t-transparent rounded-full animate-spin" />
+          <p className="text-xs font-black text-uupm-ink uppercase tracking-wider">
             Đang khởi tạo hệ thống...
           </p>
         </div>
@@ -91,7 +91,7 @@ export function App() {
   // Khi đã đăng nhập, hiển thị Không gian Chat tràn viền 100% màn hình
   return (
     <>
-      <div className="h-screen w-screen bg-white text-[#0f172a] flex flex-col selection:bg-[#22c55e] selection:text-[#0f172a] overflow-hidden">
+      <div className="h-screen w-screen bg-uupm-surface text-uupm-ink flex flex-col selection:bg-uupm-accent selection:text-uupm-accent-text overflow-hidden">
         <main className="flex-1 w-full h-full overflow-hidden">
           <ChatLayout onLogout={handleLogout} />
         </main>

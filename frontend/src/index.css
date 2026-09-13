@@ -33,36 +33,140 @@
     --ring: 221.2 83.2% 53.3%;
 
     --radius: 0.5rem;
+
+    /* ------------------------------------------------------------------
+     * Token giao diện Tactile (tiền tố --uupm-)
+     * Thay thế toàn bộ màu literal từng nằm rải rác trong component, nhờ đó
+     * chỉ cần đổi giá trị ở đây là cả ứng dụng chuyển theme.
+     * Quy ước: mọi giá trị theo hệ HSL không đơn vị để Tailwind ghép được
+     * alpha (vd: bg-uupm-accent/10).
+     * ------------------------------------------------------------------ */
+
+    /* Nền và bề mặt */
+    --uupm-page: 210 40% 98%;          /* #f8fafc - nền toàn trang */
+    --uupm-surface: 0 0% 100%;         /* #ffffff - thẻ, panel, nút */
+    --uupm-surface-hover: 210 40% 96.1%; /* #f1f5f9 - nền khi hover */
+    --uupm-surface-strong: 214.3 31.8% 91.4%; /* #e2e8f0 - nền phụ trợ đậm hơn (thanh trượt, chip trung tính) */
+
+    /* Chữ */
+    --uupm-ink: 222.2 47.4% 11.2%;     /* #0f172a - chữ chính */
+    --uupm-ink-soft: 215.3 19.3% 34.5%; /* #475569 - chữ phụ */
+    --uupm-ink-muted: 215.4 16.3% 46.9%; /* #64748b - chữ mờ, placeholder */
+
+    /* Viền và bóng khối, TÁCH RIÊNG khỏi màu chữ.
+     * Trước đây viền dùng chung --uupm-ink vì ở theme sáng hai vai trùng nhau.
+     * Nhưng ở theme tối chữ phải SÁNG (#f2f3f5) còn viền phải MỜ (#7a7d85) —
+     * dùng chung một token thì mọi viền 2px thành màu trắng chói.
+     * Giá trị ở đây giữ đúng bằng --uupm-ink nên theme sáng không đổi gì. */
+    --uupm-line: 222.2 47.4% 11.2%;    /* #0f172a */
+
+    /* Màu thương hiệu */
+    --uupm-accent: 142.1 70.6% 45.3%;  /* #22c55e */
+    --uupm-accent-hover: 142.1 76.2% 36.3%; /* #16a34a */
+    --uupm-accent-soft: 194.7 53.3% 79%; /* #add8e6 */
+    --uupm-accent-soft-hover: 203.4 82% 76.1%; /* #90cdf4 */
+
+    /* CẢNH BÁO: --uupm-accent-text và --uupm-danger-ink KHÔNG được đổi theo theme.
+     * Chúng là chữ đặt TRÊN nền accent/danger. Nền accent giữ nguyên độ sáng ở
+     * cả hai theme, nên nếu đảo hai token này thành màu sáng thì chữ sẽ trắng
+     * trên nền xanh lá -> mất khả năng đọc. */
+    --uupm-accent-text: 222.2 47.4% 11.2%;
+    --uupm-danger: 0 72.2% 50.6%;      /* #dc2626 - huy hiệu/nút đặc, chữ trắng trên nền đạt 4.83:1 */
+    --uupm-danger-hover: 0 73.7% 41.8%; /* #b91c1c */
+    --uupm-danger-ink: 0 0% 100%;      /* chữ đặt trên nền --uupm-danger */
+    /* Màu đỏ dùng LÀM CHỮ phải tách khỏi màu đỏ làm NỀN: cùng một giá trị không
+     * thể đạt 4.5:1 trên cả nền sáng lẫn nền tối. Hai token dưới đây chỉ dùng cho
+     * text/icon, mỗi theme một giá trị. */
+    --uupm-danger-text: 0 72.2% 41.8%; /* #b91c1c - đỏ đậm, đạt 6.47:1 trên nền sáng */
+
+    /* Chip "nhóm" màu vàng. Cặp nền+chữ này trước đây viết cứng (#fef08a /
+     * text-uupm-accent-text) nên ở theme tối sẽ là chữ trắng trên nền vàng nhạt
+     * -> gần như không đọc được. Tách thành token để mỗi theme tự chọn cặp đạt
+     * tương phản: sáng 15.34:1, tối 9.72:1. */
+    --uupm-warn-soft: 52.8 98.3% 76.9%;     /* #fef08a */
+    --uupm-warn-soft-ink: 222.2 47.4% 11.2%; /* #0f172a */
   }
 
   .dark {
-    --background: 224 71% 4%;
-    --foreground: 213 31% 91%;
+    /* Bộ token nền tảng (shadcn) cũng đồng bộ theo bảng màu Discord để không
+     * còn mảng màu xanh navy lệch tông so với các token --uupm- bên dưới. */
+    --background: 225 6.3% 12.5%;   /* #1e1f22 */
+    --foreground: 220 13% 95.5%;    /* #f2f3f5 */
 
-    --card: 224 71% 6%;
-    --card-foreground: 213 31% 91%;
+    --card: 220 6.5% 18%;           /* #2b2d31 */
+    --card-foreground: 220 13% 95.5%;
 
-    --popover: 224 71% 6%;
-    --popover-foreground: 215 20.2% 65.1%;
+    --popover: 220 6.5% 18%;
+    --popover-foreground: 220 13% 95.5%;
 
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 234.9 85.6% 64.7%;   /* #5865f2 - blurple */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 222.2 47.4% 11.2%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 222.9 6.2% 22.2%;  /* #35373c */
+    --secondary-foreground: 220 13% 95.5%;
 
-    --muted: 223 47% 11%;
-    --muted-foreground: 215.4 16.3% 56.9%;
+    --muted: 222.9 6.2% 22.2%;
+    --muted-foreground: 213.8 8.1% 61.2%; /* #949ba4 */
 
-    --accent: 216 34% 17%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 222.9 6.2% 22.2%;
+    --accent-foreground: 220 13% 95.5%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 72.2% 50.6%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 216 34% 17%;
-    --input: 216 34% 17%;
-    --ring: 224 76.3% 48%;
+    --border: 228 6% 32.5%;         /* #4e5058 - viền thấy rõ trên nền thẻ */
+    --input: 228 6% 32.5%;
+    --ring: 234.9 85.6% 64.7%;      /* vòng focus blurple */
+
+    /* ==================================================================
+     * Theme tối theo bảng màu gốc của Discord.
+     * Discord dùng hệ xám hơi ngả xanh lam (hue ~220-228, saturation ~6%)
+     * cho toàn bộ bề mặt, và màu "blurple" #5865f2 làm màu thương hiệu.
+     * Tương phản đã kiểm định: ink/surface 12.42:1, ink/page 14.84:1,
+     * ink-muted/surface 4.92:1, trắng/blurple 4.61:1.
+     * ================================================================== */
+
+    /* Nền và bề mặt */
+    --uupm-page: 225 6.3% 12.5%;           /* #1e1f22 - nền toàn trang (Discord "darkest") */
+    --uupm-surface: 220 6.5% 18%;          /* #2b2d31 - thẻ, panel, sidebar */
+    --uupm-surface-hover: 222.9 6.2% 22.2%; /* #35373c - hover */
+    --uupm-surface-strong: 228 6% 32.5%;   /* #4e5058 - nền phụ trợ đậm hơn, tương ứng #e2e8f0 ở theme sáng */
+
+    /* Chữ */
+    --uupm-ink: 220 13% 95.5%;             /* #f2f3f5 - chữ chính Discord */
+    --uupm-ink-soft: 215 8.8% 73.3%;       /* #b5bac1 - chữ phụ Discord */
+    --uupm-ink-muted: 213.8 8.1% 61.2%;    /* #949ba4 - chữ mờ Discord (4.92:1 trên surface) */
+
+    /* Viền và bóng khối — đã tách khỏi màu chữ (xem chú thích ở :root).
+     * Discord dùng #4e5058, nhưng trên nền thẻ #2b2d31 màu đó chỉ đạt 1.72:1
+     * nên viền gần như tàng hình. Nâng lên #7a7d85 để đạt 3.35:1 (ngưỡng 3:1
+     * cho thành phần phi văn bản) mà vẫn dịu hơn hẳn #f2f3f5. */
+    --uupm-line: 220 3.7% 50%;             /* #7a7d85 - 3.35:1 trên surface, 4.00:1 trên page */
+
+    /* Màu thương hiệu Discord (blurple) */
+    --uupm-accent: 234.9 85.6% 64.7%;      /* #5865f2 - blurple */
+    --uupm-accent-hover: 234.7 51.4% 52.4%; /* #4752c4 */
+    --uupm-accent-soft: 233.8 24.5% 38.4%; /* #4a4f7a - nền chip blurple đã tối đi để chữ trắng đọc được (7.80:1) */
+    --uupm-accent-soft-hover: 233.3 22.9% 46.3%; /* #5b6191 - trắng trên nền này đạt 5.89:1 */
+
+    /* Ghi đè ngoại lệ của --uupm-accent-text.
+     * Xem chú thích gốc ở :root: token này KHÔNG đổi theo theme, vì đa số nền
+     * accent là xanh lá sáng nên chữ phải tối. Nhưng ở theme tối, chính token
+     * --uupm-accent đã đổi thành blurple #5865f2 (độ sáng 64.7%) — chữ đen trên
+     * nền đó chỉ đạt 3.33:1, trong khi chữ trắng đạt 4.61:1. Nên đây là ngoại lệ
+     * duy nhất được phép đảo, và các nền còn lại dùng token này (nền vàng
+     * --uupm-warn-soft, --uupm-surface) đều là nền SÁNG nên vẫn cần chữ tối...
+     * trừ --uupm-surface. Vì vậy nền vàng ở theme tối đã được đổi sang tông đậm
+     * (--uupm-warn-soft bên dưới) để chữ trắng vẫn đọc được. */
+    --uupm-accent-text: 0 0% 100%;         /* #ffffff - 4.61:1 trên blurple */
+
+    /* Chip "nhóm": nền vàng đậm lại để đi cùng chữ trắng (9.72:1) */
+    --uupm-warn-soft: 44.3 62.6% 17.8%;    /* #4a3c11 */
+    --uupm-warn-soft-ink: 0 0% 100%;       /* #ffffff */
+
+    /* Đỏ làm chữ: phải SÁNG hơn ở theme tối mới đủ tương phản (4.99:1 trên surface).
+     * Nền đỏ và chữ trắng trên nền đỏ giữ nguyên như :root. */
+    --uupm-danger-text: 0 90.6% 70.8%; /* #f87171 */
   }
 }
 

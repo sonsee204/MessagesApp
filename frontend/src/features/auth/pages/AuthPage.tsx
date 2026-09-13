@@ -1,6 +1,7 @@
 import React from "react";
-import { MessageSquare, Sparkles } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { AuthCard } from "../components/AuthCard";
+import { ThemeToggle } from "../../../components/ui/ThemeToggle";
 
 interface AuthPageProps {
   onSuccess?: () => void;
@@ -15,29 +16,31 @@ interface AuthPageProps {
  */
 export const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-[#0f172a] flex flex-col justify-between selection:bg-[#22c55e] selection:text-[#0f172a]">
+    <div className="min-h-screen bg-uupm-page text-uupm-ink flex flex-col justify-between selection:bg-uupm-accent selection:text-uupm-accent-text">
       {/* Header thanh điều hướng thương hiệu */}
-      <header className="border-b-2 border-[#2d3748] bg-white/90 backdrop-blur-md sticky top-0 z-40 px-6 py-3.5 shadow-sm">
+      <header className="border-b-2 border-uupm-line bg-uupm-surface/90 backdrop-blur-md sticky top-0 z-40 px-6 py-3.5 shadow-sm">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           {/* Logo nhận diện thương hiệu Tactile */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xs bg-[#22c55e] border-2 border-[#2d3748] shadow-uupm-2 flex items-center justify-center">
-              <MessageSquare className="w-5 h-5 text-[#0f172a]" />
+            <div className="w-10 h-10 rounded-xs bg-uupm-accent border-2 border-uupm-line shadow-uupm-2 flex items-center justify-center">
+              {/* Icon nằm TRÊN nền accent nên phải dùng --uupm-accent-text
+                  (theme tối = trắng, đạt 4.61:1 trên blurple); nếu dùng
+                  --uupm-ink (#f2f3f5) chỉ đạt 4.15:1 — dưới ngưỡng WCAG AA. */}
+              <MessageSquare className="w-5 h-5 text-uupm-accent-text" />
             </div>
             <div>
-              <span className="text-xl font-black tracking-tight text-[#0f172a] block">
+              <span className="text-xl font-black tracking-tight text-uupm-ink block">
                 AppMessaging
               </span>
-              <span className="text-[11px] font-extrabold uppercase tracking-widest text-[#64748b] block -mt-1">
+              <span className="text-[11px] font-extrabold uppercase tracking-widest text-uupm-ink-muted block -mt-1">
                 Real-Time Chat Engine
               </span>
             </div>
           </div>
 
-          {/* Huy hiệu phong cách UI/UX Pro Max */}
-          <div className="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-xs bg-[#add8e6] border-2 border-[#2d3748] shadow-uupm-2 text-xs font-black text-[#0f172a]">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>UI/UX Pro Max • Tactile Neo-brutalist</span>
+          <div className="flex items-center gap-2.5">
+            {/* Nút chuyển đổi chế độ Sáng / Tối */}
+            <ThemeToggle />
           </div>
         </div>
       </header>
@@ -48,15 +51,15 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
       </main>
 
       {/* Chân trang (Footer) */}
-      <footer className="border-t-2 border-[#2d3748] bg-white py-4 px-6 text-center text-xs font-bold text-[#64748b]">
+      <footer className="border-t-2 border-uupm-line bg-uupm-surface py-4 px-6 text-center text-xs font-bold text-uupm-ink-muted">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
           <span>AppMessaging © 2026 - Chuẩn thiết kế UI/UX Pro Max & WCAG 2.2 AA</span>
           <div className="flex items-center gap-4">
-            <span className="hover:text-[#0f172a] cursor-pointer">Chính Sách Bảo Mật</span>
+            <span className="hover:text-uupm-ink cursor-pointer">Chính Sách Bảo Mật</span>
             <span>•</span>
-            <span className="hover:text-[#0f172a] cursor-pointer">Điều Khoản Dịch Vụ</span>
+            <span className="hover:text-uupm-ink cursor-pointer">Điều Khoản Dịch Vụ</span>
             <span>•</span>
-            <span className="hover:text-[#0f172a] cursor-pointer">Bảo Mật Kép RAM & Cookie</span>
+            <span className="hover:text-uupm-ink cursor-pointer">Bảo Mật Kép RAM & Cookie</span>
           </div>
         </div>
       </footer>

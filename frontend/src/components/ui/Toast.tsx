@@ -4,7 +4,13 @@ import { useToastStore, ToastItem, ToastType } from "../../stores/toast.store";
 import { cn } from "../../lib/utils";
 
 /**
- * Cấu hình giao diện biểu tượng và màu sắc theo loại thông báo Popup
+ * Cấu hình giao diện biểu tượng và màu sắc theo loại thông báo Popup.
+ *
+ * Toàn bộ màu ở đây đi qua token --uupm-* (nền = token pha alpha 10%, chữ =
+ * token gốc). Trước đây mỗi loại dùng một cặp hex pastel cứng, nên ở theme tối
+ * nền vẫn sáng trong khi chữ đổi sang tông sáng -> chữ gần như tàng hình.
+ * Riêng icon trên nền đặc phải dùng token "chữ đặt trên nền" (danger-ink /
+ * warn-soft-ink), không dùng text-white cố định.
  */
 const toastConfig: Record<
   ToastType,
@@ -17,32 +23,32 @@ const toastConfig: Record<
   }
 > = {
   success: {
-    icon: <CheckCircle2 className="w-4 h-4 text-[#0f172a]" />,
-    bgClass: "bg-[#f0fdf4]",
-    iconBgClass: "bg-[#22c55e]",
-    titleColor: "text-[#0f172a]",
-    messageColor: "text-[#166534]",
+    icon: <CheckCircle2 className="w-4 h-4 text-uupm-accent-text" />,
+    bgClass: "bg-uupm-accent/10",
+    iconBgClass: "bg-uupm-accent",
+    titleColor: "text-uupm-ink",
+    messageColor: "text-uupm-ink-soft",
   },
   error: {
-    icon: <ShieldAlert className="w-4 h-4 text-white" />,
-    bgClass: "bg-[#fef2f2]",
-    iconBgClass: "bg-[#ef4444]",
-    titleColor: "text-[#991b1b]",
-    messageColor: "text-[#7f1d1d]",
+    icon: <ShieldAlert className="w-4 h-4 text-uupm-danger-ink" />,
+    bgClass: "bg-uupm-danger/10",
+    iconBgClass: "bg-uupm-danger",
+    titleColor: "text-uupm-danger-text",
+    messageColor: "text-uupm-danger-text",
   },
   warning: {
-    icon: <AlertTriangle className="w-4 h-4 text-[#0f172a]" />,
-    bgClass: "bg-[#fefce8]",
-    iconBgClass: "bg-[#fef08a]",
-    titleColor: "text-[#854d0e]",
-    messageColor: "text-[#713f12]",
+    icon: <AlertTriangle className="w-4 h-4 text-uupm-warn-soft-ink" />,
+    bgClass: "bg-uupm-warn-soft/10",
+    iconBgClass: "bg-uupm-warn-soft",
+    titleColor: "text-uupm-ink-soft",
+    messageColor: "text-uupm-ink-soft",
   },
   info: {
-    icon: <Info className="w-4 h-4 text-[#0f172a]" />,
-    bgClass: "bg-[#f0f9ff]",
-    iconBgClass: "bg-[#add8e6]",
-    titleColor: "text-[#0369a1]",
-    messageColor: "text-[#0c4a6e]",
+    icon: <Info className="w-4 h-4 text-uupm-accent-text" />,
+    bgClass: "bg-uupm-accent/10",
+    iconBgClass: "bg-uupm-accent-soft",
+    titleColor: "text-uupm-ink",
+    messageColor: "text-uupm-ink-soft",
   },
 };
 
@@ -66,7 +72,7 @@ const ToastCard: React.FC<ToastCardProps> = ({ toast, onClose }) => {
     <div
       role="alert"
       className={cn(
-        "pointer-events-auto w-full p-3.5 rounded-xs border-2 border-[#2d3748] shadow-uupm-2 select-none",
+        "pointer-events-auto w-full p-3.5 rounded-xs border-2 border-uupm-line shadow-uupm-2 select-none",
         "flex items-start gap-3 transition-all duration-200 ease-out",
         "animate-in slide-in-from-top-3 fade-in duration-200",
         config.bgClass
@@ -75,7 +81,7 @@ const ToastCard: React.FC<ToastCardProps> = ({ toast, onClose }) => {
       {/* Huy hiệu Icon trạng thái Tactile */}
       <div
         className={cn(
-          "w-8 h-8 rounded-xs border-2 border-[#2d3748] shadow-uupm-active flex items-center justify-center shrink-0 mt-0.5",
+          "w-8 h-8 rounded-xs border-2 border-uupm-line shadow-uupm-active flex items-center justify-center shrink-0 mt-0.5",
           config.iconBgClass
         )}
       >
@@ -98,7 +104,7 @@ const ToastCard: React.FC<ToastCardProps> = ({ toast, onClose }) => {
       <button
         type="button"
         onClick={() => onClose(toast.id)}
-        className="w-7 h-7 rounded-xs bg-white hover:bg-slate-100 border-2 border-[#2d3748] shadow-uupm-active flex items-center justify-center text-[#0f172a] shrink-0 cursor-pointer transition-all active:translate-x-[1px] active:translate-y-[1px]"
+        className="w-7 h-7 rounded-xs bg-uupm-surface hover:bg-uupm-surface-hover border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink shrink-0 cursor-pointer transition-all active:translate-x-[1px] active:translate-y-[1px]"
         aria-label="Đóng thông báo"
       >
         <X className="w-3.5 h-3.5" />

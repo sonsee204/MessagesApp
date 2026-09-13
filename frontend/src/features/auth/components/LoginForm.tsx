@@ -84,9 +84,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
       {serverError && (
         <div
           role="alert"
-          className="p-4 rounded-xs bg-[#fef2f2] border-2 border-[#ef4444] text-[#991b1b] flex items-start gap-3 shadow-[3px_3px_0px_0px_#ef4444] animate-in fade-in slide-in-from-top-1"
+          className="p-4 rounded-xs bg-uupm-danger/10 border-2 border-uupm-danger text-uupm-danger-text flex items-start gap-3 shadow-[3px_3px_0px_0px_hsl(var(--uupm-danger))] animate-in fade-in slide-in-from-top-1"
         >
-          <ShieldAlert className="w-5 h-5 shrink-0 text-[#ef4444] mt-0.5" />
+          <ShieldAlert className="w-5 h-5 shrink-0 text-uupm-danger-text mt-0.5" />
           <div className="text-xs font-bold leading-relaxed">{serverError}</div>
         </div>
       )}
@@ -95,9 +95,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
       {successMessage && (
         <div
           role="status"
-          className="p-4 rounded-xs bg-[#f0fdf4] border-2 border-[#22c55e] text-[#166534] flex items-center gap-3 shadow-[3px_3px_0px_0px_#22c55e] animate-in fade-in slide-in-from-top-1"
+          className="p-4 rounded-xs bg-uupm-accent/10 border-2 border-uupm-accent text-uupm-accent flex items-center gap-3 shadow-[3px_3px_0px_0px_hsl(var(--uupm-accent))] animate-in fade-in slide-in-from-top-1"
         >
-          <CheckCircle2 className="w-5 h-5 shrink-0 text-[#22c55e]" />
+          <CheckCircle2 className="w-5 h-5 shrink-0 text-uupm-accent" />
           <div className="text-xs font-black">{successMessage}</div>
         </div>
       )}
@@ -134,10 +134,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
         <label className="flex items-center gap-2.5 cursor-pointer select-none group py-1">
           <input
             type="checkbox"
-            className="w-5 h-5 rounded-xs border-2 border-[#2d3748] text-[#22c55e] focus:ring-2 focus:ring-blue-500 cursor-pointer accent-[#22c55e] shrink-0 shadow-[1px_1px_0px_0px_#2d3748]"
+            className="w-5 h-5 rounded-xs border-2 border-uupm-line text-uupm-accent focus:ring-2 focus:ring-blue-500 cursor-pointer accent-uupm-accent shrink-0 shadow-[1px_1px_0px_0px_hsl(var(--uupm-line))]"
             {...register("rememberMe")}
           />
-          <span className="text-xs font-bold text-[#0f172a] group-hover:text-black">
+          <span className="text-xs font-bold text-uupm-ink group-hover:text-uupm-ink">
             Ghi nhớ phiên đăng nhập
           </span>
         </label>
@@ -145,7 +145,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
         <button
           type="button"
           onClick={() => toast.info("Tính năng khôi phục mật khẩu đang được phát triển và sẽ sớm ra mắt.", "Khôi phục tài khoản")}
-          className="text-xs font-black text-[#64748b] hover:text-[#0f172a] hover:underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-xs py-1 cursor-pointer"
+          className="text-xs font-black text-uupm-ink-muted hover:text-uupm-ink hover:underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-xs py-1 cursor-pointer"
         >
           Quên mật khẩu?
         </button>
@@ -165,13 +165,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
 
       {/* Chuyển sang form đăng ký nếu chưa có tài khoản */}
       {onSwitchToRegister && (
-        <div className="text-center pt-3 border-t-2 border-slate-100">
-          <p className="text-xs font-bold text-slate-500">
+        <div className="text-center pt-3 border-t-2 border-uupm-ink-muted/40">
+          <p className="text-xs font-bold text-uupm-ink-muted">
             Chưa có tài khoản?{" "}
             <button
               type="button"
               onClick={onSwitchToRegister}
-              className="font-black text-[#0f172a] hover:text-[#16a34a] hover:underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-xs"
+              className="font-black text-uupm-ink hover:text-uupm-accent-hover hover:underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-xs"
             >
               Đăng ký tài khoản mới
             </button>

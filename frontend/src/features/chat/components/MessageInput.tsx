@@ -81,9 +81,9 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   };
 
   return (
-    <div className="p-3 md:p-4 bg-white border-t-2 border-[#2d3748] shrink-0">
+    <div className="p-3 md:p-4 bg-uupm-surface border-t-2 border-uupm-line shrink-0">
       {/* Khung nhập nổi dạng Discord (Floating Container) - Cân đối trọng tâm thẳng hàng với danh sách tin nhắn */}
-      <div className="w-full max-w-5xl xl:max-w-6xl mx-auto flex items-center gap-2 bg-[#f8fafc] border-2 border-[#2d3748] rounded-xs shadow-uupm-active p-1.5 focus-within:bg-white focus-within:shadow-uupm-2 transition-all">
+      <div className="w-full max-w-5xl xl:max-w-6xl mx-auto flex items-center gap-2 bg-uupm-page border-2 border-uupm-line rounded-xs shadow-uupm-active p-1.5 focus-within:bg-uupm-surface focus-within:shadow-uupm-2 transition-all">
         {/* Nút "+" đính kèm tệp tin / ảnh ở góc trái */}
         <button
           type="button"
@@ -93,7 +93,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
               "Đính kèm tệp"
             )
           }
-          className="w-8 h-8 rounded-xs bg-slate-200 hover:bg-[#22c55e] hover:text-[#0f172a] border-2 border-[#2d3748] shadow-uupm-active flex items-center justify-center text-[#0f172a] shrink-0 cursor-pointer transition-all active:translate-x-[1px] active:translate-y-[1px]"
+          className="w-8 h-8 rounded-xs bg-uupm-surface-strong hover:bg-uupm-accent hover:text-uupm-accent-text border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-accent-text shrink-0 cursor-pointer transition-all active:translate-x-[1px] active:translate-y-[1px]"
           title="Tải lên tệp hoặc ảnh"
           aria-label="Tải lên tệp hoặc ảnh"
         >
@@ -109,7 +109,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           placeholder={`Nhắn @${partnerName}`}
-          className="flex-1 min-h-[36px] max-h-32 py-1.5 px-2 text-xs md:text-sm font-semibold text-[#0f172a] placeholder:text-slate-400 bg-transparent focus:outline-none resize-none leading-relaxed"
+          className="flex-1 min-h-[36px] max-h-32 py-1.5 px-2 text-xs md:text-sm font-semibold text-uupm-ink placeholder:text-uupm-ink-muted bg-transparent focus:outline-none resize-none leading-relaxed"
         />
 
         {/* Cụm nút tiện ích kiểu Discord ở góc phải */}
@@ -123,7 +123,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                 "Quà tặng Nitro"
               )
             }
-            className="w-7 h-7 rounded-xs hover:bg-slate-200 text-slate-500 hover:text-[#0f172a] flex items-center justify-center cursor-pointer transition-colors hidden sm:flex"
+            className="w-7 h-7 rounded-xs hover:bg-uupm-surface-strong text-uupm-ink-muted hover:text-uupm-ink flex items-center justify-center cursor-pointer transition-colors hidden sm:flex"
             title="Tặng quà"
             aria-label="Tặng quà"
           >
@@ -136,7 +136,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             onClick={() =>
               toast.info("Kho ảnh động GIF đang chuẩn bị ra mắt.", "Kho GIF")
             }
-            className="w-7 h-7 rounded-xs hover:bg-slate-200 text-slate-500 hover:text-[#0f172a] flex items-center justify-center cursor-pointer transition-colors hidden sm:flex"
+            className="w-7 h-7 rounded-xs hover:bg-uupm-surface-strong text-uupm-ink-muted hover:text-uupm-ink flex items-center justify-center cursor-pointer transition-colors hidden sm:flex"
             title="Mở ảnh GIF"
             aria-label="Mở ảnh GIF"
           >
@@ -149,7 +149,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             onClick={() =>
               toast.info("Bộ sưu tập Sticker độc quyền đang được tích hợp.", "Nhãn dán")
             }
-            className="w-7 h-7 rounded-xs hover:bg-slate-200 text-slate-500 hover:text-[#0f172a] flex items-center justify-center cursor-pointer transition-colors hidden sm:flex"
+            className="w-7 h-7 rounded-xs hover:bg-uupm-surface-strong text-uupm-ink-muted hover:text-uupm-ink flex items-center justify-center cursor-pointer transition-colors hidden sm:flex"
             title="Mở nhãn dán"
             aria-label="Mở nhãn dán"
           >
@@ -165,7 +165,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                 "Biểu tượng cảm xúc"
               )
             }
-            className="w-7 h-7 rounded-xs hover:bg-slate-200 text-slate-500 hover:text-[#0f172a] flex items-center justify-center cursor-pointer transition-colors"
+            className="w-7 h-7 rounded-xs hover:bg-uupm-surface-strong text-uupm-ink-muted hover:text-uupm-ink flex items-center justify-center cursor-pointer transition-colors"
             title="Chọn biểu cảm"
             aria-label="Chọn biểu cảm"
           >
@@ -177,7 +177,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             type="button"
             disabled={disabled || !content.trim()}
             onClick={handleSend}
-            className="h-8 px-3 rounded-xs bg-[#22c55e] hover:bg-[#16a34a] disabled:bg-slate-300 disabled:opacity-50 disabled:cursor-not-allowed border-2 border-[#2d3748] shadow-uupm-active text-[#0f172a] font-black text-xs uppercase flex items-center gap-1 cursor-pointer transition-all active:translate-x-[1px] active:translate-y-[1px]"
+            className="h-8 px-3 rounded-xs bg-uupm-accent hover:bg-uupm-accent-hover disabled:bg-uupm-surface-strong disabled:opacity-50 disabled:cursor-not-allowed border-2 border-uupm-line shadow-uupm-active text-uupm-accent-text font-black text-xs uppercase flex items-center gap-1 cursor-pointer transition-all active:translate-x-[1px] active:translate-y-[1px]"
             title="Gửi tin nhắn"
             aria-label="Gửi tin nhắn"
           >

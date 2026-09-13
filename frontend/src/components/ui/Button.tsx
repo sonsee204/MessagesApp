@@ -42,15 +42,15 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     // Khai báo kiểu dáng màu sắc
     const variantStyles: Record<ButtonVariant, string> = {
       // Primary: Màu xanh nổi bật #22c55e, chữ đen đậm tương phản cao
-      primary: "bg-[#22c55e] text-[#0f172a] hover:bg-[#16a34a] border-[#2d3748]",
+      primary: "bg-uupm-accent text-uupm-accent-text hover:bg-uupm-accent-hover border-uupm-line",
       // Secondary: Màu xanh phấn #add8e6, chữ đen đậm
-      secondary: "bg-[#add8e6] text-[#0f172a] hover:bg-[#90cdf4] border-[#2d3748]",
+      secondary: "bg-uupm-accent-soft text-uupm-accent-text hover:bg-uupm-accent-soft-hover border-uupm-line",
       // Outline: Nền trắng sạch, viền đậm
-      outline: "bg-white text-[#0f172a] hover:bg-slate-50 border-[#2d3748]",
+      outline: "bg-uupm-surface text-uupm-ink hover:bg-uupm-surface-hover border-uupm-line",
       // Ghost: Trong suốt không viền
-      ghost: "bg-transparent text-[#0f172a] hover:bg-slate-100 border-transparent shadow-none hover:shadow-none hover:translate-x-0 hover:translate-y-0",
+      ghost: "bg-transparent text-uupm-ink hover:bg-uupm-surface-hover border-transparent shadow-none hover:shadow-none hover:translate-x-0 hover:translate-y-0",
       // Danger: Màu đỏ cảnh báo
-      danger: "bg-[#ef4444] text-white hover:bg-[#dc2626] border-[#2d3748]",
+      danger: "bg-uupm-danger text-uupm-danger-ink hover:bg-uupm-danger-hover border-uupm-line",
     };
 
     // Khai báo kích thước nút bấm: chiều cao tối thiểu và đệm (padding) dày dặn, béo đẹp
@@ -74,7 +74,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           // - Nhấn chuột (Active): Nút lún phẳng hoàn toàn (+4px, +4px) và triệt tiêu bóng (shadow-none)
           variant !== "ghost" && [
             "shadow-uupm-2",
-            "hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_#2d3748]",
+            "hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_hsl(var(--uupm-line))]",
             "active:translate-x-[4px] active:translate-y-[4px] active:shadow-none active:duration-75",
           ],
           // Chuẩn tiếp cận Accessibility WCAG 2.2 AA (Vòng sáng Focus)

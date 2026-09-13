@@ -17,6 +17,7 @@ import {
 import { Conversation } from "../../../types/chat.types";
 import { toast } from "../../../stores/toast.store";
 import { cn } from "../../../lib/utils";
+import { ThemeToggle } from "../../../components/ui/ThemeToggle";
 
 interface ChatHeaderProps {
   conversation: Conversation;
@@ -69,7 +70,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
       : `${activeTypers.length} người đang soạn tin...`;
 
   return (
-    <div className="h-14 px-3 md:px-4 bg-white border-b-2 border-[#2d3748] flex items-center justify-between shrink-0 select-none z-10 gap-2">
+    <div className="h-14 px-3 md:px-4 bg-uupm-surface border-b-2 border-uupm-line flex items-center justify-between shrink-0 select-none z-10 gap-2">
       {/* 1. Phần thông tin đối tác bên trái */}
       <div className="flex items-center gap-2.5 min-w-0">
         {/* Nút Quay lại trên Mobile */}
@@ -77,7 +78,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
           <button
             type="button"
             onClick={onBack}
-            className="md:hidden w-8 h-8 rounded-xs bg-white border-2 border-[#2d3748] shadow-uupm-active flex items-center justify-center text-[#0f172a] hover:bg-slate-100 cursor-pointer"
+            className="md:hidden w-8 h-8 rounded-xs bg-uupm-surface border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink hover:bg-uupm-surface-hover cursor-pointer"
             aria-label="Quay lại danh sách hội thoại"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -85,19 +86,19 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
         )}
 
         {/* Biểu tượng @ hoặc # theo phong cách Discord */}
-        <div className="w-8 h-8 rounded-xs bg-[#f8fafc] border-2 border-[#2d3748] shadow-uupm-active flex items-center justify-center text-slate-700 shrink-0">
+        <div className="w-8 h-8 rounded-xs bg-uupm-page border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink-soft shrink-0">
           {isGroup ? (
-            <Hash className="w-4 h-4 text-[#0f172a]" />
+            <Hash className="w-4 h-4 text-uupm-ink" />
           ) : (
-            <AtSign className="w-4 h-4 text-[#0f172a]" />
+            <AtSign className="w-4 h-4 text-uupm-ink" />
           )}
         </div>
 
         {/* Khung Avatar nhỏ */}
         <div className="relative shrink-0 hidden sm:block">
-          <div className="w-7 h-7 rounded-xs border-2 border-[#2d3748] shadow-uupm-active flex items-center justify-center overflow-hidden bg-[#add8e6]">
+          <div className="w-7 h-7 rounded-xs border-2 border-uupm-line shadow-uupm-active flex items-center justify-center overflow-hidden bg-uupm-accent-soft">
             {isGroup ? (
-              <Users className="w-3.5 h-3.5 text-[#0f172a]" />
+              <Users className="w-3.5 h-3.5 text-uupm-ink" />
             ) : partner?.avatarUrl ? (
               <img
                 src={partner.avatarUrl}
@@ -105,14 +106,14 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
                 className="w-full h-full object-cover"
               />
             ) : (
-              <UserIcon className="w-3.5 h-3.5 text-[#0f172a]" />
+              <UserIcon className="w-3.5 h-3.5 text-uupm-ink" />
             )}
           </div>
           {!isGroup && (
             <span
               className={cn(
-                "absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border border-[#2d3748]",
-                isOnline ? "bg-[#22c55e]" : "bg-slate-400"
+                "absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border border-uupm-line",
+                isOnline ? "bg-uupm-accent" : "bg-uupm-ink-muted"
               )}
             />
           )}
@@ -121,7 +122,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
         {/* Tên và Trạng thái */}
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
-            <h2 className="text-sm font-black text-[#0f172a] truncate leading-none">
+            <h2 className="text-sm font-black text-uupm-ink truncate leading-none">
               {title}
             </h2>
             {!isGroup && <span className="text-xs">🌸</span>}
@@ -129,16 +130,16 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
 
           {/* Chỉ báo đang soạn tin hoặc trạng thái */}
           {isAnyoneTyping ? (
-            <div className="flex items-center gap-1 text-[11px] font-bold text-[#22c55e] animate-pulse">
+            <div className="flex items-center gap-1 text-[11px] font-bold text-uupm-accent animate-pulse">
               <span>{typingText}</span>
               <span className="inline-flex gap-0.5">
-                <span className="w-1 h-1 rounded-full bg-[#22c55e] animate-bounce" />
-                <span className="w-1 h-1 rounded-full bg-[#22c55e] animate-bounce [animation-delay:0.2s]" />
-                <span className="w-1 h-1 rounded-full bg-[#22c55e] animate-bounce [animation-delay:0.4s]" />
+                <span className="w-1 h-1 rounded-full bg-uupm-accent animate-bounce" />
+                <span className="w-1 h-1 rounded-full bg-uupm-accent animate-bounce [animation-delay:0.2s]" />
+                <span className="w-1 h-1 rounded-full bg-uupm-accent animate-bounce [animation-delay:0.4s]" />
               </span>
             </div>
           ) : (
-            <p className="text-[10px] font-bold text-slate-500">
+            <p className="text-[10px] font-bold text-uupm-ink-muted">
               {isGroup
                 ? `${conversation.participants.length} thành viên`
                 : isOnline
@@ -151,6 +152,9 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
 
       {/* 2. Dàn nút tác vụ bên phải kiểu Discord */}
       <div className="flex items-center gap-1.5 shrink-0">
+        {/* Nút chuyển đổi chế độ Sáng / Tối */}
+        <ThemeToggle className="mr-0.5" />
+
         {/* Nút Bắt đầu cuộc gọi thoại */}
         <button
           type="button"
@@ -160,11 +164,11 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
               "Cuộc gọi thoại"
             )
           }
-          className="w-8 h-8 rounded-xs bg-white hover:bg-slate-100 border-2 border-[#2d3748] shadow-uupm-active flex items-center justify-center text-[#0f172a] cursor-pointer transition-all active:translate-x-[1px] active:translate-y-[1px]"
+          className="w-8 h-8 rounded-xs bg-uupm-surface hover:bg-uupm-surface-hover border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink cursor-pointer transition-all active:translate-x-[1px] active:translate-y-[1px]"
           title="Bắt đầu cuộc gọi thoại"
           aria-label="Bắt đầu cuộc gọi thoại"
         >
-          <Phone className="w-4 h-4 text-slate-700" />
+          <Phone className="w-4 h-4 text-uupm-ink-soft" />
         </button>
 
         {/* Nút Bắt đầu cuộc gọi video */}
@@ -176,11 +180,11 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
               "Cuộc gọi video"
             )
           }
-          className="w-8 h-8 rounded-xs bg-white hover:bg-slate-100 border-2 border-[#2d3748] shadow-uupm-active flex items-center justify-center text-[#0f172a] cursor-pointer transition-all active:translate-x-[1px] active:translate-y-[1px]"
+          className="w-8 h-8 rounded-xs bg-uupm-surface hover:bg-uupm-surface-hover border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink cursor-pointer transition-all active:translate-x-[1px] active:translate-y-[1px]"
           title="Bắt đầu cuộc gọi video"
           aria-label="Bắt đầu cuộc gọi video"
         >
-          <Video className="w-4 h-4 text-slate-700" />
+          <Video className="w-4 h-4 text-uupm-ink-soft" />
         </button>
 
         {/* Nút Tin nhắn đã ghim */}
@@ -189,11 +193,11 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
           onClick={() =>
             toast.info("Hiện chưa có tin nhắn nào được ghim trong hội thoại.", "Tin nhắn đã ghim")
           }
-          className="w-8 h-8 rounded-xs bg-white hover:bg-slate-100 border-2 border-[#2d3748] shadow-uupm-active flex items-center justify-center text-[#0f172a] cursor-pointer transition-all active:translate-x-[1px] active:translate-y-[1px] hidden sm:flex"
+          className="w-8 h-8 rounded-xs bg-uupm-surface hover:bg-uupm-surface-hover border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink cursor-pointer transition-all active:translate-x-[1px] active:translate-y-[1px] hidden sm:flex"
           title="Tin nhắn đã ghim"
           aria-label="Tin nhắn đã ghim"
         >
-          <Pin className="w-4 h-4 text-slate-700" />
+          <Pin className="w-4 h-4 text-uupm-ink-soft" />
         </button>
 
         {/* Nút Thêm bạn bè vào DM */}
@@ -202,11 +206,11 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
           onClick={() =>
             toast.info("Mời bạn bè vào cuộc trò chuyện đang được hoàn thiện.", "Thêm bạn vào nhóm")
           }
-          className="w-8 h-8 rounded-xs bg-white hover:bg-slate-100 border-2 border-[#2d3748] shadow-uupm-active flex items-center justify-center text-[#0f172a] cursor-pointer transition-all active:translate-x-[1px] active:translate-y-[1px] hidden sm:flex"
+          className="w-8 h-8 rounded-xs bg-uupm-surface hover:bg-uupm-surface-hover border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink cursor-pointer transition-all active:translate-x-[1px] active:translate-y-[1px] hidden sm:flex"
           title="Thêm bạn bè vào nhóm"
           aria-label="Thêm bạn bè vào nhóm"
         >
-          <UserPlus className="w-4 h-4 text-slate-700" />
+          <UserPlus className="w-4 h-4 text-uupm-ink-soft" />
         </button>
 
         {/* Nút BẬT/TẮT Bảng Hồ Sơ Người Dùng (Cột 3 Toggle) */}
@@ -215,10 +219,10 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
             type="button"
             onClick={onToggleProfile}
             className={cn(
-              "w-8 h-8 rounded-xs border-2 border-[#2d3748] shadow-uupm-active flex items-center justify-center cursor-pointer transition-all active:translate-x-[1px] active:translate-y-[1px]",
+              "w-8 h-8 rounded-xs border-2 border-uupm-line shadow-uupm-active flex items-center justify-center cursor-pointer transition-all active:translate-x-[1px] active:translate-y-[1px]",
               isProfileOpen
-                ? "bg-[#22c55e] text-[#0f172a]"
-                : "bg-white hover:bg-slate-100 text-slate-700"
+                ? "bg-uupm-accent text-uupm-accent-text"
+                : "bg-uupm-surface hover:bg-uupm-surface-hover text-uupm-ink-soft"
             )}
             title={isProfileOpen ? "Ẩn hồ sơ người dùng" : "Hiện hồ sơ người dùng"}
             aria-label={isProfileOpen ? "Ẩn hồ sơ người dùng" : "Hiện hồ sơ người dùng"}
@@ -229,13 +233,13 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
 
         {/* Ô tìm kiếm tin nhắn trong hội thoại */}
         <div className="relative hidden lg:block">
-          <Search className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <Search className="w-3.5 h-3.5 text-uupm-ink-muted absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Tìm kiếm..."
-            className="w-32 xl:w-40 pl-2.5 pr-7 py-1 text-xs font-semibold bg-[#f8fafc] rounded-xs border-2 border-[#2d3748] shadow-uupm-active focus:bg-white focus:outline-none focus:w-48 transition-all"
+            className="w-32 xl:w-40 pl-2.5 pr-7 py-1 text-xs font-semibold bg-uupm-page rounded-xs border-2 border-uupm-line shadow-uupm-active focus:bg-uupm-surface focus:outline-none focus:w-48 transition-all"
           />
         </div>
 
@@ -243,11 +247,11 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
         <button
           type="button"
           onClick={() => toast.info("Hộp thư thông báo hiện không có tin mới.", "Hộp thư")}
-          className="w-8 h-8 rounded-xs bg-white hover:bg-slate-100 border-2 border-[#2d3748] shadow-uupm-active flex items-center justify-center text-[#0f172a] cursor-pointer transition-all active:translate-x-[1px] active:translate-y-[1px] hidden xl:flex"
+          className="w-8 h-8 rounded-xs bg-uupm-surface hover:bg-uupm-surface-hover border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink cursor-pointer transition-all active:translate-x-[1px] active:translate-y-[1px] hidden xl:flex"
           title="Hộp thư"
           aria-label="Hộp thư"
         >
-          <Inbox className="w-4 h-4 text-slate-700" />
+          <Inbox className="w-4 h-4 text-uupm-ink-soft" />
         </button>
 
         {/* Nút Trợ giúp */}
@@ -259,11 +263,11 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
               "Trợ giúp"
             )
           }
-          className="w-8 h-8 rounded-xs bg-white hover:bg-slate-100 border-2 border-[#2d3748] shadow-uupm-active flex items-center justify-center text-[#0f172a] cursor-pointer transition-all active:translate-x-[1px] active:translate-y-[1px] hidden xl:flex"
+          className="w-8 h-8 rounded-xs bg-uupm-surface hover:bg-uupm-surface-hover border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink cursor-pointer transition-all active:translate-x-[1px] active:translate-y-[1px] hidden xl:flex"
           title="Trợ giúp"
           aria-label="Trợ giúp"
         >
-          <HelpCircle className="w-4 h-4 text-slate-700" />
+          <HelpCircle className="w-4 h-4 text-uupm-ink-soft" />
         </button>
       </div>
     </div>

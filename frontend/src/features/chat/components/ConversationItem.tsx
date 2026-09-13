@@ -85,8 +85,8 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
         "group w-full text-left p-2.5 rounded-xs border-2 transition-all duration-150 ease-out select-none cursor-pointer flex items-center gap-3 relative",
         // Trạng thái được chọn (Active)
         isActive
-          ? "bg-[#22c55e]/20 border-[#2d3748] shadow-uupm-active font-bold translate-x-[1px] translate-y-[1px]"
-          : "bg-white border-[#2d3748] shadow-uupm-active hover:bg-[#f8fafc] hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[2px] active:translate-y-[2px]",
+          ? "bg-uupm-accent/20 border-uupm-line shadow-uupm-active font-bold translate-x-[1px] translate-y-[1px]"
+          : "bg-uupm-surface border-uupm-line shadow-uupm-active hover:bg-uupm-page hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[2px] active:translate-y-[2px]",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
       )}
     >
@@ -94,12 +94,12 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
       <div className="relative shrink-0">
         <div
           className={cn(
-            "w-10 h-10 rounded-xs border-2 border-[#2d3748] shadow-uupm-active flex items-center justify-center font-black text-sm uppercase overflow-hidden",
-            isGroup ? "bg-[#add8e6] text-[#0f172a]" : "bg-[#fef08a] text-[#0f172a]"
+            "w-10 h-10 rounded-xs border-2 border-uupm-line shadow-uupm-active flex items-center justify-center font-black text-sm uppercase overflow-hidden",
+            isGroup ? "bg-uupm-accent-soft text-uupm-accent-text" : "bg-uupm-warn-soft text-uupm-warn-soft-ink"
           )}
         >
           {isGroup ? (
-            <Users className="w-5 h-5 text-[#0f172a]" />
+            <Users className="w-5 h-5 text-uupm-ink" />
           ) : partner?.avatarUrl ? (
             <img
               src={partner.avatarUrl}
@@ -107,7 +107,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
               className="w-full h-full object-cover"
             />
           ) : (
-            <UserIcon className="w-5 h-5 text-[#0f172a]" />
+            <UserIcon className="w-5 h-5 text-uupm-ink" />
           )}
         </div>
 
@@ -115,8 +115,8 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
         {!isGroup && (
           <span
             className={cn(
-              "absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-[#2d3748]",
-              isOnline ? "bg-[#22c55e]" : "bg-slate-400"
+              "absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-uupm-line",
+              isOnline ? "bg-uupm-accent" : "bg-uupm-ink-muted"
             )}
             title={isOnline ? "Đang trực tuyến" : "Ngoại tuyến"}
           />
@@ -127,7 +127,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
       <div className="flex-1 min-w-0 pr-6">
         <div className="flex items-center justify-between gap-1 mb-0.5">
           <div className="flex items-center gap-1 min-w-0">
-            <h3 className="text-xs font-black text-[#0f172a] truncate">{displayName}</h3>
+            <h3 className="text-xs font-black text-uupm-ink truncate">{displayName}</h3>
             {!isGroup && (
               <span className="text-[10px] shrink-0" title="Trạng thái">
                 🌸
@@ -135,19 +135,19 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
             )}
           </div>
 
-          <span className="text-[10px] font-bold text-slate-400 shrink-0">
+          <span className="text-[10px] font-bold text-uupm-ink-muted shrink-0">
             {formatTime(conversation.lastMessageAt || conversation.createdAt)}
           </span>
         </div>
 
         <div className="flex items-center justify-between gap-1">
-          <p className="text-[11px] text-slate-500 truncate font-semibold">
+          <p className="text-[11px] text-uupm-ink-muted truncate font-semibold">
             {lastMessageText}
           </p>
 
           {/* Huy hiệu số tin nhắn chưa đọc (Unread Badge) */}
           {Boolean(conversation.unreadCount && conversation.unreadCount > 0) && (
-            <span className="shrink-0 min-w-[18px] h-4.5 px-1.5 rounded-full bg-[#ef4444] border-2 border-[#2d3748] text-[9px] font-black text-white flex items-center justify-center shadow-uupm-active">
+            <span className="shrink-0 min-w-[18px] h-4.5 px-1.5 rounded-full bg-uupm-danger border-2 border-uupm-line text-[9px] font-black text-uupm-danger-ink flex items-center justify-center shadow-uupm-active">
               {conversation.unreadCount! > 99 ? "99+" : conversation.unreadCount}
             </span>
           )}
@@ -162,7 +162,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
             e.stopPropagation();
             onCloseConversation(e);
           }}
-          className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-xs bg-slate-100 hover:bg-[#ef4444] hover:text-white border border-[#2d3748] shadow-uupm-active flex items-center justify-center text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+          className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-xs bg-uupm-surface-hover hover:bg-uupm-danger hover:text-uupm-danger-ink border border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink-muted opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
           title="Đóng cuộc trò chuyện"
           aria-label="Đóng cuộc trò chuyện"
         >

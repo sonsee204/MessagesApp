@@ -28,7 +28,7 @@ export const AuthSwitch: React.FC<AuthSwitchProps> = ({
       role="tablist"
       aria-label="Chuyển đổi giữa Đăng ký và Đăng nhập"
       className={cn(
-        "relative p-1.5 bg-slate-100 rounded-xs border-2 border-[#2d3748] shadow-[3px_3px_0px_0px_#2d3748] select-none",
+        "relative p-1.5 bg-uupm-surface-hover rounded-xs border-2 border-uupm-line shadow-[3px_3px_0px_0px_hsl(var(--uupm-line))] select-none",
         className
       )}
     >
@@ -41,7 +41,7 @@ export const AuthSwitch: React.FC<AuthSwitchProps> = ({
       <div
         aria-hidden="true"
         className={cn(
-          "absolute top-1.5 bottom-1.5 w-[calc(50%-10px)] rounded-xs bg-[#22c55e] border-2 border-[#2d3748] shadow-uupm-2 transition-transform duration-300 ease-spring pointer-events-none",
+          "absolute top-1.5 bottom-1.5 w-[calc(50%-10px)] rounded-xs bg-uupm-accent border-2 border-uupm-line shadow-uupm-2 transition-transform duration-300 ease-spring pointer-events-none",
           mode === "register"
             ? "left-1.5 translate-x-0"
             : "left-1.5 translate-x-[calc(100%+8px)]"
@@ -59,9 +59,11 @@ export const AuthSwitch: React.FC<AuthSwitchProps> = ({
           className={cn(
             "min-h-[46px] py-3 px-4 text-xs md:text-sm rounded-xs transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1",
+            // Tab đang chọn nằm trên thanh trượt nền accent -> phải dùng
+            // --uupm-accent-text, không dùng --uupm-ink (xem chú thích AuthPage).
             mode === "register"
-              ? "text-[#0f172a] font-black"
-              : "text-[#64748b] hover:text-[#0f172a] font-extrabold hover:bg-slate-200/40"
+              ? "text-uupm-accent-text font-black"
+              : "text-uupm-ink-muted hover:text-uupm-ink font-extrabold hover:bg-uupm-surface-strong/40"
           )}
         >
           <UserPlus
@@ -83,8 +85,8 @@ export const AuthSwitch: React.FC<AuthSwitchProps> = ({
             "min-h-[46px] py-3 px-4 text-xs md:text-sm rounded-xs transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1",
             mode === "login"
-              ? "text-[#0f172a] font-black"
-              : "text-[#64748b] hover:text-[#0f172a] font-extrabold hover:bg-slate-200/40"
+              ? "text-uupm-accent-text font-black"
+              : "text-uupm-ink-muted hover:text-uupm-ink font-extrabold hover:bg-uupm-surface-strong/40"
           )}
         >
           <LogIn
