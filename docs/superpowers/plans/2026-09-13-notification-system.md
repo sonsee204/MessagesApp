@@ -31,7 +31,7 @@
 **Interfaces:**
 - Produces: `NotificationModel`, `INotification`, `NotificationType`, `getNotificationsQuerySchema`, `notificationIdParamSchema`.
 
-- [ ] **Step 1: Write failing schema and model unit tests**
+- [x] **Step 1: Write failing schema and model unit tests**
 
 ```typescript
 // backend/tests/schemas/notification.schema.test.ts
@@ -60,21 +60,21 @@ describe("Notification Schemas Validation", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test backend/tests/schemas/notification.schema.test.ts`
 Expected: FAIL (File not found or modules not exported)
 
-- [ ] **Step 3: Implement Notification Model and Zod Schemas**
+- [x] **Step 3: Implement Notification Model and Zod Schemas**
 
 Tạo `backend/src/models/notification.model.ts` và `backend/src/schemas/notification.schema.ts`, đồng thời xuất `NotificationModel` qua `backend/src/models/index.ts`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npm test backend/tests/schemas/notification.schema.test.ts backend/tests/models/notification.model.test.ts`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git -C D:/ add appmessaging/backend/src/models/notification.model.ts appmessaging/backend/src/schemas/notification.schema.ts appmessaging/backend/src/models/index.ts appmessaging/backend/tests/schemas/notification.schema.test.ts appmessaging/backend/tests/models/notification.model.test.ts
@@ -93,7 +93,7 @@ git -C D:/ commit -m "feat(notification): add notification mongoose model and zo
 - Consumes: `NotificationModel`, `INotification`
 - Produces: `NotificationRepository` with methods: `create`, `findById`, `findByRecipientIdPaginated`, `countUnreadByRecipientId`, `markAsRead`, `markAllAsRead`, `deleteById`.
 
-- [ ] **Step 1: Write failing repository unit test**
+- [x] **Step 1: Write failing repository unit test**
 
 ```typescript
 // backend/tests/repositories/notification.repository.test.ts
@@ -115,21 +115,21 @@ describe("NotificationRepository Unit Tests", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test backend/tests/repositories/notification.repository.test.ts`
 Expected: FAIL (Repository not implemented)
 
-- [ ] **Step 3: Implement NotificationRepository**
+- [x] **Step 3: Implement NotificationRepository**
 
 Xây dựng `NotificationRepository` với các truy vấn tối ưu index, phân trang và populate trường `senderId` (`displayName`, `username`, `avatarUrl`).
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npm test backend/tests/repositories/notification.repository.test.ts`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git -C D:/ add appmessaging/backend/src/repositories/notification.repository.ts appmessaging/backend/tests/repositories/notification.repository.test.ts
@@ -148,7 +148,7 @@ git -C D:/ commit -m "feat(notification): implement notification repository laye
 - Consumes: `NotificationRepository`, `Socket.IO Server instance (optional/injected)`
 - Produces: `NotificationService` with methods: `createNotification`, `getUserNotifications`, `markNotificationAsRead`, `markAllNotificationsAsRead`, `deleteNotification`.
 
-- [ ] **Step 1: Write failing service unit test**
+- [x] **Step 1: Write failing service unit test**
 
 ```typescript
 // backend/tests/services/notification.service.test.ts
@@ -187,21 +187,21 @@ describe("NotificationService Unit Tests", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test backend/tests/services/notification.service.test.ts`
 Expected: FAIL
 
-- [ ] **Step 3: Implement NotificationService**
+- [x] **Step 3: Implement NotificationService**
 
 Hiện thực hóa toàn bộ logic nghiệp vụ, kiểm tra quyền sở hữu thông báo (`recipientId`), và phát tín hiệu Socket.IO (`notification:new`, `notification:read`) khi có instance IO.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npm test backend/tests/services/notification.service.test.ts`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git -C D:/ add appmessaging/backend/src/services/notification.service.ts appmessaging/backend/tests/services/notification.service.test.ts
@@ -222,7 +222,7 @@ git -C D:/ commit -m "feat(notification): implement notification service with ow
 - Consumes: `NotificationService`, `requireAuth` middleware, Zod validation middleware.
 - Produces: API endpoints `/api/notifications`, `/api/notifications/:id/read`, `/api/notifications/read-all`, `/api/notifications/:id`.
 
-- [ ] **Step 1: Write integration tests for Notification API**
+- [x] **Step 1: Write integration tests for Notification API**
 
 ```typescript
 // backend/tests/notification.test.ts
@@ -239,21 +239,21 @@ describe("Notification API Integration Tests (/api/notifications)", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test backend/tests/notification.test.ts`
 Expected: FAIL (Route not registered, returns 404)
 
-- [ ] **Step 3: Implement Controller, Routes and mount to apiRouter**
+- [x] **Step 3: Implement Controller, Routes and mount to apiRouter**
 
 Hiện thực `NotificationController`, khai báo routes với `validateRequest` middleware, đăng ký route tại `backend/src/routes/index.ts`.
 
-- [ ] **Step 4: Run tests to verify all 29 test suites pass**
+- [x] **Step 4: Run tests to verify all 29 test suites pass**
 
 Run: `npm test`
 Expected: All tests PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git -C D:/ add appmessaging/backend/src/controllers/notification.controller.ts appmessaging/backend/src/routes/notification.routes.ts appmessaging/backend/src/routes/index.ts appmessaging/backend/tests/notification.test.ts
@@ -272,25 +272,25 @@ git -C D:/ commit -m "feat(notification): wire up notification controller and ro
 **Interfaces:**
 - Consumes: `NotificationService.createNotification` inside `sendFriendRequest` & `respondFriendRequest`.
 
-- [ ] **Step 1: Add test asserting notification creation when sending friend request**
+- [x] **Step 1: Add test asserting notification creation when sending friend request**
 
 Cập nhật `backend/tests/services/friend.service.test.ts` để kiểm tra hàm `notificationService.createNotification` được gọi khi gửi lời mời kết bạn và khi chấp nhận lời mời.
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test backend/tests/services/friend.service.test.ts`
 Expected: FAIL
 
-- [ ] **Step 3: Wire NotificationService call into FriendService**
+- [x] **Step 3: Wire NotificationService call into FriendService**
 
 Gọi `notificationService.createNotification` trong `sendFriendRequest` với loại `FRIEND_REQUEST_RECEIVED` và trong `respondFriendRequest` (khi status = ACCEPTED) với loại `FRIEND_REQUEST_ACCEPTED`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npm test backend/tests/services/friend.service.test.ts backend/tests/friend.test.ts`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git -C D:/ add appmessaging/backend/src/services/friend.service.ts appmessaging/backend/tests/services/friend.service.test.ts
@@ -312,31 +312,31 @@ git -C D:/ commit -m "feat(notification): trigger real-time notifications on fri
 - Consumes: Backend `/api/notifications` endpoints & Socket events (`notification:new`, `notification:read`).
 - Produces: UI Notification Popover hiển thị danh sách thông báo thực tế khi bấm vào nút "Thông báo" trên `ConversationSidebar`.
 
-- [ ] **Step 1: Create TypeScript types & REST service client**
+- [x] **Step 1: Create TypeScript types & REST service client**
 
 Định nghĩa interface `AppNotification` và các API call: `getNotifications`, `markAsRead`, `markAllAsRead`, `deleteNotification`.
 
-- [ ] **Step 2: Implement Zustand Notification Store with Socket.IO listener**
+- [x] **Step 2: Implement Zustand Notification Store with Socket.IO listener**
 
 Tạo `useNotificationStore` lưu trữ danh sách thông báo, `unreadCount`, và kết nối với socket để nhận thông báo tức thời.
 
-- [ ] **Step 3: Create NotificationListModal component (Tactile Neo-Brutalist design)**
+- [x] **Step 3: Create NotificationListModal component (Tactile Neo-Brutalist design)**
 
 Tạo giao diện hiển thị danh sách thông báo chuẩn Neo-Brutalist:
 - Header: Tiêu đề "Thông báo", nút "Đánh dấu tất cả đã đọc", nút đóng.
 - Body: Danh sách thẻ thông báo kèm avatar người gửi, thời gian tương đối, nút hành động xem lời mời kết bạn hoặc hội thoại.
 - Empty state khi không có thông báo nào.
 
-- [ ] **Step 4: Connect NotificationListModal to ConversationSidebar**
+- [x] **Step 4: Connect NotificationListModal to ConversationSidebar**
 
 Gắn số đếm `unreadCount` thật vào badge đỏ của nút "Thông báo" và mở `NotificationListModal` khi nhấp chuột.
 
-- [ ] **Step 5: Verify build frontend**
+- [x] **Step 5: Verify build frontend**
 
 Run: `npm --prefix ../frontend run build`
 Expected: PASS (0 type errors, production build succeeds)
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git -C D:/ add appmessaging/frontend/src/features/notifications/ appmessaging/frontend/src/features/chat/components/ConversationSidebar.tsx
