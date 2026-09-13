@@ -1,0 +1,51 @@
+# ==============================================================================
+# Docker Compose for Local Development:
+# Chỉ chạy MongoDB & Mongo Express trong Docker, code Backend chạy trực tiếp bằng `npm run dev`
+# Lệnh chạy: docker compose -f docker-compose.dev.yml up -d
+# ==============================================================================
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: appmessaging-dev-mongodb
+    restart: unless-stopped
+    # Tự động quét và xóa document hết hạn mỗi 30 giây trong môi trường phát triển
+    command: ["mongod", "--setParameter", "ttlMonitorSleepSecs=30"]
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_dev_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - dev-network
+
+  mongo-express:
+    image: mongo-express:1.0.2-20
+    container_name: appmessaging-dev-mongo-express
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      - ME_CONFIG_MONGODB_URL=mongodb://mongodb:27017
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+      - ME_CONFIG_MONGODB_PORT=27017
+      - ME_CONFIG_BASICAUTH=false
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - dev-network
+
+volumes:
+  mongodb_dev_data:
+    name: appmessaging_dev_mongodb_data
+
+networks:
+  dev-network:
+    name: appmessaging_dev_network
+    driver: bridge

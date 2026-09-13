@@ -2,6 +2,7 @@ import { Server as HttpServer } from "http";
 import { Server, Socket } from "socket.io";
 import { verifyToken, TokenPayload } from "../utils/auth";
 import { userRepository } from "../repositories/user.repository";
+import { conversationRepository } from "../repositories/conversation.repository";
 import { messageService } from "../services/message.service";
 import { logger } from "../core/logger";
 import { env } from "../config/env";
@@ -42,6 +43,51 @@ export function emitToConversation(conversationId: string, event: string, payloa
 }
 
 /**
+ * Chuẩn hóa mã cuộc hội thoại nhận từ sự kiện gõ phím (Typing Indicator).
+ * Chấp nhận cả hai dạng payload để tương thích ngược với các phiên bản client:
+ * - Dạng chuỗi thô: "652f1a2b..."
+ * - Dạng đối tượng: { conversationId: "652f1a2b..." }
+ * @returns Mã cuộc hội thoại đã chuẩn hóa, hoặc chuỗi rỗng nếu payload không hợp lệ
+ */
+export function resolveConversationId(payload: string | { conversationId?: string }): string {
+  if (typeof payload === "string") return payload;
+  return payload?.conversationId ?? "";
+}
+
+/**
+ * Chuẩn hóa token nhận được trong bước bắt tay (Handshake) của Socket.IO về đúng chuỗi JWT thô.
+ * Một số client (như Frontend appmessaging) gửi kèm tiền tố "Bearer " giống HTTP header,
+ * nếu đưa nguyên chuỗi này vào jwt.verify sẽ báo lỗi "jwt malformed" và chặn toàn bộ kết nối.
+ * @param rawToken Giá trị token thô lấy từ socket.handshake.auth.token
+ * @returns JWT thô đã bỏ tiền tố, hoặc undefined nếu không có token
+ */
+export function normalizeHandshakeToken(rawToken: unknown): string | undefined {
+  if (typeof rawToken !== "string" || rawToken.length === 0) return undefined;
+  return rawToken.startsWith("Bearer ") ? rawToken.slice(7) : rawToken;
+}
+
+/**
+ * Kiểm tra một người dùng có nằm trong danh sách thành viên của cuộc trò chuyện hay không.
+ * Danh sách `participants` có thể chứa ObjectId thô hoặc document User đã populate,
+ * nên phải chuẩn hóa về chuỗi ID trước khi so sánh.
+ * @param participants Mảng thành viên lấy từ document Conversation
+ * @param userId ID người dùng cần kiểm tra
+ * @returns true nếu người dùng là thành viên hợp lệ
+ */
+export function isParticipant(participants: unknown[], userId: string): boolean {
+  if (!Array.isArray(participants)) return false;
+
+  return participants.some((participant) => {
+    if (!participant) return false;
+    const participantId =
+      (participant as { _id?: unknown })._id?.toString() ||
+      (participant as { id?: unknown }).id?.toString() ||
+      participant.toString();
+    return participantId === userId;
+  });
+}
+
+/**
  * Khởi tạo Socket.IO Server và thiết lập các sự kiện Real-Time
  */
 export function initSocketServer(httpServer: HttpServer): Server {
@@ -64,9 +110,9 @@ export function initSocketServer(httpServer: HttpServer): Server {
       .find((row) => row.startsWith("token="))
       ?.split("=")[1];
 
-    // Trích xuất token từ handshake auth, header hoặc cookie
+    // Trích xuất token từ handshake auth, header hoặc cookie (đã chuẩn hóa bỏ tiền tố "Bearer ")
     const token =
-      socket.handshake.auth?.token ||
+      normalizeHandshakeToken(socket.handshake.auth?.token) ||
       socket.handshake.headers?.authorization?.replace("Bearer ", "") ||
       cookieToken;
 
@@ -89,6 +135,19 @@ export function initSocketServer(httpServer: HttpServer): Server {
     const user = socket.user!;
     logger.info(`User connected: ${user.username} (${socket.id})`);
 
+    /**
+     * Xác thực quyền truy cập phòng của một cuộc trò chuyện.
+     * Phòng Socket.IO là kênh nhận mọi tin nhắn của cuộc hội thoại, nên nếu cho join vô điều kiện
+     * thì bất kỳ người dùng đã đăng nhập nào cũng đọc được tin nhắn riêng của người khác.
+     * @param conversationId ID cuộc trò chuyện cần kiểm tra
+     * @returns true nếu người dùng hiện tại là thành viên hợp lệ
+     */
+    const canAccessConversation = async (conversationId: string): Promise<boolean> => {
+      const conversation = await conversationRepository.findById(conversationId);
+      if (!conversation) return false;
+      return isParticipant(conversation.participants, user.userId);
+    };
+
     // Bước 1: Cập nhật trạng thái trực tuyến (Online) của người dùng vào CSDL
     await userRepository.updateOnlineStatus(user.userId, true);
     // Phát thông báo trạng thái Online tới tất cả người dùng khác
@@ -101,13 +160,27 @@ export function initSocketServer(httpServer: HttpServer): Server {
     socket.join(`user:${user.userId}`);
 
     // Bước 3: Xử lý sự kiện tham gia phòng cuộc trò chuyện cụ thể
-    socket.on("join_conversation", (conversationId: string) => {
+    socket.on("join_conversation", async (payload: string | { conversationId?: string }) => {
+      const conversationId = resolveConversationId(payload);
+      if (!conversationId) return;
+
+      // Zero-Trust: chỉ thành viên của cuộc trò chuyện mới được vào phòng
+      if (!(await canAccessConversation(conversationId))) {
+        logger.warn(
+          `Từ chối join_conversation: ${user.username} không thuộc conversation:${conversationId}`
+        );
+        socket.emit("error", { code: "FORBIDDEN", message: "Bạn không thuộc cuộc trò chuyện này" });
+        return;
+      }
+
       socket.join(`conversation:${conversationId}`);
       logger.info(`User ${user.username} joined conversation:${conversationId}`);
     });
 
     // Bước 4: Xử lý sự kiện rời phòng cuộc trò chuyện
-    socket.on("leave_conversation", (conversationId: string) => {
+    socket.on("leave_conversation", (payload: string | { conversationId?: string }) => {
+      const conversationId = resolveConversationId(payload);
+      if (!conversationId) return;
       socket.leave(`conversation:${conversationId}`);
       logger.info(`User ${user.username} left conversation:${conversationId}`);
     });
@@ -120,16 +193,16 @@ export function initSocketServer(httpServer: HttpServer): Server {
         callback?: (response: unknown) => void
       ) => {
         try {
-          // Lưu tin nhắn vào CSDL qua Service Layer
+          // Lưu tin nhắn vào CSDL qua Service Layer.
+          // KHÔNG phát lại 'new_message' ở đây: messageService.sendMessage đã phát sự kiện này
+          // tới room conversation:${conversationId} (Bước 6). Phát thêm lần nữa khiến mọi client
+          // nhận 2 bản cho cùng một tin nhắn.
           const message = await messageService.sendMessage({
             conversationId: data.conversationId,
             senderId: user.userId,
             content: data.content,
             type: data.type,
           });
-
-          // Phát sự kiện tin nhắn mới tới toàn bộ thành viên đang ở trong phòng cuộc hội thoại
-          io.to(`conversation:${data.conversationId}`).emit("new_message", message);
 
           // Phản hồi xác nhận thành công tới client gửi tin nhắn (Ack callback)
           if (callback) {
@@ -146,7 +219,11 @@ export function initSocketServer(httpServer: HttpServer): Server {
     );
 
     // Bước 6: Xử lý sự kiện bắt đầu gõ phím (Typing Indicator Start)
-    socket.on("typing_start", (conversationId: string) => {
+    socket.on("typing_start", async (payload: string | { conversationId?: string }) => {
+      const conversationId = resolveConversationId(payload);
+      if (!conversationId) return;
+      // Chỉ phát tín hiệu gõ phím nếu người dùng thực sự thuộc cuộc trò chuyện
+      if (!(await canAccessConversation(conversationId))) return;
       socket.to(`conversation:${conversationId}`).emit("user_typing", {
         conversationId,
         userId: user.userId,
@@ -156,7 +233,11 @@ export function initSocketServer(httpServer: HttpServer): Server {
     });
 
     // Bước 7: Xử lý sự kiện dừng gõ phím (Typing Indicator Stop)
-    socket.on("typing_stop", (conversationId: string) => {
+    socket.on("typing_stop", async (payload: string | { conversationId?: string }) => {
+      const conversationId = resolveConversationId(payload);
+      if (!conversationId) return;
+      // Chỉ phát tín hiệu dừng gõ phím nếu người dùng thực sự thuộc cuộc trò chuyện
+      if (!(await canAccessConversation(conversationId))) return;
       socket.to(`conversation:${conversationId}`).emit("user_typing", {
         conversationId,
         userId: user.userId,

@@ -1,0 +1,59 @@
+# ==============================================================================
+# .gitignore - Standard Fullstack (Express + React + TypeScript + Docker)
+# ==============================================================================
+
+# 1. Dependencies
+node_modules/
+*/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# 2. Build Outputs & Compilations
+dist/
+*/dist/
+build/
+*/build/
+out/
+.output/
+*.tsbuildinfo
+
+# 3. Environment Variables & Secrets (Keep .env.example)
+.env
+.env.local
+.env.*.local
+*.env
+backend/.env
+frontend/.env
+!*.env.example
+
+# 4. Logs & Runtime Data
+logs/
+*.log
+npm-debug.log*
+
+# 5. Testing & Coverage
+coverage/
+*.lcov
+.nyc_output/
+.vitest/
+
+# 6. Operating System & IDE Artifacts
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# 7. Local Tooling State
+.claude/settings.local.json
+# Cấu hình MCP gắn với máy cục bộ (chứa đường dẫn tuyệt đối) — không chia sẻ qua Git
+.claude/mcp.json
+
+# 8. Sản phẩm biên dịch của file cấu hình Vite (sinh ra bởi `tsc -b`)
+frontend/vite.config.js
+frontend/vite.config.d.ts

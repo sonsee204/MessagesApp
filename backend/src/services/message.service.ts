@@ -73,13 +73,13 @@ export class MessageService {
     if (conversation.type === "DIRECT" && conversation.participants.length === 2) {
       const [p1Raw, p2Raw] = conversation.participants;
       const p1 =
-        (p1Raw as { _id?: { toString(): string }; id?: string })?._id?.toString() ||
-        (p1Raw as { id?: string })?.id?.toString() ||
-        (p1Raw as { toString(): string }).toString();
+        (p1Raw as unknown as { _id?: { toString(): string }; id?: string })?._id?.toString() ||
+        (p1Raw as unknown as { id?: string })?.id?.toString() ||
+        (p1Raw as unknown as { toString(): string }).toString();
       const p2 =
-        (p2Raw as { _id?: { toString(): string }; id?: string })?._id?.toString() ||
-        (p2Raw as { id?: string })?.id?.toString() ||
-        (p2Raw as { toString(): string }).toString();
+        (p2Raw as unknown as { _id?: { toString(): string }; id?: string })?._id?.toString() ||
+        (p2Raw as unknown as { id?: string })?.id?.toString() ||
+        (p2Raw as unknown as { toString(): string }).toString();
 
       const isBlocked =
         typeof (this.blockRepo as unknown as { isBlockedBetween?: (a: string, b: string) => Promise<boolean> }).isBlockedBetween === "function"
@@ -270,9 +270,9 @@ export class MessageService {
 
     // Bước 3: Kiểm tra quyền: Chỉ người gửi tin nhắn mới có quyền thu hồi
     const senderId =
-      (message.senderId as { _id?: { toString(): string }; id?: string })?._id?.toString() ||
-      (message.senderId as { id?: string })?.id?.toString() ||
-      (message.senderId as { toString(): string }).toString();
+      (message.senderId as unknown as { _id?: { toString(): string }; id?: string })?._id?.toString() ||
+      (message.senderId as unknown as { id?: string })?.id?.toString() ||
+      (message.senderId as unknown as { toString(): string }).toString();
 
     if (senderId !== userId) {
       throw new ForbiddenError("Bạn chỉ có thể thu hồi tin nhắn do chính mình gửi");

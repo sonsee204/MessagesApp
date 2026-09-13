@@ -1,0 +1,89 @@
+services:
+  # ============================================================================
+  # 1. MongoDB Database (Tích hợp TTL Monitor tự động xóa document hết hạn)
+  # ============================================================================
+  mongodb:
+    image: mongo:7.0
+    container_name: appmessaging-mongodb
+    restart: unless-stopped
+    # ttlMonitorSleepSecs=30: MongoDB quét và tự động xóa các document hết hạn (TTL Index) mỗi 30 giây
+    command: ["mongod", "--setParameter", "ttlMonitorSleepSecs=30"]
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - app-network
+
+  # ============================================================================
+  # 2. Backend Service (Express + Socket.IO)
+  # ============================================================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: appmessaging-backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://mongodb:27017/appmessaging
+      - CORS_ORIGIN=http://localhost:3000
+      - JWT_SECRET=appmessaging_super_secret_jwt_key_at_least_32_characters_long
+      - JWT_EXPIRES_IN=7d
+      - JWT_ACCESS_SECRET=appmessaging_super_secret_jwt_key_at_least_32_characters_long
+      - JWT_ACCESS_EXPIRES_IN=15m
+      - JWT_REFRESH_SECRET=appmessaging_super_secret_refresh_jwt_key_at_least_32_characters_long
+      - JWT_REFRESH_EXPIRES_IN=7d
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  # ============================================================================
+  # 3. Mongo Express (Trình quản trị trực quan Web UI cho MongoDB)
+  # ============================================================================
+  mongo-express:
+    image: mongo-express:1.0.2-20
+    container_name: appmessaging-mongo-express
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      - ME_CONFIG_MONGODB_URL=mongodb://mongodb:27017
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+      - ME_CONFIG_MONGODB_PORT=27017
+      - ME_CONFIG_BASICAUTH=false
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - app-network
+
+volumes:
+  mongodb_data:
+    name: appmessaging_mongodb_data
+
+networks:
+  app-network:
+    name: appmessaging_network
+    driver: bridge

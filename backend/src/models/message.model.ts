@@ -91,6 +91,18 @@ const MessageSchema = new Schema<IMessage>(
     timestamps: true,
     toJSON: {
       transform: (_doc, ret: Record<string, unknown>) => {
+        // Tách thông tin người gửi khi trường `senderId` đã được populate:
+        // - `senderId` luôn trả về dạng CHUỖI ID (đúng hợp đồng Frontend để so sánh `senderId === currentUserId`)
+        // - toàn bộ document User được chuyển sang trường `sender` (phục vụ hiển thị tên/avatar)
+        // Nếu không tách, `senderId` sẽ là một object và mọi so sánh phía client đều sai âm thầm.
+        const populatedSender = ret.senderId as Record<string, unknown> | null | undefined;
+        // ObjectId thô cũng là "object", nên phải loại trừ tường minh — nếu không
+        // trường `sender` sẽ bị gán nhầm bằng chính ObjectId rác.
+        if (populatedSender && typeof populatedSender === "object" && !(populatedSender instanceof Types.ObjectId)) {
+          ret.senderId = (populatedSender._id ?? populatedSender.id)?.toString();
+          ret.sender = populatedSender;
+        }
+
         ret.id = (ret._id as { toString(): string }).toString();
         delete ret._id;
         delete ret.__v;
