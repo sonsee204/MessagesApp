@@ -19,6 +19,7 @@ import {
   notificationService,
 } from "./notification.service";
 import { IFriendRequest } from "../models/friend-request.model";
+import { emitToUser } from "../socket";
 import {
   ConflictError,
   ForbiddenError,
@@ -141,6 +142,9 @@ export class FriendService {
       // Tiếp tục hoạt động nếu gửi thông báo thất bại
     }
 
+    // Phát sự kiện Socket.IO thời gian thực tới người nhận lời mời
+    emitToUser(receiverId, "friend:request_received", request);
+
     return request;
   }
 
@@ -192,12 +196,12 @@ export class FriendService {
       await session.endSession();
     }
 
-    // 5. Lấy thông tin hồ sơ của người bạn mới kết nối để trả về cho client
+    // 5. Lấy thông tin hồ sơ của cả 2 bên để đồng bộ thời gian thực
     const friendUser = await this.userRepo.findById(senderIdStr);
+    const receiverUser = await this.userRepo.findById(userId);
 
     // 6. Phát thông báo thời gian thực cho người gửi ban đầu rằng lời mời đã được chấp nhận
     try {
-      const receiverUser = await this.userRepo.findById(userId);
       const receiverName =
         receiverUser?.displayName || receiverUser?.username || "Bạn bè";
       await this.notifService.createNotification({
@@ -213,6 +217,18 @@ export class FriendService {
     } catch (_notifErr) {
       // Tiếp tục hoạt động nếu gửi thông báo thất bại
     }
+
+    // 7. Phát sự kiện Socket.IO thời gian thực cho cả 2 người dùng để cập nhật danh bạ
+    emitToUser(senderIdStr, "friend:request_accepted", {
+      friendshipId,
+      friend: receiverUser,
+      acceptedAt,
+    });
+    emitToUser(userId, "friend:request_accepted", {
+      friendshipId,
+      friend: friendUser,
+      acceptedAt,
+    });
 
     return {
       friendshipId,
@@ -243,6 +259,12 @@ export class FriendService {
 
     // Cập nhật trạng thái thành REJECTED
     await this.friendRequestRepo.updateStatus(requestId, "REJECTED", new Date());
+
+    // Phát sự kiện Socket.IO thời gian thực cho người gửi ban đầu
+    emitToUser(request.senderId.toString(), "friend:request_rejected", {
+      requestId,
+      receiverId: userId,
+    });
   }
 
   /**
@@ -267,6 +289,12 @@ export class FriendService {
 
     // Cập nhật trạng thái thành CANCELED
     await this.friendRequestRepo.updateStatus(requestId, "CANCELED");
+
+    // Phát sự kiện Socket.IO thời gian thực cho người nhận rằng lời mời đã bị hủy
+    emitToUser(request.receiverId.toString(), "friend:request_canceled", {
+      requestId,
+      senderId: userId,
+    });
   }
 
   /**
@@ -350,6 +378,11 @@ export class FriendService {
 
     // Thực hiện xóa bản ghi bạn bè
     await this.friendRepo.removeFriendship(userId, targetUserId);
+
+    // Phát sự kiện Socket.IO thời gian thực cho đối phương biết quan hệ bạn bè đã chấm dứt
+    emitToUser(targetUserId, "friend:removed", {
+      userId,
+    });
   }
 
   /**
@@ -439,6 +472,11 @@ export class FriendService {
     } finally {
       await session.endSession();
     }
+
+    // Phát sự kiện Socket.IO thời gian thực thông báo cho người bị chặn
+    emitToUser(blockedId, "friend:blocked", {
+      blockerId,
+    });
   }
 
   /**

@@ -66,4 +66,5 @@ backend/uploads/*
 *.png
 frontend/*.png
 .playwright-mcp/
+.superpowers/
 
