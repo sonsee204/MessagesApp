@@ -4,6 +4,7 @@ import { useAuthStore } from "../../../stores/auth.store";
 import { useChatStore } from "../stores/chat.store";
 import { useNotificationStore } from "../../notifications/stores/notification.store";
 import { NotificationItem } from "../../notifications/types/notification.types";
+import { useFriendStore } from "../../friends/stores/friend.store";
 import { toast } from "../../../stores/toast.store";
 import {
   Message,
@@ -128,8 +129,12 @@ export function useChatSocket() {
     socket.on("notification:new", handleNotificationNew);
     socket.on("notification:read", handleNotificationRead);
 
+    // Đồng bộ các sự kiện bạn bè thời gian thực với useFriendStore
+    const cleanupFriendListeners = useFriendStore.getState().initSocketListeners();
+
     // Dọn dẹp listeners khi component unmount hoặc token thay đổi
     return () => {
+      cleanupFriendListeners();
       socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
       socket.off("connect_error", handleConnectError);
