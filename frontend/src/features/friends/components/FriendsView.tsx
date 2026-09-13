@@ -6,6 +6,7 @@ import {
   UserCheck,
   UserPlus,
   AlertTriangle,
+  ArrowLeft,
 } from "lucide-react";
 import { useFriendStore } from "../stores/friend.store";
 import { FriendItem } from "./FriendItem";
@@ -17,6 +18,7 @@ import { Button } from "../../../components/ui/Button";
 export interface FriendsViewProps {
   onStartChat: (userId: string) => void;
   onOpenProfile: (userId: string) => void;
+  onBack?: () => void;
 }
 
 /**
@@ -25,6 +27,7 @@ export interface FriendsViewProps {
 export const FriendsView: React.FC<FriendsViewProps> = ({
   onStartChat,
   onOpenProfile,
+  onBack,
 }) => {
   const {
     friends,
@@ -113,6 +116,19 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
       {/* ================= HEADER: TAB NAVIGATION DISCORD ================= */}
       <header className="h-14 border-b-2 border-uupm-line px-4 flex items-center justify-between shrink-0 bg-uupm-surface z-10 gap-2">
         <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar py-1">
+          {/* Nút quay lại trên màn hình di động */}
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="md:hidden w-8 h-8 rounded-xs border-2 border-uupm-line bg-uupm-surface hover:bg-uupm-surface-hover flex items-center justify-center text-uupm-ink mr-1 shrink-0 cursor-pointer shadow-uupm-active active:translate-x-[1px] active:translate-y-[1px]"
+              title="Quay lại danh sách"
+              aria-label="Quay lại danh sách"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+          )}
+
           {/* Nhãn chính */}
           <div className="flex items-center gap-2 pr-2 text-uupm-ink font-black shrink-0">
             <Users className="w-5 h-5" />

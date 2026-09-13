@@ -17,6 +17,7 @@ import { toast } from "../../../stores/toast.store";
 import { UserSettingsModal } from "../../users/components/UserSettingsModal";
 import { useNotificationStore } from "../../notifications/stores/notification.store";
 import { NotificationListModal } from "../../notifications/components/NotificationListModal";
+import { useFriendStore } from "../../friends/stores/friend.store";
 import { cn } from "../../../lib/utils";
 
 interface ConversationSidebarProps {
@@ -25,7 +26,9 @@ interface ConversationSidebarProps {
   onlineUsers: Record<string, boolean>;
   currentUser: User | null;
   isLoading?: boolean;
+  activeView?: "friends" | "chat";
   onSelectConversation: (id: string) => void;
+  onSelectFriendsView?: () => void;
   onOpenNewChatModal: () => void;
   onLogout?: () => void;
 }
@@ -44,7 +47,9 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
   onlineUsers,
   currentUser,
   isLoading = false,
+  activeView = "chat",
   onSelectConversation,
+  onSelectFriendsView,
   onOpenNewChatModal,
   onLogout,
 }) => {
@@ -55,6 +60,8 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
 
   // Zustand Store quản lý thông báo người dùng
   const { unreadCount, openModal, fetchNotifications } = useNotificationStore();
+  // Số lời mời kết bạn nhận được đang chờ duyệt
+  const receivedRequestsCount = useFriendStore((state) => state.receivedRequests.length);
 
   useEffect(() => {
     void fetchNotifications();
@@ -103,19 +110,26 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
           type="button"
           onClick={() => {
             setActiveTab("friends");
-            toast.info("Đang hiển thị danh mục Bạn bè trực tuyến.", "Danh bạ bạn bè");
+            onSelectFriendsView?.();
           }}
           className={cn(
-            "w-full flex items-center gap-3 px-3 py-2 rounded-xs border-2 text-xs font-black transition-all cursor-pointer",
-            activeTab === "friends"
+            "w-full flex items-center justify-between px-3 py-2 rounded-xs border-2 text-xs font-black transition-all cursor-pointer",
+            activeView === "friends" && !activeConversationId
               ? "bg-uupm-accent/20 border-uupm-line shadow-uupm-active text-uupm-ink translate-x-[1px] translate-y-[1px]"
               : "bg-uupm-surface border-transparent hover:border-uupm-line hover:bg-uupm-surface-hover text-uupm-ink-soft"
           )}
         >
-          <div className="w-6 h-6 rounded-xs bg-uupm-accent-soft border-2 border-uupm-line flex items-center justify-center shrink-0">
-            <Users className="w-3.5 h-3.5 text-uupm-ink" />
+          <div className="flex items-center gap-3">
+            <div className="w-6 h-6 rounded-xs bg-uupm-accent-soft border-2 border-uupm-line flex items-center justify-center shrink-0">
+              <Users className="w-3.5 h-3.5 text-uupm-ink" />
+            </div>
+            <span>Bạn bè</span>
           </div>
-          <span>Bạn bè</span>
+          {receivedRequestsCount > 0 && (
+            <span className="px-1.5 py-0.2 rounded-full bg-uupm-danger text-uupm-danger-ink text-[10px] font-black border border-uupm-line">
+              {receivedRequestsCount > 99 ? "99+" : receivedRequestsCount}
+            </span>
+          )}
         </button>
 
         {/* Nút Thông báo */}
