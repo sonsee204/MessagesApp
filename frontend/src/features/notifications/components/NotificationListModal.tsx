@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from "react";
+import React, { useEffect, useCallback, useState } from "react";
 import {
   Bell,
   BellOff,
@@ -13,6 +13,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useNotificationStore } from "../stores/notification.store";
+import { useFriendStore } from "../../friends/stores/friend.store";
 import { NotificationItem, NotificationType } from "../types/notification.types";
 import { cn } from "../../../lib/utils";
 
@@ -84,7 +85,26 @@ const NotificationItemRow: React.FC<{
   item: NotificationItem;
   onMarkAsRead: (id: string) => void;
   onDelete: (id: string) => void;
-}> = ({ item, onMarkAsRead, onDelete }) => {
+  // Callback xử lý nhanh lời mời kết bạn ngay trong thông báo (chỉ dùng cho FRIEND_REQUEST_RECEIVED)
+  onAcceptRequest?: (friendRequestId: string) => Promise<void>;
+  onRejectRequest?: (friendRequestId: string) => Promise<void>;
+  isProcessing?: boolean;
+}> = ({
+  item,
+  onMarkAsRead,
+  onDelete,
+  onAcceptRequest,
+  onRejectRequest,
+  isProcessing = false,
+}) => {
+  // Lời mời kết bạn đã được xử lý (đọc) thì ẩn cặp nút thao tác nhanh để tránh thao tác lặp
+  const friendRequestId = item.data?.friendRequestId;
+  const showFriendActions =
+    item.type === "FRIEND_REQUEST_RECEIVED" &&
+    Boolean(friendRequestId) &&
+    !item.isRead &&
+    Boolean(onAcceptRequest && onRejectRequest);
+
   return (
     <div
       className={cn(
@@ -114,6 +134,47 @@ const NotificationItemRow: React.FC<{
         <p className="text-xs font-medium text-uupm-ink-soft mt-0.5 line-clamp-2 break-words">
           {item.content}
         </p>
+
+        {/* Cặp nút thao tác nhanh cho lời mời kết bạn: Đồng ý / Từ chối */}
+        {showFriendActions && (
+          <div className="flex items-center gap-1.5 mt-2">
+            <button
+              type="button"
+              disabled={isProcessing}
+              aria-disabled={isProcessing}
+              onClick={() => void onAcceptRequest?.(friendRequestId as string)}
+              className={cn(
+                "flex items-center gap-1 px-2 py-1 text-[11px] font-black rounded-xs border-2 border-uupm-line transition-all",
+                isProcessing
+                  ? "bg-uupm-surface/50 text-uupm-ink-soft/50 cursor-not-allowed"
+                  : "bg-uupm-accent hover:bg-uupm-accent/80 text-uupm-ink cursor-pointer shadow-uupm-active active:translate-x-[1px] active:translate-y-[1px]"
+              )}
+            >
+              {isProcessing ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <Check className="w-3 h-3" />
+              )}
+              <span>Đồng ý</span>
+            </button>
+
+            <button
+              type="button"
+              disabled={isProcessing}
+              aria-disabled={isProcessing}
+              onClick={() => void onRejectRequest?.(friendRequestId as string)}
+              className={cn(
+                "flex items-center gap-1 px-2 py-1 text-[11px] font-black rounded-xs border-2 border-uupm-line transition-all",
+                isProcessing
+                  ? "bg-uupm-surface/50 text-uupm-ink-soft/50 cursor-not-allowed"
+                  : "bg-uupm-surface hover:bg-uupm-danger/20 text-uupm-ink cursor-pointer shadow-uupm-active active:translate-x-[1px] active:translate-y-[1px]"
+              )}
+            >
+              <X className="w-3 h-3" />
+              <span>Từ chối</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Cụm hành động nhanh: Đánh dấu đã đọc và Xóa */}
@@ -162,6 +223,37 @@ export const NotificationListModal: React.FC = () => {
     markAllAsRead,
     deleteNotification,
   } = useNotificationStore();
+
+  // Chỉ lấy hai hành động cần thiết của Friend Store để xử lý lời mời kết bạn inline
+  const acceptFriendRequest = useFriendStore((state) => state.acceptFriendRequest);
+  const rejectFriendRequest = useFriendStore((state) => state.rejectFriendRequest);
+
+  // Trạng thái ID lời mời kết bạn đang được xử lý (dùng để khóa nút và hiện spinner)
+  const [processingRequestId, setProcessingRequestId] = useState<string | null>(null);
+
+  /**
+   * Xử lý lời mời kết bạn trực tiếp từ thông báo.
+   * Sau khi BE xác nhận thành công, đánh dấu thông báo đã đọc để ẩn cặp nút thao tác.
+   */
+  const handleFriendRequestAction = useCallback(
+    async (notificationId: string, friendRequestId: string, action: "accept" | "reject") => {
+      if (processingRequestId) return;
+      setProcessingRequestId(friendRequestId);
+      try {
+        if (action === "accept") {
+          await acceptFriendRequest(friendRequestId);
+        } else {
+          await rejectFriendRequest(friendRequestId);
+        }
+        await markAsRead(notificationId);
+      } catch {
+        // Lỗi đã được friend store hiển thị qua toast; giữ nguyên thông báo để người dùng thử lại
+      } finally {
+        setProcessingRequestId(null);
+      }
+    },
+    [processingRequestId, acceptFriendRequest, rejectFriendRequest, markAsRead]
+  );
 
   // Đóng modal khi nhấn phím Escape
   const handleKeyDown = useCallback(
@@ -306,6 +398,16 @@ export const NotificationListModal: React.FC = () => {
                 item={item}
                 onMarkAsRead={(id) => void markAsRead(id)}
                 onDelete={(id) => void deleteNotification(id)}
+                isProcessing={
+                  Boolean(item.data?.friendRequestId) &&
+                  processingRequestId === item.data?.friendRequestId
+                }
+                onAcceptRequest={(requestId) =>
+                  handleFriendRequestAction(item._id, requestId, "accept")
+                }
+                onRejectRequest={(requestId) =>
+                  handleFriendRequestAction(item._id, requestId, "reject")
+                }
               />
             ))
           )}
