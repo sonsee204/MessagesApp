@@ -28,6 +28,7 @@
 ## 🧩 Domain Rules & Skills Mapping
 - **Skill Mapping**: Trước khi xử lý giao diện hoặc tác vụ phức tạp, tra cứu các skills trong `.claude/skills/`.
 - **Domain Rules**:
+  - Task Routing: Tuân thủ nghiêm ngặt quy tắc tự động phân loại và dispatch subagents tại `.claude/rules/task-routing.md`.
   - Frontend tasks: Tuân thủ `.claude/rules/frontend.md`.
   - Backend tasks: Tuân thủ `.claude/rules/backend.md`.
 - **Workflows SOP**: Phân tích và thực thi theo các kịch bản chuẩn trong `.claude/workflows/` (`create-component.md`, `create-api-endpoint.md`, `fix-bug.md`, `code-review-audit.md`).
