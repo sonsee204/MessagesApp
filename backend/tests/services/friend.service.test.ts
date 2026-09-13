@@ -8,6 +8,7 @@ describe("FriendService Business Logic", () => {
   let mockFriendRepo: any;
   let mockBlockRepo: any;
   let mockUserRepo: any;
+  let mockNotifService: any;
 
   beforeEach(() => {
     mockFriendRequestRepo = {
@@ -36,12 +37,20 @@ describe("FriendService Business Logic", () => {
     mockUserRepo = {
       findById: vi.fn(),
     };
+    mockNotifService = {
+      createNotification: vi.fn().mockResolvedValue({} as any),
+      getUserNotifications: vi.fn(),
+      markNotificationAsRead: vi.fn(),
+      markAllNotificationsAsRead: vi.fn(),
+      deleteNotification: vi.fn(),
+    };
 
     friendService = new FriendService(
       mockFriendRequestRepo,
       mockFriendRepo,
       mockBlockRepo,
-      mockUserRepo
+      mockUserRepo,
+      mockNotifService
     );
   });
 
@@ -93,6 +102,12 @@ describe("FriendService Business Logic", () => {
       );
       expect(res.id).toBe("req1");
       expect(mockFriendRequestRepo.create).toHaveBeenCalled();
+      expect(mockNotifService.createNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          recipientId: "507f1f77bcf86cd799439012",
+          type: "FRIEND_REQUEST_RECEIVED",
+        })
+      );
     });
   });
 

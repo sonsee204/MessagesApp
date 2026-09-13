@@ -43,6 +43,23 @@ export function emitToConversation(conversationId: string, event: string, payloa
 }
 
 /**
+ * Phát sự kiện Socket.IO an toàn tới phòng cá nhân của một người dùng
+ * @param userId ID người dùng nhận sự kiện
+ * @param event Tên sự kiện (ví dụ: 'notification:new', 'notification:read')
+ * @param payload Dữ liệu đính kèm sự kiện
+ */
+export function emitToUser(userId: string, event: string, payload: unknown): void {
+  try {
+    const io = getIO();
+    if (io) {
+      io.to(`user:${userId}`).emit(event, payload);
+    }
+  } catch (error) {
+    logger.error(`Lỗi khi phát sự kiện socket ${event} tới user:${userId}`, error);
+  }
+}
+
+/**
  * Chuẩn hóa mã cuộc hội thoại nhận từ sự kiện gõ phím (Typing Indicator).
  * Chấp nhận cả hai dạng payload để tương thích ngược với các phiên bản client:
  * - Dạng chuỗi thô: "652f1a2b..."

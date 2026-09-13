@@ -2,6 +2,8 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { getSocket, connectSocket, disconnectSocket } from "../../../lib/socket";
 import { useAuthStore } from "../../../stores/auth.store";
 import { useChatStore } from "../stores/chat.store";
+import { useNotificationStore } from "../../notifications/stores/notification.store";
+import { NotificationItem } from "../../notifications/types/notification.types";
 import { toast } from "../../../stores/toast.store";
 import {
   Message,
@@ -107,11 +109,24 @@ export function useChatSocket() {
       applyMessagesRead(data.conversationId, data.userId);
     };
 
+    // F. Nhận sự kiện thông báo mới tạo ra từ máy chủ (Real-Time Notification)
+    const handleNotificationNew = (notification: NotificationItem) => {
+      useNotificationStore.getState().addIncomingNotification(notification);
+      toast.info(notification.content, notification.title || "Thông báo mới");
+    };
+
+    // G. Nhận sự kiện thông báo đã được đọc từ thiết bị khác để đồng bộ số lượng chưa đọc
+    const handleNotificationRead = (payload: { notificationId?: string; all?: boolean }) => {
+      useNotificationStore.getState().applyNotificationRead(payload);
+    };
+
     socket.on("new_message", handleNewMessage);
     socket.on("user_typing", handleUserTyping);
     socket.on("user_status_changed", handleUserStatusChanged);
     socket.on("message_recalled", handleMessageRecalled);
     socket.on("messages_read", handleMessagesRead);
+    socket.on("notification:new", handleNotificationNew);
+    socket.on("notification:read", handleNotificationRead);
 
     // Dọn dẹp listeners khi component unmount hoặc token thay đổi
     return () => {
@@ -123,6 +138,8 @@ export function useChatSocket() {
       socket.off("user_status_changed", handleUserStatusChanged);
       socket.off("message_recalled", handleMessageRecalled);
       socket.off("messages_read", handleMessagesRead);
+      socket.off("notification:new", handleNotificationNew);
+      socket.off("notification:read", handleNotificationRead);
     };
   }, [
     isAuthenticated,

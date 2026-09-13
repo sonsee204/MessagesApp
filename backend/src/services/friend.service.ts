@@ -14,6 +14,10 @@ import {
   blockRepository,
 } from "../repositories/block.repository";
 import { IUserRepository, userRepository } from "../repositories/user.repository";
+import {
+  INotificationService,
+  notificationService,
+} from "./notification.service";
 import { IFriendRequest } from "../models/friend-request.model";
 import {
   ConflictError,
@@ -58,7 +62,8 @@ export class FriendService {
     private friendRequestRepo: IFriendRequestRepository = friendRequestRepository,
     private friendRepo: IFriendRepository = friendRepository,
     private blockRepo: IBlockRepository = blockRepository,
-    private userRepo: IUserRepository = userRepository
+    private userRepo: IUserRepository = userRepository,
+    private notifService: INotificationService = notificationService
   ) {}
 
   /**
@@ -111,11 +116,32 @@ export class FriendService {
     }
 
     // 7. Tạo mới lời mời kết bạn trong cơ sở dữ liệu
-    return this.friendRequestRepo.create({
+    const request = await this.friendRequestRepo.create({
       senderId,
       receiverId,
       note,
     });
+
+    // 8. Phát thông báo thời gian thực cho người nhận lời mời
+    try {
+      const senderUser = await this.userRepo.findById(senderId);
+      const senderName =
+        senderUser?.displayName || senderUser?.username || "Một người dùng";
+      await this.notifService.createNotification({
+        recipientId: receiverId,
+        senderId,
+        type: "FRIEND_REQUEST_RECEIVED",
+        title: "Lời mời kết bạn mới",
+        content: `${senderName} đã gửi cho bạn một lời mời kết bạn.`,
+        data: {
+          friendRequestId: (request as any)._id?.toString() || (request as any).id,
+        },
+      });
+    } catch (_notifErr) {
+      // Tiếp tục hoạt động nếu gửi thông báo thất bại
+    }
+
+    return request;
   }
 
   /**
@@ -168,6 +194,26 @@ export class FriendService {
 
     // 5. Lấy thông tin hồ sơ của người bạn mới kết nối để trả về cho client
     const friendUser = await this.userRepo.findById(senderIdStr);
+
+    // 6. Phát thông báo thời gian thực cho người gửi ban đầu rằng lời mời đã được chấp nhận
+    try {
+      const receiverUser = await this.userRepo.findById(userId);
+      const receiverName =
+        receiverUser?.displayName || receiverUser?.username || "Bạn bè";
+      await this.notifService.createNotification({
+        recipientId: senderIdStr,
+        senderId: userId,
+        type: "FRIEND_REQUEST_ACCEPTED",
+        title: "Lời mời kết bạn được chấp nhận",
+        content: `${receiverName} đã chấp nhận lời mời kết bạn của bạn.`,
+        data: {
+          friendRequestId: requestId,
+        },
+      });
+    } catch (_notifErr) {
+      // Tiếp tục hoạt động nếu gửi thông báo thất bại
+    }
+
     return {
       friendshipId,
       friend: friendUser,
