@@ -287,4 +287,93 @@ describe("FriendService Business Logic", () => {
       });
     });
   });
+
+  describe("Transaction Fallback Handling", () => {
+    let mockSession: any;
+
+    beforeEach(() => {
+      mockSession = {
+        withTransaction: vi.fn(),
+        endSession: vi.fn(),
+      };
+      vi.spyOn(mongoose, "startSession").mockResolvedValue(mockSession);
+    });
+
+    it("tự động fallback thực thi không transaction khi MongoDB standalone báo lỗi replica set trong acceptFriendRequest", async () => {
+      // Giả lập trạng thái kết nối CSDL sẵn sàng
+      vi.spyOn(mongoose.connection, "readyState", "get").mockReturnValue(1);
+
+      // Giả lập withTransaction ném lỗi MongoDB standalone (không replica set)
+      mockSession.withTransaction.mockRejectedValueOnce(
+        new Error("Transaction numbers are only allowed on a replica set member or mongos")
+      );
+
+      mockFriendRequestRepo.findById.mockResolvedValue({
+        _id: "req1",
+        senderId: { toString: () => "u1" },
+        receiverId: { toString: () => "u2" },
+        status: "PENDING",
+      });
+      mockFriendRepo.createFriendship.mockResolvedValue({ _id: "fs_fallback" });
+      mockUserRepo.findById.mockImplementation(async (id: string) => ({
+        id,
+        displayName: `User ${id}`,
+      }));
+
+      const result = await friendService.acceptFriendRequest("u2", "req1");
+
+      // Kiểm tra kết quả thành công qua nhánh fallback
+      expect(result.friendshipId).toBe("fs_fallback");
+      expect(mockSession.endSession).toHaveBeenCalled();
+      // Xác nhận các thao tác repo vẫn được gọi với session = undefined trong fallback
+      expect(mockFriendRequestRepo.updateStatus).toHaveBeenCalledWith(
+        "req1",
+        "ACCEPTED",
+        expect.any(Date),
+        undefined
+      );
+      expect(mockFriendRepo.createFriendship).toHaveBeenCalledWith(
+        "u1",
+        "u2",
+        "req1",
+        undefined
+      );
+    });
+
+    it("tự động fallback thực thi không transaction khi MongoDB standalone báo lỗi replica set trong blockUser", async () => {
+      // Giả lập trạng thái kết nối CSDL sẵn sàng
+      vi.spyOn(mongoose.connection, "readyState", "get").mockReturnValue(1);
+
+      // Giả lập withTransaction ném lỗi standalone
+      mockSession.withTransaction.mockRejectedValueOnce(
+        new Error("This MongoDB deployment does not support replica set transactions")
+      );
+
+      mockUserRepo.findById.mockResolvedValue({ id: "u2" });
+      mockBlockRepo.isBlockedBy.mockResolvedValue(false);
+
+      await friendService.blockUser("u1", "u2");
+
+      expect(mockSession.endSession).toHaveBeenCalled();
+      // Xác nhận repo thao tác không truyền session trong fallback
+      expect(mockBlockRepo.createBlock).toHaveBeenCalledWith("u1", "u2", undefined);
+      expect(mockFriendRepo.removeFriendship).toHaveBeenCalledWith("u1", "u2", undefined);
+      expect(mockFriendRequestRepo.cancelPendingBetween).toHaveBeenCalledWith("u1", "u2", undefined);
+    });
+
+    it("ném lại lỗi nếu lỗi phát sinh trong transaction không phải lỗi replica set", async () => {
+      vi.spyOn(mongoose.connection, "readyState", "get").mockReturnValue(1);
+
+      const dbError = new Error("Lỗi kết nối cơ sở dữ liệu ngẫu nhiên");
+      mockSession.withTransaction.mockRejectedValueOnce(dbError);
+
+      mockUserRepo.findById.mockResolvedValue({ id: "u2" });
+      mockBlockRepo.isBlockedBy.mockResolvedValue(false);
+
+      await expect(friendService.blockUser("u1", "u2")).rejects.toThrow(
+        "Lỗi kết nối cơ sở dữ liệu ngẫu nhiên"
+      );
+      expect(mockSession.endSession).toHaveBeenCalled();
+    });
+  });
 });

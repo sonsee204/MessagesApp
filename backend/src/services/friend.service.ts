@@ -68,6 +68,56 @@ export class FriendService {
   ) {}
 
   /**
+   * Helper thực thi thao tác CSDL với MongoDB Transaction (replica set) hoặc tự động fallback
+   * khi MongoDB chạy ở chế độ standalone (không hỗ trợ replica set transactions) hoặc khi chưa kết nối.
+   *
+   * @template T Kiểu dữ liệu trả về của thao tác
+   * @param operation Hàm callback nhận ClientSession (hoặc undefined) và thực thi các thao tác ghi CSDL
+   * @returns Kết quả trả về từ hàm callback operation
+   */
+  private async executeWithTransactionFallback<T>(
+    operation: (session?: mongoose.ClientSession) => Promise<T>
+  ): Promise<T> {
+    let session: mongoose.ClientSession | null = null;
+
+    // 1. Chỉ khởi tạo session khi Mongoose đã kết nối thành công (readyState === 1)
+    if (mongoose.connection.readyState === 1) {
+      try {
+        session = await mongoose.startSession();
+      } catch {
+        session = null;
+      }
+    }
+
+    // 2. Nếu có session, thử thực thi qua session.withTransaction
+    if (session) {
+      try {
+        let result: T;
+        await session.withTransaction(async () => {
+          result = await operation(session!);
+        });
+        return result!;
+      } catch (err: unknown) {
+        const errorMsg = (err as Error)?.message || "";
+        // 3. Fallback khi MongoDB chạy standalone (lỗi MongoServerError về replica set / transaction numbers)
+        if (
+          errorMsg.includes("Transaction numbers are only allowed") ||
+          errorMsg.includes("replica set")
+        ) {
+          return await operation(undefined);
+        }
+        // Ném lại các lỗi nghiệp vụ hoặc ngoại lệ khác nếu không phải lỗi replica set
+        throw err;
+      } finally {
+        await session.endSession();
+      }
+    }
+
+    // 4. Fallback khi không có session (môi trường kết nối chưa sẵn sàng hoặc test mock)
+    return await operation(undefined);
+  }
+
+  /**
    * Gửi lời mời kết bạn cho người dùng khác
    * @param senderId ID người gửi
    * @param receiverId ID người nhận
@@ -192,13 +242,10 @@ export class FriendService {
 
     const senderIdStr = request.senderId.toString();
 
-    // 4. Thực thi Transaction nguyên tử: Cập nhật trạng thái lời mời ACCEPTED và tạo bản ghi bạn bè
-    const session = await mongoose.startSession();
-    let friendshipId = "";
+    // 4. Thực thi Transaction nguyên tử: Cập nhật trạng thái lời mời ACCEPTED và tạo bản ghi bạn bè (hỗ trợ fallback khi standalone)
     const acceptedAt = new Date();
-
-    try {
-      await session.withTransaction(async () => {
+    const friendshipId = await this.executeWithTransactionFallback(
+      async (session) => {
         await this.friendRequestRepo.updateStatus(requestId, "ACCEPTED", acceptedAt, session);
         const friendship = await this.friendRepo.createFriendship(
           senderIdStr,
@@ -206,11 +253,9 @@ export class FriendService {
           requestId,
           session
         );
-        friendshipId = (friendship as any)._id?.toString() || friendship.id;
-      });
-    } finally {
-      await session.endSession();
-    }
+        return (friendship as any)._id?.toString() || friendship.id;
+      }
+    );
 
     // 5. Lấy thông tin hồ sơ của cả 2 bên để đồng bộ thời gian thực
     const friendUser = await this.userRepo.findById(senderIdStr);
@@ -486,20 +531,15 @@ export class FriendService {
       throw new ConflictError("Bạn đã chặn người dùng này rồi");
     }
 
-    // Thực thi Transaction nguyên tử đảm bảo toàn vẹn dữ liệu
-    const session = await mongoose.startSession();
-    try {
-      await session.withTransaction(async () => {
-        // 1. Tạo bản ghi chặn
-        await this.blockRepo.createBlock(blockerId, blockedId, session);
-        // 2. Xóa quan hệ bạn bè nếu có
-        await this.friendRepo.removeFriendship(blockerId, blockedId, session);
-        // 3. Hủy các lời mời kết bạn 2 chiều đang pending
-        await this.friendRequestRepo.cancelPendingBetween(blockerId, blockedId, session);
-      });
-    } finally {
-      await session.endSession();
-    }
+    // Thực thi Transaction nguyên tử đảm bảo toàn vẹn dữ liệu (hỗ trợ fallback khi standalone)
+    await this.executeWithTransactionFallback(async (session) => {
+      // 1. Tạo bản ghi chặn
+      await this.blockRepo.createBlock(blockerId, blockedId, session);
+      // 2. Xóa quan hệ bạn bè nếu có
+      await this.friendRepo.removeFriendship(blockerId, blockedId, session);
+      // 3. Hủy các lời mời kết bạn 2 chiều đang pending
+      await this.friendRequestRepo.cancelPendingBetween(blockerId, blockedId, session);
+    });
 
     // Phát sự kiện Socket.IO thời gian thực thông báo cho người bị chặn
     emitToUser(blockedId, "friend:blocked", {
