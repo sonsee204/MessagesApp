@@ -5,6 +5,7 @@ import {
   MessageSquare,
   UserPlus,
   UserCheck,
+  UserMinus,
   Check,
   MoreHorizontal,
   ShieldAlert,
@@ -14,6 +15,7 @@ import {
   Sparkles,
   MessageCircle,
   Loader2,
+  AlertTriangle,
 } from "lucide-react";
 import { User } from "../../../types/auth.types";
 import { Button } from "../../../components/ui/Button";
@@ -58,6 +60,8 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   // Menu mở rộng hành động (More actions)
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
+  // Trạng thái mở modal xác nhận hủy kết bạn
+  const [isUnfriendConfirmOpen, setIsUnfriendConfirmOpen] = useState<boolean>(false);
   // Ghi chú cá nhân cục bộ
   const [personalNote, setPersonalNote] = useState<string>("");
   const [isEditingNote, setIsEditingNote] = useState<boolean>(false);
@@ -172,6 +176,54 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
     } catch (error: unknown) {
       toast.error(
         error instanceof Error ? error.message : "Không thể chấp nhận lời mời kết bạn",
+        "Thao tác thất bại"
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Xử lý từ chối lời mời kết bạn nhận được
+  const handleRejectFriendRequest = async () => {
+    if (!user.id || isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      let reqId = pendingRequestId;
+      if (!reqId) {
+        const info = await friendService.getRelationshipInfo(user.id);
+        reqId = info.requestId;
+      }
+      if (reqId) {
+        await friendService.rejectFriendRequest(reqId);
+        setRelationshipStatus("NONE");
+        setPendingRequestId(undefined);
+        toast.info(`Đã từ chối lời mời kết bạn của ${displayName}`, "Từ chối lời mời");
+      } else {
+        setRelationshipStatus("NONE");
+      }
+    } catch (error: unknown) {
+      toast.error(
+        error instanceof Error ? error.message : "Không thể từ chối lời mời kết bạn",
+        "Thao tác thất bại"
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Xử lý hủy kết bạn sau khi xác nhận trong modal
+  const handleConfirmRemoveFriend = async () => {
+    if (!user.id || isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await friendService.removeFriend(user.id);
+      setRelationshipStatus("NONE");
+      setIsUnfriendConfirmOpen(false);
+      setIsMenuOpen(false);
+      toast.info(`Đã hủy kết bạn với ${displayName}`, "Hủy kết bạn");
+    } catch (error: unknown) {
+      toast.error(
+        error instanceof Error ? error.message : "Không thể hủy kết bạn",
         "Thao tác thất bại"
       );
     } finally {
@@ -380,17 +432,30 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
                 )}
 
                 {relationshipStatus === "PENDING_RECEIVED" && (
-                  <Button
-                    type="button"
-                    variant="primary"
-                    size="sm"
-                    onClick={handleAcceptFriendRequest}
-                    disabled={isSubmitting}
-                    className="flex-1 justify-center text-xs font-black"
-                    leftIcon={isSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                  >
-                    Chấp nhận
-                  </Button>
+                  <div className="flex-1 flex items-center gap-1.5">
+                    <Button
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      onClick={handleAcceptFriendRequest}
+                      disabled={isSubmitting}
+                      className="flex-1 justify-center text-xs font-black"
+                      leftIcon={isSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                    >
+                      Đồng ý
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleRejectFriendRequest}
+                      disabled={isSubmitting}
+                      className="flex-1 justify-center text-xs font-black hover:text-uupm-danger hover:border-uupm-danger cursor-pointer"
+                      leftIcon={<X className="w-3.5 h-3.5" />}
+                    >
+                      Từ chối
+                    </Button>
+                  </div>
                 )}
 
                 {relationshipStatus === "FRIENDS" && (
@@ -398,7 +463,9 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="flex-1 justify-center text-xs font-black bg-uupm-accent-soft text-uupm-accent-text"
+                    onClick={() => setIsUnfriendConfirmOpen(true)}
+                    className="flex-1 justify-center text-xs font-black bg-uupm-accent-soft text-uupm-accent-text hover:bg-uupm-danger/10 hover:text-uupm-danger-text hover:border-uupm-danger transition-colors cursor-pointer"
+                    title="Nhấp để mở xác nhận hủy kết bạn"
                     leftIcon={<UserCheck className="w-3.5 h-3.5" />}
                   >
                     Bạn bè
@@ -448,7 +515,7 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
 
                   {/* Dropdown danh sách tùy chọn phụ */}
                   {isMenuOpen && (
-                    <div className="absolute left-0 bottom-full mb-1.5 w-44 bg-uupm-surface border-2 border-uupm-line rounded-xs shadow-uupm-2 py-1 z-30">
+                    <div className="absolute left-0 bottom-full mb-1.5 w-44 bg-uupm-surface border-2 border-uupm-line rounded-xs shadow-uupm-2 py-1 z-30 animate-in fade-in zoom-in-95 duration-100">
                       <button
                         type="button"
                         onClick={handleCopyId}
@@ -457,6 +524,21 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
                         <Copy className="w-3.5 h-3.5 text-uupm-ink-muted" />
                         <span>Sao chép ID</span>
                       </button>
+
+                      {relationshipStatus === "FRIENDS" && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsMenuOpen(false);
+                            setIsUnfriendConfirmOpen(true);
+                          }}
+                          className="w-full px-3 py-1.5 text-left text-xs font-bold text-uupm-danger-text hover:bg-uupm-danger/10 flex items-center gap-2 cursor-pointer border-t border-uupm-line/20"
+                        >
+                          <UserMinus className="w-3.5 h-3.5" />
+                          <span>Hủy kết bạn</span>
+                        </button>
+                      )}
+
                       <button
                         type="button"
                         onClick={handleToggleBlock}
@@ -675,6 +757,46 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
           )}
         </div>
       </div>
+
+      {/* Modal xác nhận Hủy kết bạn */}
+      {isUnfriendConfirmOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs select-none"
+        >
+          <div className="w-full max-w-sm bg-uupm-surface border-3 border-uupm-line rounded-xs shadow-uupm-2 p-5 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center gap-3 text-uupm-danger-text mb-3">
+              <AlertTriangle className="w-6 h-6 shrink-0" />
+              <h3 className="font-black text-base text-uupm-ink">Hủy kết bạn</h3>
+            </div>
+            <p className="text-xs text-uupm-ink-soft font-medium leading-relaxed mb-5">
+              Bạn có chắc chắn muốn hủy kết bạn với <strong className="text-uupm-ink font-black">{displayName}</strong> ({usernameHandle}) không?
+            </p>
+            <div className="flex items-center justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsUnfriendConfirmOpen(false)}
+                disabled={isSubmitting}
+              >
+                Hủy bỏ
+              </Button>
+              <Button
+                type="button"
+                variant="danger"
+                size="sm"
+                onClick={handleConfirmRemoveFriend}
+                disabled={isSubmitting}
+                leftIcon={isSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : undefined}
+              >
+                Xác nhận hủy
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
