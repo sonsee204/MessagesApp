@@ -365,7 +365,7 @@ export class FriendService {
   async getRelationshipStatus(
     userId: string,
     targetUserId: string
-  ): Promise<{ targetUserId: string; status: RelationshipStatus }> {
+  ): Promise<{ targetUserId: string; status: RelationshipStatus; requestId?: string }> {
     if (userId === targetUserId) {
       return { targetUserId, status: "NONE" };
     }
@@ -382,16 +382,18 @@ export class FriendService {
       return { targetUserId, status: "FRIENDS" };
     }
 
-    // Kiểm tra lời mời mình đã gửi
+    // Kiểm tra lời mời mình đã gửi (kèm mã requestId để client có thể hủy khi cần)
     const sentPending = await this.friendRequestRepo.findPending(userId, targetUserId);
     if (sentPending) {
-      return { targetUserId, status: "PENDING_SENT" };
+      const reqId = sentPending._id ? sentPending._id.toString() : (sentPending as { id?: string }).id;
+      return { targetUserId, status: "PENDING_SENT", requestId: reqId };
     }
 
-    // Kiểm tra lời mời người kia gửi cho mình
+    // Kiểm tra lời mời người kia gửi cho mình (kèm mã requestId để client có thể chấp nhận ngay)
     const receivedPending = await this.friendRequestRepo.findPending(targetUserId, userId);
     if (receivedPending) {
-      return { targetUserId, status: "PENDING_RECEIVED" };
+      const reqId = receivedPending._id ? receivedPending._id.toString() : (receivedPending as { id?: string }).id;
+      return { targetUserId, status: "PENDING_RECEIVED", requestId: reqId };
     }
 
     return { targetUserId, status: "NONE" };

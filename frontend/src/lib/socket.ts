@@ -21,7 +21,8 @@ export function getSocket(): Socket {
       auth: {
         token: token ? `Bearer ${token}` : undefined,
       },
-      transports: ["websocket", "polling"],
+      // Bắt đầu bằng polling để bắt tay HTTP ổn định qua proxy rồi nâng cấp lên websocket
+      transports: ["polling", "websocket"],
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,

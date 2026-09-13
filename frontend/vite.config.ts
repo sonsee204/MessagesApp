@@ -19,15 +19,15 @@ export default defineConfig({
     port: 3000,
     host: true,
     proxy: {
-      // Chuyển tiếp các cuộc gọi REST API sang máy chủ Backend
+      // Chuyển tiếp các cuộc gọi REST API sang máy chủ Backend (dùng 127.0.0.1 để tránh xung đột IPv6 localhost trên Windows)
       "/api": {
-        target: "http://localhost:5000",
+        target: "http://127.0.0.1:5000",
         changeOrigin: true,
         secure: false,
       },
       // Chuyển tiếp kết nối Socket.IO thời gian thực
       "/socket.io": {
-        target: "http://localhost:5000",
+        target: "http://127.0.0.1:5000",
         changeOrigin: true,
         ws: true,
       },
