@@ -256,3 +256,6 @@ export function useMediaUpload(conversationId: string) {
 
   return { items, pickFiles, removeItem, uploadAll, clear, isUploading };
 }
+
+// Kiểu state trả về của hook — dùng để chia sẻ giữa ChatLayout (owner) và MessageInput (consumer).
+export type MediaUploadState = ReturnType<typeof useMediaUpload>;

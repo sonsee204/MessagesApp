@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { MessageSquare, ShieldCheck, Sparkles, ShieldAlert } from "lucide-react";
+import { MessageSquare, ShieldCheck, Sparkles, ShieldAlert, Upload } from "lucide-react";
 import { useAuthStore } from "../../../stores/auth.store";
 import { useChatStore } from "../stores/chat.store";
 import { useChatSocket } from "../hooks/useChatSocket";
+import { useMediaUpload } from "../hooks/useMediaUpload";
 import { ConversationSidebar } from "./ConversationSidebar";
 import { ChatHeader } from "./ChatHeader";
 import { MessageList } from "./MessageList";
 import { MessageInput } from "./MessageInput";
 import { UserProfilePanel } from "./UserProfilePanel";
+import { Message } from "../../../types/chat.types";
 import { NewConversationModal } from "./NewConversationModal";
 import { FriendsView } from "../../friends/components/FriendsView";
 import { useFriendStore } from "../../friends/stores/friend.store";
@@ -53,6 +55,13 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({ onLogout }) => {
 
   // Khởi tạo và kết nối Socket.IO
   const { emitTyping } = useChatSocket();
+
+  // Hàng đợi upload media dùng chung cho khung nhập + vùng kéo-thả (lift state).
+  // Owner ở ChatLayout để MessageInput chỉ render; conversationId rỗng → hook không ký được.
+  const media = useMediaUpload(activeConversationId ?? "");
+
+  // Cờ hiển thị overlay khi người dùng kéo tệp vào vùng chat.
+  const [isDragOver, setIsDragOver] = useState<boolean>(false);
 
   // Trạng thái hiển thị giao diện: "friends" (mặc định như Discord) hoặc "chat"
   const [activeView, setActiveView] = useState<"friends" | "chat">("friends");
@@ -113,10 +122,14 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({ onLogout }) => {
       })
   );
 
-  // Xử lý gửi tin nhắn
-  const handleSendMessage = async (content: string) => {
+  // Xử lý gửi tin nhắn (văn bản TEXT hoặc sticker IMAGE kèm tệp đính kèm từ kho Klipy)
+  const handleSendMessage = async (
+    content: string,
+    type: Message["type"] = "TEXT",
+    attachments?: Message["attachments"]
+  ) => {
     if (!activeConversationId) return;
-    const result = await sendMessage(activeConversationId, content, "TEXT");
+    const result = await sendMessage(activeConversationId, content, type, attachments);
     if (!result) {
       toast.error("Không thể gửi tin nhắn. Vui lòng kiểm tra lại kết nối mạng.", "Lỗi gửi tin");
     }
@@ -237,7 +250,26 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({ onLogout }) => {
         }`}
       >
         {activeConversation ? (
-          <>
+          /* Vùng kéo-thả file bao quanh toàn bộ khung chat khi có cuộc trò chuyện.
+             Drag-over hiển thị overlay chấm nét đứt; drop chuyển file vào media.pickFiles.
+             position:relative để overlay phủ đúng khung, absolute inset-0 chỉ bao đúng box. */
+          <div
+            className="relative flex flex-col flex-1 min-h-0"
+            onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+            onDragLeave={() => setIsDragOver(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setIsDragOver(false);
+              if (e.dataTransfer.files.length > 0) media.pickFiles(e.dataTransfer.files);
+            }}
+          >
+            {/* Overlay chỉ hiện khi đang kéo tệp vào */}
+            {isDragOver && (
+              <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-uupm-accent-soft/80 border-4 border-dashed border-uupm-line rounded-xs select-none pointer-events-none">
+                <Upload className="w-10 h-10 text-uupm-ink mb-2" />
+                <span className="text-sm font-bold text-uupm-ink">Thả tệp để đính kèm</span>
+              </div>
+            )}
             {/* Header cuộc trò chuyện với dàn nút tác vụ Discord */}
             <ChatHeader
               conversation={activeConversation}
@@ -261,20 +293,21 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({ onLogout }) => {
             {/* Đối tác đã bị chặn: hiển thị thông báo và khóa ô nhập tin nhắn
                 (giữ nguyên hội thoại theo đúng phạm vi được duyệt, không tự đóng) */}
             {partnerIsBlocked ? (
-              <div className="px-4 py-3 border-t-2 border-uupm-line bg-uupm-page flex items-center gap-2 text-xs font-bold text-uupm-ink-muted">
+              <div className="h-[84px] px-4 border-t-2 border-uupm-line bg-uupm-page flex items-center gap-2 text-xs font-bold text-uupm-ink-muted shrink-0">
                 <ShieldAlert className="w-4 h-4 shrink-0 text-uupm-danger-text" />
                 <span>Bạn đã chặn người dùng này. Bỏ chặn để tiếp tục trò chuyện.</span>
               </div>
             ) : (
-              /* Khung nhập tin nhắn nổi với nút '+' và emoji */
+              /* Khung nhập tin nhắn nổi với nút '+' và emoji — media truyền từ ChatLayout */
               <MessageInput
                 conversationId={activeConversation.id}
                 partnerName={partnerDisplayName}
                 onSendMessage={handleSendMessage}
                 onTyping={handleTyping}
+                media={media}
               />
             )}
-          </>
+          </div>
         ) : activeView === "friends" ? (
           /* Màn hình trung tâm Bạn bè kiểu Discord */
           <FriendsView
