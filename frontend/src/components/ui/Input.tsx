@@ -12,9 +12,56 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
 }
 
 /**
+ * Sinh ID định danh cho input để liên kết với nhãn và thông báo lỗi.
+ * Ưu tiên id truyền vào, nếu không có thì slugify từ label (rule a11y htmlFor/aria).
+ */
+function resolveInputId(id: string | undefined, label: string | undefined): string | undefined {
+  if (id) return id;
+  if (label) return `input-${label.toLowerCase().replace(/[^a-z0-9]/g, "-")}`;
+  return undefined;
+}
+
+/**
+ * Tính className cho ô input theo trạng thái (bình thường / lỗi / vô hiệu hóa / padding icon).
+ * Tách khỏi component Input để giảm độ phức tạp hàm cha (rule no-high-complexity-react-function).
+ */
+function buildInputClassName(opts: {
+  leftIcon?: React.ReactNode;
+  isPassword: boolean;
+  isValid: boolean;
+  error?: string;
+  disabled?: boolean;
+  className?: string;
+}): string {
+  return cn(
+    // Kích thước chuẩn UI/UX Pro Max: cao tối thiểu 48px, đệm tay thoải mái
+    "w-full h-12 min-h-[48px] px-3.5 text-sm font-bold text-uupm-ink bg-uupm-surface rounded-xs border-2 transition-[background-color,box-shadow,transform] placeholder:text-uupm-ink-muted placeholder:font-normal",
+    // Tùy biến khoảng thụt đầu dòng theo icon
+    opts.leftIcon ? "pl-11" : "pl-3.5",
+    opts.isPassword ? "pr-12" : opts.isValid ? "pr-10" : "pr-3.5",
+    // Trạng thái bình thường: Viền 2px, hover đậm hơn, focus viền + bóng đổ
+    !opts.error && [
+      "border-uupm-line",
+      "hover:border-uupm-line",
+      "focus:border-uupm-line focus:shadow-uupm-2 focus:outline-none focus:ring-2 focus:ring-blue-500",
+    ],
+    // Trạng thái lỗi (Error State): Viền đỏ, bóng đổ khối đỏ
+    opts.error && [
+      "border-uupm-danger",
+      "shadow-[4px_4px_0px_0px_hsl(var(--uupm-danger))]",
+      "focus:border-uupm-danger focus:outline-none focus:ring-2 focus:ring-uupm-danger/40",
+    ],
+    // Trạng thái vô hiệu hóa
+    opts.disabled &&
+      "bg-uupm-surface-hover text-uupm-ink-muted border-uupm-ink-muted/40 cursor-not-allowed",
+    opts.className
+  );
+}
+
+/**
  * Thành phần Ô Nhập Liệu (Input) tối ưu chuẩn UI/UX Pro Max:
  * 1. Chiều cao đạt chuẩn chạm tối thiểu >= 46px (Touch Target Guideline)
- * 2. Viền dày 2px đặc trưng (#2d3748) và đổ bóng khối khi focus (shadow.2)
+ * 2. Viền dày 2px đặc trưng và đổ bóng khối khi focus (shadow.2)
  * 3. Nút ẩn/hiện mật khẩu có vùng chạm 40x40px, hỗ trợ WCAG 2.2 AA aria-label
  * 4. Trạng thái phản hồi tức thì: Bình thường, Hover, Focus, Lỗi, và Hợp lệ
  */
@@ -42,7 +89,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     const inputType = isPassword ? (showPassword ? "text" : "password") : type;
 
     // Sinh ID định danh cho input để liên kết với nhãn và thông báo lỗi
-    const inputId = id || (label ? `input-${label.toLowerCase().replace(/[^a-z0-9]/g, "-")}` : undefined);
+    const inputId = resolveInputId(id, label);
 
     return (
       <div className="w-full space-y-1.5 text-left">
@@ -80,28 +127,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
                 ? `${inputId}-helper`
                 : undefined
             }
-            className={cn(
-              // Kích thước chuẩn UI/UX Pro Max: cao tối thiểu 48px, đệm tay thoải mái
-              "w-full h-12 min-h-[48px] px-3.5 text-sm font-bold text-uupm-ink bg-uupm-surface rounded-xs border-2 transition-[background-color,box-shadow,transform] placeholder:text-uupm-ink-muted placeholder:font-normal",
-              // Tùy biến khoảng thụt đầu dòng theo icon
-              leftIcon ? "pl-11" : "pl-3.5",
-              isPassword ? "pr-12" : isValid ? "pr-10" : "pr-3.5",
-              // Trạng thái bình thường: Viền 2px #2d3748, hover đậm hơn, focus viền đen bóng đổ
-              !error && [
-                "border-uupm-line",
-                "hover:border-uupm-line",
-                "focus:border-uupm-line focus:shadow-uupm-2 focus:outline-none focus:ring-2 focus:ring-blue-500",
-              ],
-              // Trạng thái lỗi (Error State): Viền đỏ #ef4444, bóng đổ khối đỏ
-              error && [
-                "border-uupm-danger",
-                "shadow-[4px_4px_0px_0px_hsl(var(--uupm-danger))]",
-                "focus:border-uupm-danger focus:outline-none focus:ring-2 focus:ring-uupm-danger/40",
-              ],
-              // Trạng thái vô hiệu hóa
-              disabled && "bg-uupm-surface-hover text-uupm-ink-muted border-uupm-ink-muted/40 cursor-not-allowed",
-              className
-            )}
+            className={buildInputClassName({ leftIcon, isPassword, isValid, error, disabled, className })}
             {...props}
           />
 

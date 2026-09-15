@@ -30,6 +30,169 @@ interface ChatHeaderProps {
 }
 
 /**
+ * Nút tác vụ chuẩn của thanh tiêu đề (Discord-style 8x8 tactical button).
+ * Tách thành molecule local để triệt tiêu 8 khối JSX lặp lại và giảm complexity
+ * của ChatHeader (rule no-high-complexity-react-function).
+ */
+function ChatHeaderActionButton({
+  icon,
+  label,
+  onClick,
+  className,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "w-8 h-8 rounded-xs bg-uupm-surface hover:bg-uupm-surface-hover border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink cursor-pointer transition-[background-color,box-shadow,transform] active:translate-x-[1px] active:translate-y-[1px]",
+        className
+      )}
+      title={label}
+      aria-label={label}
+    >
+      {icon}
+    </button>
+  );
+}
+
+/**
+ * Khối thông tin đối tác/thuộc tính hội thoại bên trái thanh tiêu đề.
+ * Tách thành child component để chuyển các nhánh điều kiện (?:, &&) ra khỏi
+ * hàm ChatHeader, giảm độ phức tạp control-flow (rule no-high-complexity-react-function).
+ */
+function ChatHeaderPartnerInfo({
+  isGroup,
+  title,
+  partner,
+  isOnline,
+  isAnyoneTyping,
+  typingText,
+  memberCount,
+  onBack,
+}: {
+  isGroup: boolean;
+  title: string;
+  partner: { displayName?: string; username?: string; avatarUrl?: string | null } | null;
+  isOnline: boolean;
+  isAnyoneTyping: boolean;
+  typingText: string;
+  memberCount: number;
+  onBack?: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-2.5 min-w-0">
+      {/* Nút Quay lại trên Mobile */}
+      {onBack && (
+        <button
+          type="button"
+          onClick={onBack}
+          className="md:hidden w-8 h-8 rounded-xs bg-uupm-surface border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink hover:bg-uupm-surface-hover cursor-pointer"
+          aria-label="Quay lại danh sách hội thoại"
+        >
+          <ArrowLeft className="w-4 h-4" />
+        </button>
+      )}
+
+      {/* Biểu tượng @ hoặc # theo phong cách Discord */}
+      <div className="w-8 h-8 rounded-xs bg-uupm-page border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink-soft shrink-0">
+        {isGroup ? (
+          <Hash className="w-4 h-4 text-uupm-ink" />
+        ) : (
+          <AtSign className="w-4 h-4 text-uupm-ink" />
+        )}
+      </div>
+
+      {/* Khung Avatar nhỏ */}
+      <div className="relative shrink-0 hidden sm:block">
+        <div className="w-7 h-7 rounded-xs border-2 border-uupm-line shadow-uupm-active flex items-center justify-center overflow-hidden bg-uupm-accent-soft">
+          {isGroup ? (
+            <Users className="w-3.5 h-3.5 text-uupm-ink" />
+          ) : partner?.avatarUrl ? (
+            <img
+              src={partner.avatarUrl}
+              alt={title}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <UserIcon className="w-3.5 h-3.5 text-uupm-ink" />
+          )}
+        </div>
+        {!isGroup && (
+          <span
+            className={cn(
+              "absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border border-uupm-line",
+              isOnline ? "bg-uupm-accent" : "bg-uupm-ink-muted"
+            )}
+          />
+        )}
+      </div>
+
+      {/* Tên và Trạng thái */}
+      <div className="min-w-0">
+        <div className="flex items-center gap-1.5">
+          <h2 className="text-sm font-black text-uupm-ink truncate leading-none">
+            {title}
+          </h2>
+          {!isGroup && <span className="text-xs">🌸</span>}
+        </div>
+
+        {/* Chỉ báo đang soạn tin hoặc trạng thái */}
+        {isAnyoneTyping ? (
+          <div className="flex items-center gap-1 text-[11px] font-bold text-uupm-accent animate-pulse">
+            <span>{typingText}</span>
+            <span className="inline-flex gap-0.5">
+              <span className="w-1 h-1 rounded-full bg-uupm-accent animate-bounce" />
+              <span className="w-1 h-1 rounded-full bg-uupm-accent animate-bounce [animation-delay:0.2s]" />
+              <span className="w-1 h-1 rounded-full bg-uupm-accent animate-bounce [animation-delay:0.4s]" />
+            </span>
+          </div>
+        ) : (
+          <p className="text-[10px] font-bold text-uupm-ink-muted">
+            {isGroup
+              ? `${memberCount} thành viên`
+              : isOnline
+              ? "Trực tuyến"
+              : "Ngoại tuyến"}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Ô tìm kiếm tin nhắn trong hội thoại (ẩn dưới breakpoint lg).
+ * Tách khỏi ChatHeader để giảm độ phức tạp hàm cha.
+ */
+function ChatHeaderSearchBox({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="relative hidden lg:block">
+      <Search className="w-3.5 h-3.5 text-uupm-ink-muted absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Tìm kiếm..."
+        aria-label="Tìm kiếm tin nhắn trong cuộc trò chuyện"
+        className="w-32 xl:w-40 pl-2.5 pr-7 py-1 text-xs font-semibold bg-uupm-page rounded-xs border-2 border-uupm-line shadow-uupm-active focus:bg-uupm-surface focus:outline-none focus:w-48 transition-[background-color,box-shadow,transform]"
+      />
+    </div>
+  );
+}
+
+/**
  * Thanh tiêu đề hội thoại kiểu Discord (ChatHeader)
  * Thiết kế Tactile Neo-Brutalist chuẩn UI/UX Pro Max:
  * - Biểu tượng @ hoặc # trong khung tactile viền 2px #2d3748
@@ -69,151 +232,102 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
       ? `${activeTypers[0].username} đang soạn tin...`
       : `${activeTypers.length} người đang soạn tin...`;
 
+  // Cấu hình dàn nút tác vụ bên phải — render vòng lặp để giảm độ phức tạp hàm cha
+  const toolbarActions: Array<{
+    label: string;
+    icon: React.ReactNode;
+    onClick: () => void;
+    className?: string;
+  }> = [
+    {
+      label: "Bắt đầu cuộc gọi thoại",
+      icon: <Phone className="w-4 h-4 text-uupm-ink-soft" />,
+      onClick: () =>
+        toast.info(`Đang kết nối cuộc gọi thoại với ${title}...`, "Cuộc gọi thoại"),
+    },
+    {
+      label: "Bắt đầu cuộc gọi video",
+      icon: <Video className="w-4 h-4 text-uupm-ink-soft" />,
+      onClick: () =>
+        toast.info(`Đang kết nối cuộc gọi video với ${title}...`, "Cuộc gọi video"),
+    },
+    {
+      label: "Tin nhắn đã ghim",
+      icon: <Pin className="w-4 h-4 text-uupm-ink-soft" />,
+      onClick: () =>
+        toast.info("Hiện chưa có tin nhắn nào được ghim trong hội thoại.", "Tin nhắn đã ghim"),
+      className: "hidden sm:flex",
+    },
+    {
+      label: "Thêm bạn bè vào nhóm",
+      icon: <UserPlus className="w-4 h-4 text-uupm-ink-soft" />,
+      onClick: () =>
+        toast.info("Mời bạn bè vào cuộc trò chuyện đang được hoàn thiện.", "Thêm bạn vào nhóm"),
+      className: "hidden sm:flex",
+    },
+  ];
+
+  // Nút ẩn sau breakpoint xl (Hộp thư, Trợ giúp) — nhóm riêng cho gọn JSX
+  const overflowActions: Array<{
+    label: string;
+    icon: React.ReactNode;
+    onClick: () => void;
+  }> = [
+    {
+      label: "Hộp thư",
+      icon: <Inbox className="w-4 h-4 text-uupm-ink-soft" />,
+      onClick: () => toast.info("Hộp thư thông báo hiện không có tin mới.", "Hộp thư"),
+    },
+    {
+      label: "Trợ giúp",
+      icon: <HelpCircle className="w-4 h-4 text-uupm-ink-soft" />,
+      onClick: () =>
+        toast.info(
+          "AppMessaging - Hệ thống nhắn tin thời gian thực Neo-Brutalist Discord Style.",
+          "Trợ giúp"
+        ),
+    },
+  ];
+
   return (
     <div className="h-14 px-3 md:px-4 bg-uupm-surface border-b-2 border-uupm-line flex items-center justify-between shrink-0 select-none z-10 gap-2">
-      {/* 1. Phần thông tin đối tác bên trái */}
-      <div className="flex items-center gap-2.5 min-w-0">
-        {/* Nút Quay lại trên Mobile */}
-        {onBack && (
-          <button
-            type="button"
-            onClick={onBack}
-            className="md:hidden w-8 h-8 rounded-xs bg-uupm-surface border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink hover:bg-uupm-surface-hover cursor-pointer"
-            aria-label="Quay lại danh sách hội thoại"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-        )}
+      {/* 1. Phần thông tin đối tác bên trái — tách sang ChatHeaderPartnerInfo */}
+      <ChatHeaderPartnerInfo
+        isGroup={isGroup}
+        title={title}
+        partner={partner}
+        isOnline={isOnline}
+        isAnyoneTyping={isAnyoneTyping}
+        typingText={typingText}
+        memberCount={conversation.participants.length}
+        onBack={onBack}
+      />
 
-        {/* Biểu tượng @ hoặc # theo phong cách Discord */}
-        <div className="w-8 h-8 rounded-xs bg-uupm-page border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink-soft shrink-0">
-          {isGroup ? (
-            <Hash className="w-4 h-4 text-uupm-ink" />
-          ) : (
-            <AtSign className="w-4 h-4 text-uupm-ink" />
-          )}
-        </div>
-
-        {/* Khung Avatar nhỏ */}
-        <div className="relative shrink-0 hidden sm:block">
-          <div className="w-7 h-7 rounded-xs border-2 border-uupm-line shadow-uupm-active flex items-center justify-center overflow-hidden bg-uupm-accent-soft">
-            {isGroup ? (
-              <Users className="w-3.5 h-3.5 text-uupm-ink" />
-            ) : partner?.avatarUrl ? (
-              <img
-                src={partner.avatarUrl}
-                alt={title}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <UserIcon className="w-3.5 h-3.5 text-uupm-ink" />
-            )}
-          </div>
-          {!isGroup && (
-            <span
-              className={cn(
-                "absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border border-uupm-line",
-                isOnline ? "bg-uupm-accent" : "bg-uupm-ink-muted"
-              )}
-            />
-          )}
-        </div>
-
-        {/* Tên và Trạng thái */}
-        <div className="min-w-0">
-          <div className="flex items-center gap-1.5">
-            <h2 className="text-sm font-black text-uupm-ink truncate leading-none">
-              {title}
-            </h2>
-            {!isGroup && <span className="text-xs">🌸</span>}
-          </div>
-
-          {/* Chỉ báo đang soạn tin hoặc trạng thái */}
-          {isAnyoneTyping ? (
-            <div className="flex items-center gap-1 text-[11px] font-bold text-uupm-accent animate-pulse">
-              <span>{typingText}</span>
-              <span className="inline-flex gap-0.5">
-                <span className="w-1 h-1 rounded-full bg-uupm-accent animate-bounce" />
-                <span className="w-1 h-1 rounded-full bg-uupm-accent animate-bounce [animation-delay:0.2s]" />
-                <span className="w-1 h-1 rounded-full bg-uupm-accent animate-bounce [animation-delay:0.4s]" />
-              </span>
-            </div>
-          ) : (
-            <p className="text-[10px] font-bold text-uupm-ink-muted">
-              {isGroup
-                ? `${conversation.participants.length} thành viên`
-                : isOnline
-                ? "Trực tuyến"
-                : "Ngoại tuyến"}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* 2. Dàn nút tác vụ bên phải kiểu Discord */}
+      {/* 2. Dàn nút tác vụ bên phải kiểu Discord — render từ toolbarActions config */}
       <div className="flex items-center gap-1.5 shrink-0">
-        {/* Nút chuyển đổi chế độ Sáng / Tối */}
         <ThemeToggle className="mr-0.5" />
 
-        {/* Nút Bắt đầu cuộc gọi thoại */}
-        <button
-          type="button"
-          onClick={() =>
-            toast.info(
-              `Đang kết nối cuộc gọi thoại với ${title}...`,
-              "Cuộc gọi thoại"
-            )
-          }
-          className="w-8 h-8 rounded-xs bg-uupm-surface hover:bg-uupm-surface-hover border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink cursor-pointer transition-[background-color,box-shadow,transform] active:translate-x-[1px] active:translate-y-[1px]"
-          title="Bắt đầu cuộc gọi thoại"
-          aria-label="Bắt đầu cuộc gọi thoại"
-        >
-          <Phone className="w-4 h-4 text-uupm-ink-soft" />
-        </button>
+        {toolbarActions.map((action) => (
+          <ChatHeaderActionButton
+            key={action.label}
+            icon={action.icon}
+            label={action.label}
+            onClick={action.onClick}
+            className={action.className}
+          />
+        ))}
 
-        {/* Nút Bắt đầu cuộc gọi video */}
-        <button
-          type="button"
-          onClick={() =>
-            toast.info(
-              `Đang kết nối cuộc gọi video với ${title}...`,
-              "Cuộc gọi video"
-            )
-          }
-          className="w-8 h-8 rounded-xs bg-uupm-surface hover:bg-uupm-surface-hover border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink cursor-pointer transition-[background-color,box-shadow,transform] active:translate-x-[1px] active:translate-y-[1px]"
-          title="Bắt đầu cuộc gọi video"
-          aria-label="Bắt đầu cuộc gọi video"
-        >
-          <Video className="w-4 h-4 text-uupm-ink-soft" />
-        </button>
+        {overflowActions.map((action) => (
+          <ChatHeaderActionButton
+            key={action.label}
+            icon={action.icon}
+            label={action.label}
+            onClick={action.onClick}
+            className="hidden xl:flex"
+          />
+        ))}
 
-        {/* Nút Tin nhắn đã ghim */}
-        <button
-          type="button"
-          onClick={() =>
-            toast.info("Hiện chưa có tin nhắn nào được ghim trong hội thoại.", "Tin nhắn đã ghim")
-          }
-          className="w-8 h-8 rounded-xs bg-uupm-surface hover:bg-uupm-surface-hover border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink cursor-pointer transition-[background-color,box-shadow,transform] active:translate-x-[1px] active:translate-y-[1px] hidden sm:flex"
-          title="Tin nhắn đã ghim"
-          aria-label="Tin nhắn đã ghim"
-        >
-          <Pin className="w-4 h-4 text-uupm-ink-soft" />
-        </button>
-
-        {/* Nút Thêm bạn bè vào DM */}
-        <button
-          type="button"
-          onClick={() =>
-            toast.info("Mời bạn bè vào cuộc trò chuyện đang được hoàn thiện.", "Thêm bạn vào nhóm")
-          }
-          className="w-8 h-8 rounded-xs bg-uupm-surface hover:bg-uupm-surface-hover border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink cursor-pointer transition-[background-color,box-shadow,transform] active:translate-x-[1px] active:translate-y-[1px] hidden sm:flex"
-          title="Thêm bạn bè vào nhóm"
-          aria-label="Thêm bạn bè vào nhóm"
-        >
-          <UserPlus className="w-4 h-4 text-uupm-ink-soft" />
-        </button>
-
-        {/* Nút BẬT/TẮT Bảng Hồ Sơ Người Dùng (Cột 3 Toggle) */}
+        {/* Nút bật/tắt bảng hồ sơ Cột 3 (trạng thái active đổi màu riêng) */}
         {onToggleProfile && (
           <button
             type="button"
@@ -231,45 +345,8 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
           </button>
         )}
 
-        {/* Ô tìm kiếm tin nhắn trong hội thoại */}
-        <div className="relative hidden lg:block">
-          <Search className="w-3.5 h-3.5 text-uupm-ink-muted absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Tìm kiếm..."
-            aria-label="Tìm kiếm tin nhắn trong cuộc trò chuyện"
-            className="w-32 xl:w-40 pl-2.5 pr-7 py-1 text-xs font-semibold bg-uupm-page rounded-xs border-2 border-uupm-line shadow-uupm-active focus:bg-uupm-surface focus:outline-none focus:w-48 transition-[background-color,box-shadow,transform]"
-          />
-        </div>
-
-        {/* Nút Hộp thư thông báo */}
-        <button
-          type="button"
-          onClick={() => toast.info("Hộp thư thông báo hiện không có tin mới.", "Hộp thư")}
-          className="w-8 h-8 rounded-xs bg-uupm-surface hover:bg-uupm-surface-hover border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink cursor-pointer transition-[background-color,box-shadow,transform] active:translate-x-[1px] active:translate-y-[1px] hidden xl:flex"
-          title="Hộp thư"
-          aria-label="Hộp thư"
-        >
-          <Inbox className="w-4 h-4 text-uupm-ink-soft" />
-        </button>
-
-        {/* Nút Trợ giúp */}
-        <button
-          type="button"
-          onClick={() =>
-            toast.info(
-              "AppMessaging - Hệ thống nhắn tin thời gian thực Neo-Brutalist Discord Style.",
-              "Trợ giúp"
-            )
-          }
-          className="w-8 h-8 rounded-xs bg-uupm-surface hover:bg-uupm-surface-hover border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink cursor-pointer transition-[background-color,box-shadow,transform] active:translate-x-[1px] active:translate-y-[1px] hidden xl:flex"
-          title="Trợ giúp"
-          aria-label="Trợ giúp"
-        >
-          <HelpCircle className="w-4 h-4 text-uupm-ink-soft" />
-        </button>
+        {/* Ô tìm kiếm tin nhắn trong hội thoại — tách sang ChatHeaderSearchBox */}
+        <ChatHeaderSearchBox value={searchQuery} onChange={setSearchQuery} />
       </div>
     </div>
   );
