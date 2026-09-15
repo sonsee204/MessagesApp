@@ -264,6 +264,16 @@ export const NotificationListModal: React.FC = () => {
   // onClose={closeModal} ở thẻ <dialog> lo phần đồng bộ state — KHÔNG cần
   // handler bàn phím thủ công (trước đây gọi closeModal 2 lần mỗi lần Esc).
   const dialogRef = useRef<HTMLDialogElement>(null);
+  // Đảm bảo modal luôn bắt đầu ở trạng thái ĐÓNG khi component mount.
+  // Trạng thái isModalOpen của Zustand có thể bị kẹt `true` qua Vite HMR
+  // (cùng một tab trình duyệt) hoặc do socket đẩy thông báo, khiến dialog
+  // tự showModal() ngay khi remount mà không có thao tác người dùng. Reset
+  // này chặn modal "tự hiện lên" và giữ trạng thái đóng sau khi reload.
+  useEffect(() => {
+    closeModal();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
