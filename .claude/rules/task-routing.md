@@ -10,7 +10,7 @@
 | :--- | :--- | :--- | :--- | :--- |
 | **Tier 1 (Nhẹ)** | Đọc file, tra cứu regex/text, tóm tắt dữ liệu, giải thích cú pháp, trace log | `quick-worker` | `haiku` (`BAi/qwen3.8-flash`) | Tra cứu đơn lẻ |
 | **Tier 2 (Chuẩn)** | Viết CRUD, tạo API endpoint, dựng React component, sửa bug thông thường | `feature-builder` | `sonnet` (`ag/gemini-3.8-flash-high`) | `create-api-endpoint.md`, `create-component.md`, `fix-bug.md` |
-| **Tier 3 (Phức tạp)** | Thiết kế kiến trúc, audit bảo mật, transaction DB đa collection, xử lý race-condition, refactor diện rộng | `deep-architect` | `opus` (`BAi/deepseek-v4.1-flash`) | `code-review-audit.md` |
+| **Tier 3 (Phức tạp)** | Thiết kế kiến trúc, audit bảo mật, transaction DB đa collection, xử lý race-condition, refactor diện rộng, soạn kế hoạch triển khai | `deep-architect` | `opus` (`BAi/deepseek-v4.1-flash`) | `code-review-audit.md`, `write-implementation-plan.md` |
 
 ---
 
