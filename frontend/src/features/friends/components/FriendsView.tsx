@@ -6,27 +6,16 @@ import {
   UserCheck,
   UserPlus,
   AlertTriangle,
-  ArrowLeft,
   RefreshCw,
 } from "lucide-react";
 import { useFriendStore } from "../stores/friend.store";
-import type { FriendsTab } from "../types/friend.types";
-import { FriendItem } from "./FriendItem";
-import { FriendRequestItem } from "./FriendRequestItem";
 import { BlockedUserItem } from "./BlockedUserItem";
 import { AddFriendTab } from "./AddFriendTab";
+import { FriendListSection } from "./FriendListSection";
+import { PendingRequestsTab } from "./PendingRequestsTab";
+import { FriendsHeader } from "./FriendsHeader";
 import { Button } from "../../../components/ui/Button";
-import { ThemeToggle } from "../../../components/ui/ThemeToggle";
 import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
-
-// Cấu hình thanh tab để tránh lặp className dài dòng (rule no-duplicate-jsx).
-const NAV_TABS: { key: FriendsTab; label: string; highlight?: boolean }[] = [
-  { key: "online", label: "Trực tuyến" },
-  { key: "all", label: "Tất cả" },
-  { key: "pending", label: "Đang chờ" },
-  { key: "blocked", label: "Đã chặn" },
-  { key: "add", label: "Thêm Bạn", highlight: true },
-];
 
 export interface FriendsViewProps {
   onStartChat: (userId: string) => void;
@@ -45,7 +34,6 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   const {
     friends,
     receivedRequests,
-    sentRequests,
     blockedUsers,
     activeTab,
     isLoading,
@@ -54,9 +42,6 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
     setActiveTab,
     setSearchQuery,
     fetchAll,
-    acceptFriendRequest,
-    rejectFriendRequest,
-    cancelFriendRequest,
     removeFriend,
     blockUser,
     unblockUser,
@@ -128,76 +113,18 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   return (
     <div className="flex-1 flex flex-col h-full bg-uupm-surface overflow-hidden">
       {/* ================= HEADER: TAB NAVIGATION DISCORD ================= */}
-      <header className="h-14 border-b-2 border-uupm-line px-4 flex items-center justify-between shrink-0 bg-uupm-surface z-10 gap-2">
-        <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar py-1">
-          {/* Nút quay lại trên màn hình di động */}
-          {onBack && (
-            <button
-              type="button"
-              onClick={onBack}
-              className="md:hidden w-8 h-8 rounded-xs border-2 border-uupm-line bg-uupm-surface hover:bg-uupm-surface-hover flex items-center justify-center text-uupm-ink mr-1 shrink-0 cursor-pointer shadow-uupm-active active:translate-x-[1px] active:translate-y-[1px]"
-              title="Quay lại danh sách"
-              aria-label="Quay lại danh sách"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </button>
-          )}
-
-          {/* Nhãn chính */}
-          <div className="flex items-center gap-2 pr-2 text-uupm-ink font-black shrink-0">
-            <Users className="w-5 h-5" />
-            <span className="text-sm uppercase tracking-wider hidden md:inline">Bạn Bè</span>
-          </div>
-
-          {/* Phân cách dọc */}
-          <div className="h-5 w-[2px] bg-uupm-line/20 shrink-0 hidden sm:block" />
-
-          {/* Các tab: được render từ NAV_TABS config, tránh lặp JSX */}
-          {NAV_TABS.map((tab) => {
-            // Tính số lượng badge hiển thị trên mỗi tab
-            const countMap: Record<string, number> = {
-              online: onlineFriends.length,
-              all: friends.length,
-              pending: receivedRequests.length,
-              blocked: blockedUsers.length,
-            };
-            const count = countMap[tab.key] ?? 0;
-
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setActiveTab(tab.key)}
-                className={`px-3 py-1 rounded-xs text-xs font-black shrink-0 cursor-pointer transition-[background-color,box-shadow,transform] flex items-center gap-1.5 ${
-                  tab.highlight
-                    ? `border-2 ${
-                        activeTab === tab.key
-                          ? "bg-uupm-accent text-uupm-accent-text border-uupm-line shadow-uupm-active"
-                          : "bg-uupm-accent/20 text-uupm-accent-text border-transparent hover:border-uupm-line hover:bg-uupm-accent/40"
-                      }`
-                    : activeTab === tab.key
-                      ? "bg-uupm-page border-2 border-uupm-line shadow-uupm-active text-uupm-ink"
-                      : "text-uupm-ink-muted hover:text-uupm-ink hover:bg-uupm-surface-hover"
-                }`}
-              >
-                {tab.highlight && <UserPlus className="w-3.5 h-3.5" />}
-                <span>{tab.label}</span>
-                {/* Badge số lượng: pending hiển thị badge đỏ nếu > 0, các tab khác hiện count thường */}
-                {tab.key === "pending" && count > 0 ? (
-                  <span className="px-1.5 py-0.2 rounded-full bg-uupm-danger text-uupm-danger-ink text-[10px] font-black">{count}</span>
-                ) : !tab.highlight && (
-                  <span className="text-[10px] opacity-75 font-bold">({count})</span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Phía bên phải: nút đổi Theme sáng/tối đồng bộ với ChatHeader */}
-        <div className="flex items-center gap-2 shrink-0">
-          <ThemeToggle />
-        </div>
-      </header>
+      <FriendsHeader
+        activeTab={activeTab}
+        counts={{
+          online: onlineFriends.length,
+          all: friends.length,
+          pending: receivedRequests.length,
+          blocked: blockedUsers.length,
+          add: 0,
+        }}
+        onSelectTab={setActiveTab}
+        onBack={onBack}
+      />
 
       {/* ================= NỘI DUNG CHÍNH (BODY) ================= */}
       <div className="flex-1 overflow-y-auto flex flex-col">
@@ -263,11 +190,14 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
 
             {/* Trạng thái 2 & 4: Danh sách dữ liệu cho từng tab */}
             {!isLoading && !error && activeTab ==="online" && (
-              <div className="flex-1 flex flex-col">
-                <div className="text-xs font-black uppercase tracking-wider text-uupm-ink-muted mb-2">
-                  Trực tuyến — {filteredFriends.length}
-                </div>
-                {filteredFriends.length === 0 ? (
+              <FriendListSection
+                title={`Trực tuyến — ${filteredFriends.length}`}
+                friends={filteredFriends}
+                onStartChat={onStartChat}
+                onOpenProfile={onOpenProfile}
+                onRemoveFriend={(id) => setUnfriendConfirmId(id)}
+                onBlockUser={(id) => setBlockConfirmId(id)}
+                emptyState={
                   <div className="flex-1 flex flex-col items-center justify-center text-center p-8 border-2 border-dashed border-uupm-line/30 rounded-xs my-auto">
                     <UserCheck className="w-12 h-12 text-uupm-ink-muted mb-3 stroke-[1.5]" />
                     <p className="text-sm font-black text-uupm-ink">
@@ -277,29 +207,19 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                       Khi bạn bè của bạn đăng nhập, họ sẽ xuất hiện tại đây.
                     </p>
                   </div>
-                ) : (
-                  <div className="border-2 border-uupm-line rounded-xs bg-uupm-surface divide-y divide-uupm-line/20 shadow-uupm-2">
-                    {filteredFriends.map((f) => (
-                      <FriendItem
-                        key={f.friendshipId}
-                        friend={f}
-                        onStartChat={onStartChat}
-                        onOpenProfile={onOpenProfile}
-                        onRemoveFriend={(id) => setUnfriendConfirmId(id)}
-                        onBlockUser={(id) => setBlockConfirmId(id)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
+                }
+              />
             )}
 
             {!isLoading && !error && activeTab ==="all" && (
-              <div className="flex-1 flex flex-col">
-                <div className="text-xs font-black uppercase tracking-wider text-uupm-ink-muted mb-2">
-                  Tất cả bạn bè — {filteredFriends.length}
-                </div>
-                {filteredFriends.length === 0 ? (
+              <FriendListSection
+                title={`Tất cả bạn bè — ${filteredFriends.length}`}
+                friends={filteredFriends}
+                onStartChat={onStartChat}
+                onOpenProfile={onOpenProfile}
+                onRemoveFriend={(id) => setUnfriendConfirmId(id)}
+                onBlockUser={(id) => setBlockConfirmId(id)}
+                emptyState={
                   <div className="flex-1 flex flex-col items-center justify-center text-center p-8 border-2 border-dashed border-uupm-line/30 rounded-xs my-auto">
                     <Users className="w-12 h-12 text-uupm-ink-muted mb-3 stroke-[1.5]" />
                     <p className="text-sm font-black text-uupm-ink">Chưa có bạn bè nào</p>
@@ -317,74 +237,12 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                       Thêm bạn ngay
                     </Button>
                   </div>
-                ) : (
-                  <div className="border-2 border-uupm-line rounded-xs bg-uupm-surface divide-y divide-uupm-line/20 shadow-uupm-2">
-                    {filteredFriends.map((f) => (
-                      <FriendItem
-                        key={f.friendshipId}
-                        friend={f}
-                        onStartChat={onStartChat}
-                        onOpenProfile={onOpenProfile}
-                        onRemoveFriend={(id) => setUnfriendConfirmId(id)}
-                        onBlockUser={(id) => setBlockConfirmId(id)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
+                }
+              />
             )}
 
             {!isLoading && !error && activeTab ==="pending" && (
-              <div className="space-y-6">
-                {/* Nhóm 1: Lời mời nhận được */}
-                <div>
-                  <div className="text-xs font-black uppercase tracking-wider text-uupm-ink-muted mb-2">
-                    Lời mời nhận được — {receivedRequests.length}
-                  </div>
-                  {receivedRequests.length === 0 ? (
-                    <div className="p-4 border-2 border-dashed border-uupm-line/20 rounded-xs text-center text-xs text-uupm-ink-muted font-bold">
-                      Không có lời mời kết bạn nào nhận được.
-                    </div>
-                  ) : (
-                    <div className="border-2 border-uupm-line rounded-xs bg-uupm-surface divide-y divide-uupm-line/20 shadow-uupm-2">
-                      {receivedRequests.map((r) => (
-                        <FriendRequestItem
-                          key={r._id || r.id}
-                          request={r}
-                          type="received"
-                          onAccept={acceptFriendRequest}
-                          onReject={rejectFriendRequest}
-                          onOpenProfile={onOpenProfile}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Nhóm 2: Lời mời đã gửi */}
-                <div>
-                  <div className="text-xs font-black uppercase tracking-wider text-uupm-ink-muted mb-2">
-                    Lời mời đã gửi — {sentRequests.length}
-                  </div>
-                  {sentRequests.length === 0 ? (
-                    <div className="p-4 border-2 border-dashed border-uupm-line/20 rounded-xs text-center text-xs text-uupm-ink-muted font-bold">
-                      Không có lời mời kết bạn nào đang chờ duyệt.
-                    </div>
-                  ) : (
-                    <div className="border-2 border-uupm-line rounded-xs bg-uupm-surface divide-y divide-uupm-line/20 shadow-uupm-2">
-                      {sentRequests.map((r) => (
-                        <FriendRequestItem
-                          key={r._id || r.id}
-                          request={r}
-                          type="sent"
-                          onCancel={cancelFriendRequest}
-                          onOpenProfile={onOpenProfile}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
+              <PendingRequestsTab onOpenProfile={onOpenProfile} />
             )}
 
             {!isLoading && !error && activeTab ==="blocked" && (
