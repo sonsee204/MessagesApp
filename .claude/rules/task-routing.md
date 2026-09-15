@@ -67,3 +67,11 @@ RỦI RO / CÒN TỒN TẠI:
 2. **Làm Thay Subagent**: Phiên chính tự ý đọc và sửa các file thuộc trách nhiệm của subagent mà không ủy quyền.
 3. **Thử Sửa Hú Họa (Guess-and-Check Loop)**: Subagent liên tục sửa và chạy lại lệnh lỗi quá 2 lần mà không phân tích nguyên nhân gốc rễ.
 4. **Chat Thừa Thãi**: Đưa lời chào hỏi, cảm ơn, nhận xét ngoài lề vào kết quả trả về của subagent.
+
+---
+
+## 7. Quy Tắc Git Workflow (Không Dùng Worktree)
+- **Cấm tạo worktree**: Tuyệt đối không gọi `EnterWorktree`. Mọi tác vụ phải thực hiện trên cùng một checkout (working directory chính).
+- **Cách tách biệt công việc**: Tạo branch mới từ `main` (`git checkout -b <tên-branch>`) để làm việc độc lập; không dùng worktree để cô lập.
+- **Hoàn tất**: Merge branch vào `main` (ưu tiên fast-forward hoặc squash với message chuẩn), sau đó xoá branch (`git branch -d <tên-branch>`).
+- **Lý do**: Worktree để lại thư mục vật lý bị khoá bởi OS/session cũ, gây rác và không thể xoá sạch qua git, gây lộn xộn cây thư mục. Branch tối giản hơn và dễ dọn dẹp.
