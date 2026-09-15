@@ -91,6 +91,70 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     // Sinh ID định danh cho input để liên kết với nhãn và thông báo lỗi
     const inputId = resolveInputId(id, label);
 
+    // Giao diện đã tính sẵn (presentational) — tách để giảm complexity của forwardRef cha
+    return (
+      <InputField
+        ref={ref}
+        inputId={inputId}
+        inputType={inputType}
+        error={error}
+        helperText={helperText}
+        leftIcon={leftIcon}
+        isPassword={isPassword}
+        isValid={isValid}
+        disabled={disabled}
+        showPassword={showPassword}
+        onTogglePassword={() => setShowPassword((prev) => !prev)}
+        className={buildInputClassName({ leftIcon, isPassword, isValid, error, disabled, className })}
+        label={label}
+        required={props.required}
+        describedById={
+          error ? `${inputId}-error` : helperText ? `${inputId}-helper` : undefined
+        }
+        {...props}
+      />
+    );
+  }
+);
+
+Input.displayName = "Input";
+
+/**
+ * Thành phần trình bày (presentational) của Input — nhận mọi giá trị đã tính sẵn
+ * từ forwardRef cha. Tách riêng để chuyển các nhánh điều kiện render ra khỏi
+ * hàm Input (rule no-high-complexity-react-function).
+ */
+const InputField = React.forwardRef<
+  HTMLInputElement,
+  Omit<InputProps, "isPassword" | "isValid"> & {
+    inputId: string;
+    inputType: string;
+    showPassword: boolean;
+    onTogglePassword: () => void;
+    describedById?: string;
+    label?: string;
+  }
+>(
+  (
+    {
+      inputId,
+      inputType,
+      error,
+      helperText,
+      leftIcon,
+      isPassword,
+      isValid,
+      disabled,
+      showPassword,
+      onTogglePassword,
+      className,
+      label,
+      required,
+      describedById,
+      ...props
+    },
+    ref
+  ) => {
     return (
       <div className="w-full space-y-1.5 text-left">
         {/* Nhãn trường dữ liệu (Label in hoa, phân cấp rõ nét) */}
@@ -100,7 +164,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             className="block text-xs font-black text-uupm-ink tracking-wider uppercase select-none"
           >
             {label}
-            {props.required && <span className="text-uupm-danger-text ml-1 font-black">*</span>}
+            {required && <span className="text-uupm-danger-text ml-1 font-black">*</span>}
           </label>
         )}
 
@@ -120,14 +184,8 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             type={inputType}
             disabled={disabled}
             aria-invalid={Boolean(error)}
-            aria-describedby={
-              error
-                ? `${inputId}-error`
-                : helperText
-                ? `${inputId}-helper`
-                : undefined
-            }
-            className={buildInputClassName({ leftIcon, isPassword, isValid, error, disabled, className })}
+            aria-describedby={describedById}
+            className={className}
             {...props}
           />
 
@@ -143,7 +201,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             <button
               type="button"
               disabled={disabled}
-              onClick={() => setShowPassword((prev) => !prev)}
+              onClick={onTogglePassword}
               aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
               className="absolute right-1.5 w-10 h-10 flex items-center justify-center text-uupm-ink-muted hover:text-uupm-ink active:text-uupm-accent transition-colors rounded-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             >
@@ -175,4 +233,4 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
   }
 );
 
-Input.displayName = "Input";
+InputField.displayName = "InputField";
