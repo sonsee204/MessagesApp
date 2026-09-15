@@ -17,6 +17,8 @@ export const AttachmentSchema = z.object({
   name: z.string().trim().min(1, "Tên tệp không được để trống"),
   size: z.number().min(0, "Kích thước tệp không được âm"),
   mimeType: z.string().trim().min(1, "MimeType không được để trống"),
+  thumbnailUrl: z.string().url().optional(), // Poster video Cloudinary (optional)
+  publicId: z.string().optional(),           // ID file Cloudinary (optional)
 });
 
 /**

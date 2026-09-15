@@ -1,10 +1,13 @@
 import { Schema, model, Document, Types, Model } from "mongoose";
 
+// Trường attachment đính kèm trong tin nhắn (ảnh/video/file).
 export interface IAttachment {
-  url: string;
-  name: string;
-  size: number;
-  mimeType: string;
+  url: string;          // URL file trên Cloudinary
+  name: string;         // Tên file gốc
+  size: number;         // Kích thước bytes
+  mimeType: string;     // MIME type
+  thumbnailUrl?: string; // Poster frame video do Cloudinary trả (thumbnail_url)
+  publicId?: string;    // Định danh file trên Cloudinary (dùng xoá sau này)
 }
 
 export interface IMessage extends Document {
@@ -27,6 +30,8 @@ const AttachmentSchema = new Schema<IAttachment>(
     name: { type: String, required: true, trim: true },
     size: { type: Number, required: true, min: 0 },
     mimeType: { type: String, required: true, trim: true },
+    thumbnailUrl: { type: String, default: null }, // Poster video Cloudinary (optional)
+    publicId: { type: String, default: null },      // ID file Cloudinary (optional)
   },
   { _id: false }
 );
