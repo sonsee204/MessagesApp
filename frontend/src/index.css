@@ -179,6 +179,18 @@
     font-family: "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   }
 
+  /* Khôi phục hành vi mặc định của native <dialog>: dialog CHƯA mở phải ẩn.
+     UA định nghĩa `dialog:not([open]) { display: none }`, nhưng các class tiện ích
+     của dialog (Pattern A: `flex items-center justify-center`, Settings: `flex flex-col`)
+     sinh ra `display: flex` ở tầng author ⇒ đè lên rule UA ⇒ dialog ĐÓNG vẫn hiện ra,
+     phủ lên main, không có ::backdrop và bấm nút đóng không ẩn được.
+     Hệ quả của commit ddd8150 (đổi từ <div> mount/unmount sang <dialog> luôn-mount).
+     Dùng !important trong @layer base để chắc chắn thắng display:flex mà không phải
+     xoá class flex (vẫn cần khi dialog mở để căn giữa nội dung). */
+  dialog:not([open]) {
+    display: none !important;
+  }
+
   /* Khay toast dùng popover="manual" để lên top-layer (không bị <dialog>:modal che).
      Reset các giá trị UA mặc định của [popover] (inset:0 + margin:auto +
      width/height:fit-content + viền/nền/màu mặc định) về auto/0/transparent.
