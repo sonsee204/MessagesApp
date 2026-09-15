@@ -130,7 +130,11 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
                   onSelectConversation(conv.id);
                   onClose();
                 }}
-                className="p-2.5 bg-uupm-page hover:bg-uupm-surface-hover border-2 border-uupm-line rounded-xs shadow-uupm-active flex items-center justify-between cursor-pointer transition-colors w-full text-left bg-transparent border-0 p-2.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-uupm-accent"
+                // Bọc qua cn() và bỏ các class trùng (bg-transparent/border-0/p-2.5 lặp)
+                // để nền + viền thẻ hội thoại hiển thị đúng thứ tự chủ đích.
+                className={cn(
+                  "p-2.5 bg-uupm-page hover:bg-uupm-surface-hover border-2 border-uupm-line rounded-xs shadow-uupm-active flex items-center justify-between cursor-pointer transition-colors w-full text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-uupm-accent"
+                )}
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="w-8 h-8 rounded-xs bg-uupm-accent border-2 border-uupm-line flex items-center justify-center shrink-0">

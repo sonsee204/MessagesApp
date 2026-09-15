@@ -193,8 +193,16 @@ function FriendsBody(props: {
 }) {
   const { activeTab, isLoading, error, searchQuery, setSearchQuery } = props;
 
-  // Tab Thêm bạn không dùng body danh sách chung
-  if (activeTab === "add") return <AddFriendTab />;
+  // Tab Thêm bạn không dùng body danh sách chung.
+  // Bọc trong khung cuộn: cha là overflow-hidden nên nếu trả về trực tiếp,
+  // danh sách kết quả dài sẽ bị cắt và không cuộn tới được.
+  if (activeTab === "add") {
+    return (
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        <AddFriendTab />
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 overflow-y-auto flex flex-col">

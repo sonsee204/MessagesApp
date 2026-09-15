@@ -16,7 +16,7 @@ interface AuthPageProps {
  */
 export const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
   return (
-    <div className="min-h-screen bg-uupm-page text-uupm-ink flex flex-col justify-between selection:bg-uupm-accent selection:text-uupm-accent-text">
+    <div className="min-h-dvh bg-uupm-page text-uupm-ink flex flex-col justify-between selection:bg-uupm-accent selection:text-uupm-accent-text">
       {/* Header thanh điều hướng thương hiệu */}
       <header className="border-b-2 border-uupm-line bg-uupm-surface/90 backdrop-blur-md sticky top-0 z-40 px-6 py-3.5 shadow-sm">
         <div className="max-w-6xl mx-auto flex items-center justify-between">

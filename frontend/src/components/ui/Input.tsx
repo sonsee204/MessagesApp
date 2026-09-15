@@ -108,8 +108,12 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         className={buildInputClassName({ leftIcon, isPassword, isValid, error, disabled, className })}
         label={label}
         required={props.required}
+        // Chỉ ghép id khi thực sự có inputId, tránh sinh ra chuỗi "undefined-error"
+        // khi component không được truyền cả id lẫn label.
         describedById={
-          error ? `${inputId}-error` : helperText ? `${inputId}-helper` : undefined
+          error && inputId ? `${inputId}-error`
+            : helperText && inputId ? `${inputId}-helper`
+            : undefined
         }
         {...props}
       />
