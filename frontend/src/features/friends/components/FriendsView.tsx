@@ -10,12 +10,23 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useFriendStore } from "../stores/friend.store";
+import type { FriendsTab } from "../types/friend.types";
 import { FriendItem } from "./FriendItem";
 import { FriendRequestItem } from "./FriendRequestItem";
 import { BlockedUserItem } from "./BlockedUserItem";
 import { AddFriendTab } from "./AddFriendTab";
 import { Button } from "../../../components/ui/Button";
 import { ThemeToggle } from "../../../components/ui/ThemeToggle";
+import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
+
+// Cấu hình thanh tab để tránh lặp className dài dòng (rule no-duplicate-jsx).
+const NAV_TABS: { key: FriendsTab; label: string; highlight?: boolean }[] = [
+  { key: "online", label: "Trực tuyến" },
+  { key: "all", label: "Tất cả" },
+  { key: "pending", label: "Đang chờ" },
+  { key: "blocked", label: "Đã chặn" },
+  { key: "add", label: "Thêm Bạn", highlight: true },
+];
 
 export interface FriendsViewProps {
   onStartChat: (userId: string) => void;
@@ -141,79 +152,45 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
           {/* Phân cách dọc */}
           <div className="h-5 w-[2px] bg-uupm-line/20 shrink-0 hidden sm:block" />
 
-          {/* Tab: Trực tuyến */}
-          <button
-            type="button"
-            onClick={() => setActiveTab("online")}
-            className={`px-3 py-1 rounded-xs text-xs font-black shrink-0 cursor-pointer transition-[background-color,box-shadow,transform] flex items-center gap-1.5 ${
-              activeTab === "online"
-                ? "bg-uupm-page border-2 border-uupm-line shadow-uupm-active text-uupm-ink"
-                : "text-uupm-ink-muted hover:text-uupm-ink hover:bg-uupm-surface-hover"
-            }`}
-          >
-            <span>Trực tuyến</span>
-            <span className="text-[10px] opacity-75 font-bold">({onlineFriends.length})</span>
-          </button>
+          {/* Các tab: được render từ NAV_TABS config, tránh lặp JSX */}
+          {NAV_TABS.map((tab) => {
+            // Tính số lượng badge hiển thị trên mỗi tab
+            const countMap: Record<string, number> = {
+              online: onlineFriends.length,
+              all: friends.length,
+              pending: receivedRequests.length,
+              blocked: blockedUsers.length,
+            };
+            const count = countMap[tab.key] ?? 0;
 
-          {/* Tab: Tất cả */}
-          <button
-            type="button"
-            onClick={() => setActiveTab("all")}
-            className={`px-3 py-1 rounded-xs text-xs font-black shrink-0 cursor-pointer transition-[background-color,box-shadow,transform] flex items-center gap-1.5 ${
-              activeTab === "all"
-                ? "bg-uupm-page border-2 border-uupm-line shadow-uupm-active text-uupm-ink"
-                : "text-uupm-ink-muted hover:text-uupm-ink hover:bg-uupm-surface-hover"
-            }`}
-          >
-            <span>Tất cả</span>
-            <span className="text-[10px] opacity-75 font-bold">({friends.length})</span>
-          </button>
-
-          {/* Tab: Đang chờ */}
-          <button
-            type="button"
-            onClick={() => setActiveTab("pending")}
-            className={`px-3 py-1 rounded-xs text-xs font-black shrink-0 cursor-pointer transition-[background-color,box-shadow,transform] flex items-center gap-1.5 ${
-              activeTab === "pending"
-                ? "bg-uupm-page border-2 border-uupm-line shadow-uupm-active text-uupm-ink"
-                : "text-uupm-ink-muted hover:text-uupm-ink hover:bg-uupm-surface-hover"
-            }`}
-          >
-            <span>Đang chờ</span>
-            {receivedRequests.length > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full bg-uupm-danger text-uupm-danger-ink text-[10px] font-black">
-                {receivedRequests.length}
-              </span>
-            )}
-          </button>
-
-          {/* Tab: Đã chặn */}
-          <button
-            type="button"
-            onClick={() => setActiveTab("blocked")}
-            className={`px-3 py-1 rounded-xs text-xs font-black shrink-0 cursor-pointer transition-[background-color,box-shadow,transform] flex items-center gap-1.5 ${
-              activeTab === "blocked"
-                ? "bg-uupm-page border-2 border-uupm-line shadow-uupm-active text-uupm-ink"
-                : "text-uupm-ink-muted hover:text-uupm-ink hover:bg-uupm-surface-hover"
-            }`}
-          >
-            <span>Đã chặn</span>
-            <span className="text-[10px] opacity-75 font-bold">({blockedUsers.length})</span>
-          </button>
-
-          {/* Tab: Thêm bạn (Màu xanh Accent nổi bật) */}
-          <button
-            type="button"
-            onClick={() => setActiveTab("add")}
-            className={`px-3 py-1 rounded-xs text-xs font-black shrink-0 cursor-pointer transition-[background-color,box-shadow,transform] flex items-center gap-1.5 border-2 ${
-              activeTab === "add"
-                ? "bg-uupm-accent text-uupm-accent-text border-uupm-line shadow-uupm-active"
-                : "bg-uupm-accent/20 text-uupm-accent-text border-transparent hover:border-uupm-line hover:bg-uupm-accent/40"
-            }`}
-          >
-            <UserPlus className="w-3.5 h-3.5" />
-            <span>Thêm Bạn</span>
-          </button>
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveTab(tab.key)}
+                className={`px-3 py-1 rounded-xs text-xs font-black shrink-0 cursor-pointer transition-[background-color,box-shadow,transform] flex items-center gap-1.5 ${
+                  tab.highlight
+                    ? `border-2 ${
+                        activeTab === tab.key
+                          ? "bg-uupm-accent text-uupm-accent-text border-uupm-line shadow-uupm-active"
+                          : "bg-uupm-accent/20 text-uupm-accent-text border-transparent hover:border-uupm-line hover:bg-uupm-accent/40"
+                      }`
+                    : activeTab === tab.key
+                      ? "bg-uupm-page border-2 border-uupm-line shadow-uupm-active text-uupm-ink"
+                      : "text-uupm-ink-muted hover:text-uupm-ink hover:bg-uupm-surface-hover"
+                }`}
+              >
+                {tab.highlight && <UserPlus className="w-3.5 h-3.5" />}
+                <span>{tab.label}</span>
+                {/* Badge số lượng: pending hiển thị badge đỏ nếu > 0, các tab khác hiện count thường */}
+                {tab.key === "pending" && count > 0 ? (
+                  <span className="px-1.5 py-0.2 rounded-full bg-uupm-danger text-uupm-danger-ink text-[10px] font-black">{count}</span>
+                ) : !tab.highlight && (
+                  <span className="text-[10px] opacity-75 font-bold">({count})</span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
         {/* Phía bên phải: nút đổi Theme sáng/tối đồng bộ với ChatHeader */}
@@ -445,78 +422,24 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
 
       {/* ================= MODAL XÁC NHẬN HỦY KẾT BẠN ================= */}
       {unfriendConfirmId && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Xác nhận hủy kết bạn"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs select-none"
-        >
-          <div className="w-full max-w-sm bg-uupm-surface border-3 border-uupm-line rounded-xs shadow-uupm-2 p-5 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center gap-3 text-uupm-danger-text mb-3">
-              <AlertTriangle className="w-6 h-6 shrink-0" />
-              <h3 className="font-black text-base text-uupm-ink">Hủy kết bạn</h3>
-            </div>
-            <p className="text-xs text-uupm-ink-soft font-medium leading-relaxed mb-5">
-              Bạn có chắc chắn muốn hủy kết bạn với người dùng này không? Hành động này sẽ xóa quan hệ bạn bè giữa hai người.
-            </p>
-            <div className="flex items-center justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setUnfriendConfirmId(null)}
-              >
-                Hủy bỏ
-              </Button>
-              <Button
-                type="button"
-                variant="danger"
-                size="sm"
-                onClick={handleConfirmRemoveFriend}
-              >
-                Xác nhận hủy
-              </Button>
-            </div>
-          </div>
-        </div>
+        <ConfirmDialog
+          title="Hủy kết bạn"
+          description="Bạn có chắc chắn muốn hủy kết bạn với người dùng này không? Hành động này sẽ xóa quan hệ bạn bè giữa hai người."
+          confirmLabel="Xác nhận hủy"
+          onConfirm={handleConfirmRemoveFriend}
+          onCancel={() => setUnfriendConfirmId(null)}
+        />
       )}
 
       {/* ================= MODAL XÁC NHẬN CHẶN NGƯỜI DÙNG ================= */}
       {blockConfirmId && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Xác nhận chặn người dùng"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs select-none"
-        >
-          <div className="w-full max-w-sm bg-uupm-surface border-3 border-uupm-line rounded-xs shadow-uupm-2 p-5 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center gap-3 text-uupm-danger-text mb-3">
-              <AlertTriangle className="w-6 h-6 shrink-0" />
-              <h3 className="font-black text-base text-uupm-ink">Chặn người dùng</h3>
-            </div>
-            <p className="text-xs text-uupm-ink-soft font-medium leading-relaxed mb-5">
-              Người dùng này sẽ bị hủy kết bạn và không thể gửi tin nhắn hoặc lời mời kết bạn cho bạn nữa.
-            </p>
-            <div className="flex items-center justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setBlockConfirmId(null)}
-              >
-                Hủy bỏ
-              </Button>
-              <Button
-                type="button"
-                variant="danger"
-                size="sm"
-                onClick={handleConfirmBlockUser}
-              >
-                Chặn người dùng
-              </Button>
-            </div>
-          </div>
-        </div>
+        <ConfirmDialog
+          title="Chặn người dùng"
+          description="Người dùng này sẽ bị hủy kết bạn và không thể gửi tin nhắn hoặc lời mời kết bạn cho bạn nữa."
+          confirmLabel="Chặn người dùng"
+          onConfirm={handleConfirmBlockUser}
+          onCancel={() => setBlockConfirmId(null)}
+        />
       )}
     </div>
   );

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import {
   X,
   User as UserIcon,
@@ -11,12 +11,11 @@ import { Button } from "../../../components/ui/Button";
 import { toast } from "../../../stores/toast.store";
 import { useAuthStore } from "../../../stores/auth.store";
 import { useChatStore } from "../../chat/stores/chat.store";
-import { useFriendStore } from "../../friends/stores/friend.store";
-import { friendService, RelationshipStatus } from "../services/friend.service";
 import { cn } from "../../../lib/utils";
 import { UserSettingsModal } from "./UserSettingsModal";
 import { ProfileTabs } from "./ProfileTabs";
 import { ProfileRelationshipBar } from "./ProfileRelationshipBar";
+import { useProfileRelationship } from "../hooks/useProfileRelationship";
 
 // Formatter ngày tham gia (tiếng Việt) — tạo 1 lần ở module scope (rule js-hoist-intl).
 const JOINED_DATE_FMT = new Intl.DateTimeFormat("vi-VN", {
@@ -51,33 +50,26 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
   const conversations = useChatStore((state) => state.conversations);
   const selectConversation = useChatStore((state) => state.selectConversation);
 
-  // Toàn bộ THAO TÁC GHI (gửi/chấp nhận/từ chối/hủy lời mời, hủy kết bạn, chặn/bỏ chặn)
-  // đều đi qua Friend Store thay vì gọi service trực tiếp, để danh sách bạn bè dùng chung
-  // trong store luôn được cập nhật đồng bộ (tránh tình trạng modal đã hủy kết bạn nhưng
-  // FriendsView vẫn còn hiển thị người đó). Các action này đã tự hiển thị toast thành công/thất bại.
-  const sendFriendRequest = useFriendStore((state) => state.sendFriendRequest);
-  const acceptFriendRequest = useFriendStore((state) => state.acceptFriendRequest);
-  const rejectFriendRequest = useFriendStore((state) => state.rejectFriendRequest);
-  const cancelFriendRequest = useFriendStore((state) => state.cancelFriendRequest);
-  const removeFriend = useFriendStore((state) => state.removeFriend);
-  const blockUser = useFriendStore((state) => state.blockUser);
-  const unblockUser = useFriendStore((state) => state.unblockUser);
+  const isMe = currentUser?.id === user?.id;
+
+  // Toàn bộ logic nghiệp vụ quan hệ bạn bè đã được tách sang hook useProfileRelationship
+  const {
+    relationshipStatus,
+    blockedByMe,
+    isLoadingStatus,
+    statusError,
+    setStatusReloadKey,
+    isSubmitting,
+    handleSendFriendRequest,
+    handleAcceptFriendRequest,
+    handleRejectFriendRequest,
+    handleConfirmRemoveFriend,
+    handleCancelFriendRequest,
+    handleToggleBlock,
+  } = useProfileRelationship({ isOpen, isMe, userId: user?.id });
 
   // Trạng thái tab đang chọn bên cột phải
   const [activeTab, setActiveTab] = useState<ProfileTab>("activity");
-  // Trạng thái quan hệ bạn bè 2 chiều với người dùng này
-  const [relationshipStatus, setRelationshipStatus] = useState<RelationshipStatus>("NONE");
-  // Mã lời mời đang chờ: chỉ được đọc/ghi trong handler async (không render) → useRef.
-  // Không phải state vì không ảnh hưởng JSX — tránh re-render vô ích (rule rerender-state-only-in-handlers).
-  const pendingRequestIdRef = useRef<string | undefined>(undefined);
-  // Chiều chặn: true nếu chính mình là bên chủ động chặn đối phương (được phép bỏ chặn)
-  const [blockedByMe, setBlockedByMe] = useState<boolean>(false);
-  const [isLoadingStatus, setIsLoadingStatus] = useState<boolean>(false);
-  // Lỗi khi không tra cứu được trạng thái quan hệ (mất kết nối, hết hạn phiên...)
-  const [statusError, setStatusError] = useState<string | null>(null);
-  // Khóa kích hoạt tải lại trạng thái quan hệ khi người dùng bấm "Thử lại"
-  const [statusReloadKey, setStatusReloadKey] = useState<number>(0);
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   // Menu mở rộng hành động (More actions)
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   // Trạng thái mở modal xác nhận hủy kết bạn
@@ -87,49 +79,6 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
   const [isEditingNote, setIsEditingNote] = useState<boolean>(false);
   // Popup Cài đặt người dùng mở từ nút "Chỉnh sửa hồ sơ" khi xem chính mình (giống Discord)
   const [isSelfSettingsOpen, setIsSelfSettingsOpen] = useState<boolean>(false);
-
-  const isMe = currentUser?.id === user?.id;
-
-  // Lấy trạng thái quan hệ bạn bè và mã lời mời khi mở modal hoặc khi user thay đổi.
-  // Đây là lượt ĐỌC duy nhất còn dùng trực tiếp friendService vì cần `requestId` mà store không có.
-  // Nếu tra cứu thất bại, ghi nhận lỗi và KHÔNG hiển thị nút hành động nào (tránh hiển thị
-  // nhầm "Thêm Bạn" cho một người đã là bạn khi token hết hạn hoặc máy chủ gặp sự cố).
-  useEffect(() => {
-    if (!isOpen || !user?.id || isMe) return;
-
-    let isMounted = true;
-    setIsLoadingStatus(true);
-    setStatusError(null);
-
-    friendService
-      .getRelationshipInfo(user.id)
-      .then((res) => {
-        if (isMounted) {
-          setRelationshipStatus(res.status);
-          pendingRequestIdRef.current = res.requestId;
-          setBlockedByMe(res.blockedByMe ?? false);
-        }
-      })
-      .catch((err: unknown) => {
-        if (isMounted) {
-          setRelationshipStatus("NONE");
-          pendingRequestIdRef.current = undefined;
-          setBlockedByMe(false);
-          setStatusError(
-            err instanceof Error
-              ? err.message
-              : "Không thể tải trạng thái quan hệ bạn bè."
-          );
-        }
-      })
-      .finally(() => {
-        if (isMounted) setIsLoadingStatus(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [isOpen, user?.id, isMe, statusReloadKey]);
 
   // Đóng modal khi nhấn phím Escape
   useEffect(() => {
@@ -156,144 +105,6 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
   const mutualConversations = conversations.filter((c) =>
     c.participants.some((p) => p.id === user.id)
   );
-
-  // Xử lý gửi lời mời kết bạn (chống spam click và tự động đồng bộ khi gặp 409 Conflict)
-  const handleSendFriendRequest = async () => {
-    if (!user.id || isSubmitting) return;
-    setIsSubmitting(true);
-    try {
-      await sendFriendRequest(user.id);
-      setRelationshipStatus("PENDING_SENT");
-      // Tải lại thông tin để cập nhật requestId mới tạo
-      const info = await friendService.getRelationshipInfo(user.id);
-      pendingRequestIdRef.current = info.requestId;
-      setBlockedByMe(info.blockedByMe ?? false);
-    } catch (error: unknown) {
-      const errorMsg = error instanceof Error ? error.message : "Không thể gửi lời mời kết bạn";
-      // Xử lý tình huống đối phương hoặc bản thân đã có lời mời (HTTP 409 Conflict):
-      // đồng bộ lại trạng thái thực tế từ máy chủ. (Toast lỗi đã do store hiển thị.)
-      if (errorMsg.includes("đã gửi lời mời") || errorMsg.includes("409")) {
-        try {
-          const info = await friendService.getRelationshipInfo(user.id);
-          setRelationshipStatus(info.status);
-          pendingRequestIdRef.current = info.requestId;
-          setBlockedByMe(info.blockedByMe ?? false);
-        } catch {
-          // Bỏ qua: giữ nguyên trạng thái hiện tại nếu không tra cứu lại được
-        }
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Xử lý chấp nhận lời mời kết bạn nhận được
-  const handleAcceptFriendRequest = async () => {
-    if (!user.id || isSubmitting) return;
-    setIsSubmitting(true);
-    try {
-      let reqId = pendingRequestIdRef.current;
-      if (!reqId) {
-        const info = await friendService.getRelationshipInfo(user.id);
-        reqId = info.requestId;
-      }
-      if (reqId) {
-        await acceptFriendRequest(reqId);
-        setRelationshipStatus("FRIENDS");
-        pendingRequestIdRef.current = undefined;
-      } else {
-        toast.error("Không tìm thấy mã lời mời kết bạn", "Thao tác thất bại");
-      }
-    } catch {
-      // Store đã hiển thị toast lỗi tương ứng; chỉ cần mở khóa nút bấm
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Xử lý từ chối lời mời kết bạn nhận được
-  const handleRejectFriendRequest = async () => {
-    if (!user.id || isSubmitting) return;
-    setIsSubmitting(true);
-    try {
-      let reqId = pendingRequestIdRef.current;
-      if (!reqId) {
-        const info = await friendService.getRelationshipInfo(user.id);
-        reqId = info.requestId;
-      }
-      if (reqId) {
-        await rejectFriendRequest(reqId);
-        setRelationshipStatus("NONE");
-        pendingRequestIdRef.current = undefined;
-      } else {
-        setRelationshipStatus("NONE");
-      }
-    } catch {
-      // Store đã hiển thị toast lỗi tương ứng
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Xử lý hủy kết bạn sau khi xác nhận trong modal
-  const handleConfirmRemoveFriend = async () => {
-    if (!user.id || isSubmitting) return;
-    setIsSubmitting(true);
-    try {
-      await removeFriend(user.id);
-      setRelationshipStatus("NONE");
-      setIsUnfriendConfirmOpen(false);
-      setIsMenuOpen(false);
-    } catch {
-      // Store đã hiển thị toast lỗi tương ứng
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Xử lý hủy lời mời kết bạn đã gửi đi
-  const handleCancelFriendRequest = async () => {
-    if (!user.id || isSubmitting) return;
-    setIsSubmitting(true);
-    try {
-      let reqId = pendingRequestIdRef.current;
-      if (!reqId) {
-        const info = await friendService.getRelationshipInfo(user.id);
-        reqId = info.requestId;
-      }
-      if (reqId) {
-        await cancelFriendRequest(reqId);
-        setRelationshipStatus("NONE");
-        pendingRequestIdRef.current = undefined;
-      } else {
-        setRelationshipStatus("NONE");
-      }
-    } catch {
-      // Store đã hiển thị toast lỗi tương ứng
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Xử lý chặn / bỏ chặn người dùng
-  const handleToggleBlock = async () => {
-    if (!user.id) return;
-    try {
-      if (relationshipStatus === "BLOCKED") {
-        await unblockUser(user.id);
-        setRelationshipStatus("NONE");
-        setBlockedByMe(false);
-      } else {
-        await blockUser(user.id);
-        setRelationshipStatus("BLOCKED");
-        // Vừa chặn thành công nghĩa là chính mình là bên chủ động chặn
-        setBlockedByMe(true);
-      }
-      setIsMenuOpen(false);
-    } catch {
-      // Store đã hiển thị toast lỗi tương ứng
-    }
-  };
 
   // Xử lý chuyển nhanh đến cuộc hội thoại với người này
   const handleStartChat = () => {
