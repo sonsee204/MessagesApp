@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   X,
   User as UserIcon,
@@ -16,6 +16,7 @@ import {
   MessageCircle,
   Loader2,
   AlertTriangle,
+  Settings,
 } from "lucide-react";
 import { User } from "../../../types/auth.types";
 import { Button } from "../../../components/ui/Button";
@@ -25,6 +26,14 @@ import { useChatStore } from "../../chat/stores/chat.store";
 import { useFriendStore } from "../../friends/stores/friend.store";
 import { friendService, RelationshipStatus } from "../services/friend.service";
 import { cn } from "../../../lib/utils";
+import { UserSettingsModal } from "./UserSettingsModal";
+
+// Formatter ngày tham gia (tiếng Việt) — tạo 1 lần ở module scope (rule js-hoist-intl).
+const JOINED_DATE_FMT = new Intl.DateTimeFormat("vi-VN", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+});
 
 interface FullUserProfileModalProps {
   isOpen: boolean;
@@ -68,7 +77,9 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
   const [activeTab, setActiveTab] = useState<ProfileTab>("activity");
   // Trạng thái quan hệ bạn bè 2 chiều với người dùng này
   const [relationshipStatus, setRelationshipStatus] = useState<RelationshipStatus>("NONE");
-  const [pendingRequestId, setPendingRequestId] = useState<string | undefined>(undefined);
+  // Mã lời mời đang chờ: chỉ được đọc/ghi trong handler async (không render) → useRef.
+  // Không phải state vì không ảnh hưởng JSX — tránh re-render vô ích (rule rerender-state-only-in-handlers).
+  const pendingRequestIdRef = useRef<string | undefined>(undefined);
   // Chiều chặn: true nếu chính mình là bên chủ động chặn đối phương (được phép bỏ chặn)
   const [blockedByMe, setBlockedByMe] = useState<boolean>(false);
   const [isLoadingStatus, setIsLoadingStatus] = useState<boolean>(false);
@@ -84,6 +95,8 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
   // Ghi chú cá nhân cục bộ
   const [personalNote, setPersonalNote] = useState<string>("");
   const [isEditingNote, setIsEditingNote] = useState<boolean>(false);
+  // Popup Cài đặt người dùng mở từ nút "Chỉnh sửa hồ sơ" khi xem chính mình (giống Discord)
+  const [isSelfSettingsOpen, setIsSelfSettingsOpen] = useState<boolean>(false);
 
   const isMe = currentUser?.id === user?.id;
 
@@ -103,14 +116,14 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
       .then((res) => {
         if (isMounted) {
           setRelationshipStatus(res.status);
-          setPendingRequestId(res.requestId);
+          pendingRequestIdRef.current = res.requestId;
           setBlockedByMe(res.blockedByMe ?? false);
         }
       })
       .catch((err: unknown) => {
         if (isMounted) {
           setRelationshipStatus("NONE");
-          setPendingRequestId(undefined);
+          pendingRequestIdRef.current = undefined;
           setBlockedByMe(false);
           setStatusError(
             err instanceof Error
@@ -146,11 +159,7 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
 
   // Định dạng ngày tham gia tiếng Việt
   const formattedJoinedDate = user.createdAt
-    ? new Intl.DateTimeFormat("vi-VN", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      }).format(new Date(user.createdAt))
+    ? JOINED_DATE_FMT.format(new Date(user.createdAt))
     : "Chưa xác định";
 
   // Lọc các cuộc hội thoại chung giữa người dùng hiện tại và người này
@@ -167,7 +176,7 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
       setRelationshipStatus("PENDING_SENT");
       // Tải lại thông tin để cập nhật requestId mới tạo
       const info = await friendService.getRelationshipInfo(user.id);
-      setPendingRequestId(info.requestId);
+      pendingRequestIdRef.current = info.requestId;
       setBlockedByMe(info.blockedByMe ?? false);
     } catch (error: unknown) {
       const errorMsg = error instanceof Error ? error.message : "Không thể gửi lời mời kết bạn";
@@ -177,7 +186,7 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
         try {
           const info = await friendService.getRelationshipInfo(user.id);
           setRelationshipStatus(info.status);
-          setPendingRequestId(info.requestId);
+          pendingRequestIdRef.current = info.requestId;
           setBlockedByMe(info.blockedByMe ?? false);
         } catch {
           // Bỏ qua: giữ nguyên trạng thái hiện tại nếu không tra cứu lại được
@@ -193,7 +202,7 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
     if (!user.id || isSubmitting) return;
     setIsSubmitting(true);
     try {
-      let reqId = pendingRequestId;
+      let reqId = pendingRequestIdRef.current;
       if (!reqId) {
         const info = await friendService.getRelationshipInfo(user.id);
         reqId = info.requestId;
@@ -201,7 +210,7 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
       if (reqId) {
         await acceptFriendRequest(reqId);
         setRelationshipStatus("FRIENDS");
-        setPendingRequestId(undefined);
+        pendingRequestIdRef.current = undefined;
       } else {
         toast.error("Không tìm thấy mã lời mời kết bạn", "Thao tác thất bại");
       }
@@ -217,7 +226,7 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
     if (!user.id || isSubmitting) return;
     setIsSubmitting(true);
     try {
-      let reqId = pendingRequestId;
+      let reqId = pendingRequestIdRef.current;
       if (!reqId) {
         const info = await friendService.getRelationshipInfo(user.id);
         reqId = info.requestId;
@@ -225,7 +234,7 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
       if (reqId) {
         await rejectFriendRequest(reqId);
         setRelationshipStatus("NONE");
-        setPendingRequestId(undefined);
+        pendingRequestIdRef.current = undefined;
       } else {
         setRelationshipStatus("NONE");
       }
@@ -257,7 +266,7 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
     if (!user.id || isSubmitting) return;
     setIsSubmitting(true);
     try {
-      let reqId = pendingRequestId;
+      let reqId = pendingRequestIdRef.current;
       if (!reqId) {
         const info = await friendService.getRelationshipInfo(user.id);
         reqId = info.requestId;
@@ -265,7 +274,7 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
       if (reqId) {
         await cancelFriendRequest(reqId);
         setRelationshipStatus("NONE");
-        setPendingRequestId(undefined);
+        pendingRequestIdRef.current = undefined;
       } else {
         setRelationshipStatus("NONE");
       }
@@ -330,8 +339,8 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      {/* Khung chính Modal 2 cột theo phong cách Discord */}
-      <div className="w-full max-w-2xl bg-uupm-surface border-3 border-uupm-line rounded-sm shadow-uupm-2 overflow-hidden flex flex-col md:flex-row relative animate-in fade-in zoom-in-95 duration-150">
+      {/* Khung chính Modal 2 cột theo phong cách Discord được phóng to rộng rãi */}
+      <div className="w-full max-w-4xl bg-uupm-surface border-3 border-uupm-line rounded-sm shadow-uupm-2 overflow-hidden flex flex-col md:flex-row relative animate-in fade-in zoom-in-95 duration-150 max-h-[92vh] overflow-y-auto md:overflow-y-visible">
         {/* Nút đóng góc trên bên phải */}
         <button
           type="button"
@@ -343,10 +352,10 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
           <X className="w-4 h-4" />
         </button>
 
-        {/* ================= CỘT TRÁI: THẺ ĐỊNH DANH HỒ SƠ (~42%) ================= */}
-        <div className="w-full md:w-[42%] bg-uupm-page border-b-2 md:border-b-0 md:border-r-2 border-uupm-line flex flex-col shrink-0">
-          {/* Ảnh bìa (Banner) */}
-          <div className="relative h-28 bg-uupm-accent-soft border-b-2 border-uupm-line overflow-hidden shrink-0">
+        {/* ================= CỘT TRÁI: THẺ ĐỊNH DANH HỒ SƠ (Rộng ~380px) ================= */}
+        <div className="w-full md:w-[380px] bg-uupm-page border-b-2 md:border-b-0 md:border-r-2 border-uupm-line flex flex-col shrink-0">
+          {/* Ảnh bìa (Banner) phóng to tỉ lệ chuẩn */}
+          <div className="relative h-36 md:h-44 bg-uupm-accent-soft border-b-2 border-uupm-line overflow-hidden shrink-0">
             {user.bannerUrl ? (
               <img
                 src={user.bannerUrl}
@@ -361,10 +370,11 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
             )}
           </div>
 
-          {/* Avatar đè lên Banner kèm chấm trạng thái kết nối */}
-          <div className="-mt-12 px-5 relative z-10 flex items-end justify-between">
+          {/* Avatar đè lên Banner kèm chấm trạng thái kết nối (shrink-0: giữ nguyên chiều cao,
+              chống cột flex co nén avatar gây đè chữ tên người dùng) */}
+          <div className="-mt-14 px-5 relative z-10 flex items-end justify-between shrink-0">
             <div className="relative inline-block">
-              <div className="w-20 h-20 rounded-full bg-uupm-surface border-3 border-uupm-line shadow-uupm-2 flex items-center justify-center overflow-hidden font-black text-2xl text-uupm-accent-text">
+              <div className="w-24 h-24 rounded-full bg-uupm-surface border-3 border-uupm-line shadow-uupm-2 flex items-center justify-center overflow-hidden font-black text-3xl text-uupm-accent-text">
                 {user.avatarUrl ? (
                   <img
                     src={user.avatarUrl}
@@ -372,13 +382,13 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <UserIcon className="w-10 h-10 text-uupm-ink" />
+                  <UserIcon className="w-12 h-12 text-uupm-ink" />
                 )}
               </div>
               {/* Chấm tròn trạng thái Online lớn kiểu Discord */}
               <span
                 className={cn(
-                  "absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full border-2 border-uupm-line shadow-sm",
+                  "absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full border-2 border-uupm-line shadow-sm",
                   isOnline ? "bg-uupm-accent" : "bg-uupm-ink-muted"
                 )}
                 title={isOnline ? "Đang trực tuyến" : "Ngoại tuyến"}
@@ -386,9 +396,9 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
             </div>
           </div>
 
-          {/* Nhãn Tên & Username */}
-          <div className="px-5 pt-3 pb-1">
-            <h2 className="text-lg font-black text-uupm-ink tracking-tight truncate">
+          {/* Nhãn Tên & Username (shrink-0 chống co nén dưới avatar khi khung modal chật) */}
+          <div className="px-5 pt-3 pb-1 shrink-0">
+            <h2 className="text-xl font-black text-uupm-ink tracking-tight truncate">
               {displayName}
             </h2>
             <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
@@ -412,8 +422,8 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
             </div>
           </div>
 
-          {/* Dải nút hành động chính (Thêm bạn, Nhắn tin, Menu) */}
-          <div className="px-5 py-2.5 flex items-center gap-2">
+          {/* Dải nút hành động chính (Thêm bạn, Nhắn tin, Menu) - Chống tràn layout */}
+          <div className="px-5 py-3 flex items-center gap-2 flex-wrap sm:flex-nowrap">
             {!isMe ? (
               <>
                 {/* Trạng thái lỗi: không tra cứu được quan hệ -> chỉ hiện nút Thử lại,
@@ -447,10 +457,10 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
                     size="sm"
                     onClick={handleSendFriendRequest}
                     disabled={isLoadingStatus || isSubmitting}
-                    className="flex-1 justify-center text-xs font-black"
-                    leftIcon={isSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserPlus className="w-3.5 h-3.5" />}
+                    className="flex-1 min-w-0 justify-center text-xs font-black"
+                    leftIcon={isSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" /> : <UserPlus className="w-3.5 h-3.5 shrink-0" />}
                   >
-                    Thêm Bạn
+                    <span className="truncate">Thêm Bạn</span>
                   </Button>
                 )}
 
@@ -462,25 +472,25 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
                     onClick={handleCancelFriendRequest}
                     disabled={isSubmitting}
                     title="Nhấp để hủy lời mời kết bạn đã gửi"
-                    className="flex-1 justify-center text-xs font-black hover:text-uupm-danger hover:border-uupm-danger transition-colors cursor-pointer"
-                    leftIcon={isSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <X className="w-3.5 h-3.5" />}
+                    className="flex-1 min-w-0 justify-center text-xs font-black hover:text-uupm-danger hover:border-uupm-danger transition-colors cursor-pointer"
+                    leftIcon={isSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" /> : <X className="w-3.5 h-3.5 shrink-0" />}
                   >
-                    Hủy lời mời
+                    <span className="truncate">Hủy lời mời</span>
                   </Button>
                 )}
 
                 {relationshipStatus === "PENDING_RECEIVED" && (
-                  <div className="flex-1 flex items-center gap-1.5">
+                  <div className="flex-1 flex items-center gap-2 min-w-0">
                     <Button
                       type="button"
                       variant="primary"
                       size="sm"
                       onClick={handleAcceptFriendRequest}
                       disabled={isSubmitting}
-                      className="flex-1 justify-center text-xs font-black"
-                      leftIcon={isSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                      className="flex-1 min-w-0 justify-center text-xs font-black px-2.5"
+                      leftIcon={isSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" /> : <Check className="w-3.5 h-3.5 shrink-0" />}
                     >
-                      Đồng ý
+                      <span className="truncate">Đồng ý</span>
                     </Button>
                     <Button
                       type="button"
@@ -488,10 +498,10 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
                       size="sm"
                       onClick={handleRejectFriendRequest}
                       disabled={isSubmitting}
-                      className="flex-1 justify-center text-xs font-black hover:text-uupm-danger hover:border-uupm-danger cursor-pointer"
-                      leftIcon={<X className="w-3.5 h-3.5" />}
+                      className="flex-1 min-w-0 justify-center text-xs font-black hover:text-uupm-danger hover:border-uupm-danger cursor-pointer px-2.5"
+                      leftIcon={<X className="w-3.5 h-3.5 shrink-0" />}
                     >
-                      Từ chối
+                      <span className="truncate">Từ chối</span>
                     </Button>
                   </div>
                 )}
@@ -502,11 +512,11 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
                     variant="outline"
                     size="sm"
                     onClick={() => setIsUnfriendConfirmOpen(true)}
-                    className="flex-1 justify-center text-xs font-black bg-uupm-accent-soft text-uupm-accent-text hover:bg-uupm-danger/10 hover:text-uupm-danger-text hover:border-uupm-danger transition-colors cursor-pointer"
+                    className="flex-1 min-w-0 justify-center text-xs font-black bg-uupm-accent-soft text-uupm-accent-text hover:bg-uupm-danger/10 hover:text-uupm-danger-text hover:border-uupm-danger transition-colors cursor-pointer"
                     title="Nhấp để mở xác nhận hủy kết bạn"
-                    leftIcon={<UserCheck className="w-3.5 h-3.5" />}
+                    leftIcon={<UserCheck className="w-3.5 h-3.5 shrink-0" />}
                   >
-                    Bạn bè
+                    <span className="truncate">Bạn bè</span>
                   </Button>
                 )}
 
@@ -514,12 +524,12 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
                     là có hướng, chỉ bên chủ động chặn mới thực hiện được */}
                 {relationshipStatus === "BLOCKED" && !blockedByMe && (
                   <span
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xs border-2 border-uupm-line bg-uupm-page text-xs font-black text-uupm-ink-muted cursor-not-allowed select-none"
+                    className="flex-1 min-w-0 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xs border-2 border-uupm-line bg-uupm-page text-xs font-black text-uupm-ink-muted cursor-not-allowed select-none"
                     title="Người dùng này đã chặn bạn. Bạn không thể bỏ chặn từ phía mình."
                     aria-disabled="true"
                   >
-                    <ShieldAlert className="w-3.5 h-3.5" />
-                    Bạn đã bị chặn
+                    <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">Bạn đã bị chặn</span>
                   </span>
                 )}
 
@@ -530,10 +540,10 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
                     size="sm"
                     onClick={handleToggleBlock}
                     disabled={isSubmitting}
-                    className="flex-1 justify-center text-xs font-black"
-                    leftIcon={<ShieldAlert className="w-3.5 h-3.5" />}
+                    className="flex-1 min-w-0 justify-center text-xs font-black"
+                    leftIcon={<ShieldAlert className="w-3.5 h-3.5 shrink-0" />}
                   >
-                    Đã chặn
+                    <span className="truncate">Đã chặn</span>
                   </Button>
                 )}
 
@@ -543,7 +553,7 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
                   variant="outline"
                   size="sm"
                   onClick={handleStartChat}
-                  className="px-2.5"
+                  className="px-3 shrink-0"
                   title="Nhắn tin"
                   aria-label="Gửi tin nhắn"
                 >
@@ -551,13 +561,13 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
                 </Button>
 
                 {/* Nút menu tùy chọn mở rộng */}
-                <div className="relative">
+                <div className="relative shrink-0">
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     onClick={() => setIsMenuOpen(!isMenuOpen)}
-                    className="px-2"
+                    className="px-2.5 shrink-0"
                     title="Tùy chọn khác"
                     aria-label="Mở tùy chọn"
                   >
@@ -620,8 +630,19 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
                 )}
               </>
             ) : (
-              <div className="w-full py-1 text-center text-xs font-black text-uupm-accent-text bg-uupm-accent-soft rounded-xs border border-uupm-line">
-                Hồ sơ của bạn
+              /* Hồ sơ của chính mình: thay dải nhãn thụ động bằng nút Chỉnh sửa hồ sơ
+                 (mở UserSettingsModal ngay trong popup theo đúng hành vi bấm ảnh đại diện của Discord) */
+              <div className="w-full">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsSelfSettingsOpen(true)}
+                  className="w-full justify-center text-xs font-black"
+                  leftIcon={<Settings className="w-3.5 h-3.5 shrink-0" />}
+                >
+                  Chỉnh sửa hồ sơ
+                </Button>
               </div>
             )}
           </div>
@@ -677,8 +698,8 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
           </div>
         </div>
 
-        {/* ================= CỘT PHẢI: PHÂN MỤC TABS NỘI DUNG (~58%) ================= */}
-        <div className="flex-1 bg-uupm-surface p-5 flex flex-col min-h-[360px]">
+        {/* ================= CỘT PHẢI: PHÂN MỤC TABS NỘI DUNG (~60%) ================= */}
+        <div className="flex-1 bg-uupm-surface p-6 flex flex-col min-h-[440px] md:min-h-[480px]">
           {/* Thanh chuyển tab trên đỉnh */}
           <div className="flex items-center gap-6 border-b-2 border-uupm-line/20 pb-2 mb-4">
             <button
@@ -864,6 +885,15 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Popup Cài đặt mở chồng lên khi bấm "Chỉnh sửa hồ sơ" trên chính hồ sơ của mình */}
+      {isMe && currentUser && (
+        <UserSettingsModal
+          isOpen={isSelfSettingsOpen}
+          onClose={() => setIsSelfSettingsOpen(false)}
+          currentUser={currentUser}
+        />
       )}
     </div>
   );

@@ -88,40 +88,41 @@ export function useMediaUpload(conversationId: string) {
   const xhrs = useRef<Record<string, XMLHttpRequest>>({});
 
   // Chọn file: validate MIME + size + giới hạn 10 tệp, đẩy hợp lệ vào queue.
+  // Dùng `items` từ closure (đúng tại thời điểm sự kiện bắn) để tính `room` và toast —
+  // setState updater chỉ còn là hàm THUẦN (trả mảng mới), không gọi toast/hiệu ứng phụ
+  // (React có thể chạy updater >1 lần, mọi side-effect phải nằm ngoài).
   const pickFiles = useCallback(
     (files: FileList | File[]) => {
-      setItems((prev) => {
-        const room = MAX_FILES - prev.length;
-        if (room <= 0) {
-          toast.info(`Chỉ được đính kèm tối đa ${MAX_FILES} tệp mỗi tin nhắn`);
-          return prev;
+      const room = MAX_FILES - items.length;
+      if (room <= 0) {
+        toast.info(`Chỉ được đính kèm tối đa ${MAX_FILES} tệp mỗi tin nhắn`);
+        return;
+      }
+      const next: UploadItem[] = [];
+      let overflow = 0;
+      for (const file of Array.from(files)) {
+        if (next.length >= room) {
+          overflow++;
+          continue;
         }
-        const next: UploadItem[] = [];
-        let overflow = 0;
-        for (const file of Array.from(files)) {
-          if (next.length >= room) {
-            overflow++;
-            continue;
-          }
-          const kind = classify(file);
-          if (!kind) {
-            toast.info(`Định dạng tệp không được hỗ trợ: ${file.name}`);
-            continue;
-          }
-          if (file.size > LIMITS[kind].max) {
-            toast.info(`Tệp ${file.name} vượt quá giới hạn ${formatMB(LIMITS[kind].max)}`);
-            continue;
-          }
-          // crypto.randomUUID sinh id cục bộ cho queue (không đụng server).
-          next.push({ id: crypto.randomUUID(), file, status: "queued", progress: 0 });
+        const kind = classify(file);
+        if (!kind) {
+          toast.info(`Định dạng tệp không được hỗ trợ: ${file.name}`);
+          continue;
         }
-        if (overflow > 0) {
-          toast.info(`Vượt giới hạn ${MAX_FILES} tệp — ${overflow} tệp bị bỏ qua`);
+        if (file.size > LIMITS[kind].max) {
+          toast.info(`Tệp ${file.name} vượt quá giới hạn ${formatMB(LIMITS[kind].max)}`);
+          continue;
         }
-        return [...prev, ...next];
-      });
+        // crypto.randomUUID sinh id cục bộ cho queue (không đụng server).
+        next.push({ id: crypto.randomUUID(), file, status: "queued", progress: 0 });
+      }
+      if (overflow > 0) {
+        toast.info(`Vượt giới hạn ${MAX_FILES} tệp — ${overflow} tệp bị bỏ qua`);
+      }
+      if (next.length > 0) setItems((prev) => [...prev, ...next]);
     },
-    []
+    [items]
   );
 
   // Cập nhật 1 item trong queue (bất biến — map sang mảng mới).

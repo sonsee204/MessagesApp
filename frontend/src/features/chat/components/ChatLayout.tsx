@@ -231,6 +231,8 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({ onLogout }) => {
           onSelectConversation={(id) => {
             setActiveView("chat");
             setIsMobileFriendsActive(false);
+            // Xoá queue media khi chuyển cuộc trò chuyện (owner ở ChatLayout, không phải MessageInput).
+            media.clear();
             void selectConversation(id);
           }}
           onSelectFriendsView={() => {
@@ -298,9 +300,12 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({ onLogout }) => {
                 <span>Bạn đã chặn người dùng này. Bỏ chặn để tiếp tục trò chuyện.</span>
               </div>
             ) : (
-              /* Khung nhập tin nhắn nổi với nút '+' và emoji — media truyền từ ChatLayout */
+              /* Khung nhập tin nhắn nổi với nút '+' và emoji — media truyền từ ChatLayout
+                  key={activeConversation.id}: remount khi đổi cuộc hội thoại để bỏ state cục bộ
+                  (content/emoji/sticker/mediaclear) tự nhiên thay vì reset tay trong effect
+                  (giải quyết no-reset-all-state-on-prop-change / no-adjust-state-on-prop-change). */
               <MessageInput
-                conversationId={activeConversation.id}
+                key={activeConversation.id}
                 partnerName={partnerDisplayName}
                 onSendMessage={handleSendMessage}
                 onTyping={handleTyping}

@@ -38,10 +38,8 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({ isOpen, on
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Mỗi lần mở lại đều quay về phân mục đầu tiên (Tài khoản)
-  useEffect(() => {
-    if (isOpen) setActiveTab("account");
-  }, [isOpen]);
+  // activeTab được reset tự nhiên qua key remount ở call site (ConversationSidebar)
+  // — không cần effect reset thủ công (rule no-reset-all-state-on-prop-change).
 
   if (!isOpen) return null;
 

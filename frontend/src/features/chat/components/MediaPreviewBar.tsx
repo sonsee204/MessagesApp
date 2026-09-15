@@ -13,14 +13,15 @@ export const MediaPreviewBar: React.FC<{
   if (items.length === 0) return null;
 
   return (
-    <div
-      className="flex gap-2 overflow-x-auto pb-2 px-1"
-      role="list"
+    <ul
+      className="flex gap-2 overflow-x-auto pb-2 px-1 list-none m-0 p-0"
       aria-label="Tệp đính kèm đang chờ gửi"
     >
       {items.map((it) => (
-        <MediaPreviewChip key={it.id} item={it} onRemove={onRemove} />
+        <li key={it.id} className="list-none">
+          <MediaPreviewChip item={it} onRemove={onRemove} />
+        </li>
       ))}
-    </div>
+    </ul>
   );
 };

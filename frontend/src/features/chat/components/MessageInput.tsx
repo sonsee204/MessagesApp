@@ -19,7 +19,6 @@ import { cn } from "../../../lib/utils";
 const ACCEPT = "image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/zip,application/x-rar-compressed,application/vnd.rar,application/x-7z-compressed,text/plain,text/csv";
 
 interface MessageInputProps {
-  conversationId: string;
   partnerName?: string;
   // Gửi tin nhắn: văn bản thuần (TEXT) hoặc sticker/GIF (IMAGE + attachments)
   onSendMessage: (
@@ -43,7 +42,6 @@ interface MessageInputProps {
  * - Nút Gửi xúc giác lún nhấn chìm vật lý
  */
 export const MessageInput: React.FC<MessageInputProps> = ({
-  conversationId,
   partnerName = "cuộc trò chuyện",
   onSendMessage,
   onTyping,
@@ -59,20 +57,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   // Trạng thái mở/đóng popup kho sticker (bind vào nút Sticker để highlight khi đang mở)
   const [isStickerOpen, setIsStickerOpen] = useState<boolean>(false);
 
-  // Tự động điều chỉnh tiêu điểm vào ô nhập khi chuyển cuộc hội thoại.
-  // MediaRef giữ ref ổn định để effect không phụ thuộc object media (tạo mới mỗi render).
-  const mediaClearRef = useRef(media?.clear);
-  mediaClearRef.current = media?.clear;
-
+  // Focus ô nhập khi mount (key=conversationId remount MessageInput mỗi lần chuyển cuộc trò chuyện).
   useEffect(() => {
-    setContent("");
-    onTyping(false);
-    setIsEmojiOpen(false);
-    setIsStickerOpen(false);
-    // Xoá queue media cũ khi chuyển sang cuộc hội thoại khác.
-    mediaClearRef.current?.();
     textareaRef.current?.focus();
-  }, [conversationId, onTyping]);
+  }, []);
 
   // Chèn emoji vào ĐÚNG vị trí con trỏ đang đứng (không append mù quáng vào cuối chuỗi),
   // sau đó trả con trỏ ngay sau emoji và giữ tiêu điểm để người dùng gõ tiếp.

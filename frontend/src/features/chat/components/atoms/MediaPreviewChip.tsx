@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { X, FileText } from "lucide-react";
 import type { UploadItem } from "../../hooks/useMediaUpload";
 
@@ -15,18 +16,27 @@ export const MediaPreviewChip: React.FC<{
   const isImg = item.file.type.startsWith("image/");
   const ext = item.file.name.split(".").pop()?.toUpperCase() ?? "";
 
+  // Tạo object URL ở effect (KHÔNG tạo trong render) và revoke khi item/url đổi hoặc unmount,
+  // tránh rò rỉ Blob/File trong bộ nhớ trình duyệt (rule no-create-object-url-in-render +
+  // no-create-object-url-without-revoke).
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!isImg) return;
+    const url = URL.createObjectURL(item.file);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [isImg, item.file]);
+
   return (
     <div
-      role="listitem"
       className="relative w-16 h-16 rounded-xs border-2 border-uupm-line shadow-uupm-active overflow-hidden shrink-0 bg-uupm-surface"
     >
       {/* Thumbnail ảnh hoặc icon đuôi tệp */}
       {isImg ? (
         <img
-          src={URL.createObjectURL(item.file)}
+          src={previewUrl ?? undefined}
           alt={item.file.name}
           className="w-full h-full object-cover"
-          onLoad={(e) => URL.revokeObjectURL((e.target as HTMLImageElement).src)}
         />
       ) : (
         <div className="w-full h-full flex flex-col items-center justify-center gap-0.5">

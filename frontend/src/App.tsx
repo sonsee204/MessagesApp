@@ -24,10 +24,13 @@ export function App() {
 
   // 1. Thử khôi phục phiên làm việc khi người dùng tải lại trang (Silent Session Restoration)
   useEffect(() => {
+    // Cờ huỷ: ngăn setState sau await nếu component unmount (rule no-set-state-after-await-in-effect).
+    let cancelled = false;
     const restoreSession = async () => {
       try {
         // Gửi yêu cầu làm mới token ngầm thông qua Signed Cookie sẵn có trong trình duyệt
         const refreshResponse = await apiClient.post("/auth/refresh");
+        if (cancelled) return;
         if (refreshResponse.data?.success && refreshResponse.data?.data) {
           const { user: restoredUser, accessToken } = refreshResponse.data.data;
           setAuth(restoredUser, accessToken);
@@ -35,11 +38,14 @@ export function App() {
       } catch {
         // Nếu không có cookie hoặc phiên đã hết hạn, giữ nguyên trạng thái chưa đăng nhập
       } finally {
-        setIsCheckingSession(false);
+        if (!cancelled) setIsCheckingSession(false);
       }
     };
 
     restoreSession();
+    return () => {
+      cancelled = true;
+    };
   }, [setAuth]);
 
   // 2. Xử lý hành động Đăng xuất (Logout)
