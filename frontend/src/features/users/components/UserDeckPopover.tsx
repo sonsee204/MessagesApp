@@ -187,13 +187,13 @@ export const UserDeckPopover: React.FC<UserDeckPopoverProps> = ({
               }}
               placeholder="Đặt trạng thái của bạn..."
               aria-label="Nhập trạng thái hoạt động của bạn"
-              className="flex-1 min-w-0 px-2 py-1.5 bg-uupm-page border-2 border-uupm-line rounded-xs shadow-uupm-active text-xs font-bold text-uupm-ink placeholder:text-uupm-ink-muted focus:outline-none focus:bg-uupm-surface transition-all"
+              className="flex-1 min-w-0 px-2 py-1.5 bg-uupm-page border-2 border-uupm-line rounded-xs shadow-uupm-active text-xs font-bold text-uupm-ink placeholder:text-uupm-ink-muted focus:outline-none focus:bg-uupm-surface transition-[background-color,box-shadow,transform]"
             />
             <button
               type="button"
               onClick={() => void handleSaveStatus()}
               disabled={isSavingStatus}
-              className="w-7 h-7 rounded-xs bg-uupm-accent border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-accent-text cursor-pointer disabled:opacity-50 active:translate-x-[1px] active:translate-y-[1px] transition-all"
+              className="w-7 h-7 rounded-xs bg-uupm-accent border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-accent-text cursor-pointer disabled:opacity-50 active:translate-x-[1px] active:translate-y-[1px] transition-[background-color,box-shadow,transform]"
               title="Lưu trạng thái"
               aria-label="Lưu trạng thái"
             >

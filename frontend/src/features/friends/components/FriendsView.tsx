@@ -145,7 +145,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab("online")}
-            className={`px-3 py-1 rounded-xs text-xs font-black shrink-0 cursor-pointer transition-all flex items-center gap-1.5 ${
+            className={`px-3 py-1 rounded-xs text-xs font-black shrink-0 cursor-pointer transition-[background-color,box-shadow,transform] flex items-center gap-1.5 ${
               activeTab === "online"
                 ? "bg-uupm-page border-2 border-uupm-line shadow-uupm-active text-uupm-ink"
                 : "text-uupm-ink-muted hover:text-uupm-ink hover:bg-uupm-surface-hover"
@@ -159,7 +159,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab("all")}
-            className={`px-3 py-1 rounded-xs text-xs font-black shrink-0 cursor-pointer transition-all flex items-center gap-1.5 ${
+            className={`px-3 py-1 rounded-xs text-xs font-black shrink-0 cursor-pointer transition-[background-color,box-shadow,transform] flex items-center gap-1.5 ${
               activeTab === "all"
                 ? "bg-uupm-page border-2 border-uupm-line shadow-uupm-active text-uupm-ink"
                 : "text-uupm-ink-muted hover:text-uupm-ink hover:bg-uupm-surface-hover"
@@ -173,7 +173,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab("pending")}
-            className={`px-3 py-1 rounded-xs text-xs font-black shrink-0 cursor-pointer transition-all flex items-center gap-1.5 ${
+            className={`px-3 py-1 rounded-xs text-xs font-black shrink-0 cursor-pointer transition-[background-color,box-shadow,transform] flex items-center gap-1.5 ${
               activeTab === "pending"
                 ? "bg-uupm-page border-2 border-uupm-line shadow-uupm-active text-uupm-ink"
                 : "text-uupm-ink-muted hover:text-uupm-ink hover:bg-uupm-surface-hover"
@@ -191,7 +191,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab("blocked")}
-            className={`px-3 py-1 rounded-xs text-xs font-black shrink-0 cursor-pointer transition-all flex items-center gap-1.5 ${
+            className={`px-3 py-1 rounded-xs text-xs font-black shrink-0 cursor-pointer transition-[background-color,box-shadow,transform] flex items-center gap-1.5 ${
               activeTab === "blocked"
                 ? "bg-uupm-page border-2 border-uupm-line shadow-uupm-active text-uupm-ink"
                 : "text-uupm-ink-muted hover:text-uupm-ink hover:bg-uupm-surface-hover"
@@ -205,7 +205,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab("add")}
-            className={`px-3 py-1 rounded-xs text-xs font-black shrink-0 cursor-pointer transition-all flex items-center gap-1.5 border-2 ${
+            className={`px-3 py-1 rounded-xs text-xs font-black shrink-0 cursor-pointer transition-[background-color,box-shadow,transform] flex items-center gap-1.5 border-2 ${
               activeTab === "add"
                 ? "bg-uupm-accent text-uupm-accent-text border-uupm-line shadow-uupm-active"
                 : "bg-uupm-accent/20 text-uupm-accent-text border-transparent hover:border-uupm-line hover:bg-uupm-accent/40"

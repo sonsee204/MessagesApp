@@ -94,7 +94,7 @@ export const FriendItem: React.FC<FriendItemProps> = ({
         <button
           type="button"
           onClick={() => onStartChat(user.id)}
-          className="w-9 h-9 rounded-xs bg-uupm-surface hover:bg-uupm-surface-strong border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink cursor-pointer transition-all active:translate-x-[1px] active:translate-y-[1px]"
+          className="w-9 h-9 rounded-xs bg-uupm-surface hover:bg-uupm-surface-strong border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink cursor-pointer transition-[background-color,box-shadow,transform] active:translate-x-[1px] active:translate-y-[1px]"
           title="Nhắn tin"
           aria-label={`Nhắn tin cho ${user.displayName}`}
         >
@@ -106,7 +106,7 @@ export const FriendItem: React.FC<FriendItemProps> = ({
           <button
             type="button"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="w-9 h-9 rounded-xs bg-uupm-surface hover:bg-uupm-surface-strong border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink cursor-pointer transition-all active:translate-x-[1px] active:translate-y-[1px]"
+            className="w-9 h-9 rounded-xs bg-uupm-surface hover:bg-uupm-surface-strong border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink cursor-pointer transition-[background-color,box-shadow,transform] active:translate-x-[1px] active:translate-y-[1px]"
             title="Tùy chọn khác"
             aria-label="Tùy chọn khác"
           >

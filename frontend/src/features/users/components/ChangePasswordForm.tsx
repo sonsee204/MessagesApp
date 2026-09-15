@@ -131,17 +131,17 @@ export const ChangePasswordForm: React.FC = () => {
             </div>
             <div className="grid grid-cols-3 gap-1.5 h-2">
               <div
-                className={`rounded-xs transition-all border border-uupm-line ${
+                className={`rounded-xs transition-[background-color,box-shadow,transform] border border-uupm-line ${
                   passwordStrength.score >= 1 ? passwordStrength.color : "bg-uupm-surface-strong"
                 }`}
               />
               <div
-                className={`rounded-xs transition-all border border-uupm-line ${
+                className={`rounded-xs transition-[background-color,box-shadow,transform] border border-uupm-line ${
                   passwordStrength.score >= 2 ? passwordStrength.color : "bg-uupm-surface-strong"
                 }`}
               />
               <div
-                className={`rounded-xs transition-all border border-uupm-line ${
+                className={`rounded-xs transition-[background-color,box-shadow,transform] border border-uupm-line ${
                   passwordStrength.score >= 3 ? passwordStrength.color : "bg-uupm-surface-strong"
                 }`}
               />

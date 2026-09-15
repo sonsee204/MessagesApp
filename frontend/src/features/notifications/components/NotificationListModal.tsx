@@ -108,7 +108,7 @@ const NotificationItemRow: React.FC<{
   return (
     <div
       className={cn(
-        "group relative flex items-start gap-3 p-3 rounded-xs border-2 transition-all",
+        "group relative flex items-start gap-3 p-3 rounded-xs border-2 transition-[background-color,box-shadow,transform]",
         item.isRead
           ? "bg-uupm-surface border-uupm-line/40 hover:border-uupm-line opacity-90"
           : "bg-uupm-accent/15 border-uupm-line shadow-xs"
@@ -144,7 +144,7 @@ const NotificationItemRow: React.FC<{
               aria-disabled={isProcessing}
               onClick={() => void onAcceptRequest?.(friendRequestId as string)}
               className={cn(
-                "flex items-center gap-1 px-2 py-1 text-[11px] font-black rounded-xs border-2 border-uupm-line transition-all",
+                "flex items-center gap-1 px-2 py-1 text-[11px] font-black rounded-xs border-2 border-uupm-line transition-[background-color,box-shadow,transform]",
                 isProcessing
                   ? "bg-uupm-surface/50 text-uupm-ink-soft/50 cursor-not-allowed"
                   : "bg-uupm-accent hover:bg-uupm-accent/80 text-uupm-ink cursor-pointer shadow-uupm-active active:translate-x-[1px] active:translate-y-[1px]"
@@ -164,7 +164,7 @@ const NotificationItemRow: React.FC<{
               aria-disabled={isProcessing}
               onClick={() => void onRejectRequest?.(friendRequestId as string)}
               className={cn(
-                "flex items-center gap-1 px-2 py-1 text-[11px] font-black rounded-xs border-2 border-uupm-line transition-all",
+                "flex items-center gap-1 px-2 py-1 text-[11px] font-black rounded-xs border-2 border-uupm-line transition-[background-color,box-shadow,transform]",
                 isProcessing
                   ? "bg-uupm-surface/50 text-uupm-ink-soft/50 cursor-not-allowed"
                   : "bg-uupm-surface hover:bg-uupm-danger/20 text-uupm-ink cursor-pointer shadow-uupm-active active:translate-x-[1px] active:translate-y-[1px]"
@@ -322,7 +322,7 @@ export const NotificationListModal: React.FC = () => {
               disabled={unreadCount === 0 || isLoading}
               onClick={() => void markAllAsRead()}
               className={cn(
-                "flex items-center gap-1.5 px-2.5 py-1 text-xs font-black rounded-xs border-2 transition-all",
+                "flex items-center gap-1.5 px-2.5 py-1 text-xs font-black rounded-xs border-2 transition-[background-color,box-shadow,transform]",
                 unreadCount > 0
                   ? "bg-uupm-surface hover:bg-uupm-surface-hover border-uupm-line text-uupm-ink cursor-pointer shadow-uupm-active active:translate-x-[1px] active:translate-y-[1px]"
                   : "bg-uupm-surface/50 border-uupm-line/40 text-uupm-ink-soft/50 cursor-not-allowed"
@@ -350,7 +350,7 @@ export const NotificationListModal: React.FC = () => {
             type="button"
             onClick={() => setFilter("all")}
             className={cn(
-              "px-3 py-1 text-xs font-black rounded-xs border-2 transition-all cursor-pointer",
+              "px-3 py-1 text-xs font-black rounded-xs border-2 transition-[background-color,box-shadow,transform] cursor-pointer",
               filter === "all"
                 ? "bg-uupm-accent border-uupm-line text-uupm-ink shadow-uupm-active translate-x-[1px] translate-y-[1px]"
                 : "bg-uupm-page border-transparent hover:border-uupm-line text-uupm-ink-soft"
@@ -362,7 +362,7 @@ export const NotificationListModal: React.FC = () => {
             type="button"
             onClick={() => setFilter("unread")}
             className={cn(
-              "px-3 py-1 text-xs font-black rounded-xs border-2 transition-all cursor-pointer flex items-center gap-1.5",
+              "px-3 py-1 text-xs font-black rounded-xs border-2 transition-[background-color,box-shadow,transform] cursor-pointer flex items-center gap-1.5",
               filter === "unread"
                 ? "bg-uupm-accent border-uupm-line text-uupm-ink shadow-uupm-active translate-x-[1px] translate-y-[1px]"
                 : "bg-uupm-page border-transparent hover:border-uupm-line text-uupm-ink-soft"

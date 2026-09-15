@@ -85,7 +85,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
         }}
         aria-label={`Mở cuộc trò chuyện ${displayName}`}
         className={cn(
-          "w-full text-left p-2.5 rounded-xs border-2 transition-all duration-150 ease-out select-none cursor-pointer flex items-center gap-3",
+          "w-full text-left p-2.5 rounded-xs border-2 transition-[background-color,box-shadow,transform] duration-150 ease-out select-none cursor-pointer flex items-center gap-3",
           // Trạng thái được chọn (Active)
           isActive
             ? "bg-uupm-accent/20 border-uupm-line shadow-uupm-active font-bold translate-x-[1px] translate-y-[1px]"

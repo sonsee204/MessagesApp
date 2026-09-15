@@ -138,7 +138,7 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
               searchResults.map((user) => (
                 <div
                   key={user.id}
-                  className="p-3 bg-uupm-surface hover:bg-uupm-surface-hover border-2 border-uupm-line rounded-xs shadow-uupm-active flex items-center justify-between gap-3 transition-all"
+                  className="p-3 bg-uupm-surface hover:bg-uupm-surface-hover border-2 border-uupm-line rounded-xs shadow-uupm-active flex items-center justify-between gap-3 transition-[background-color,box-shadow,transform]"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     {/* Cặp nền vàng + chữ phải cùng theme (xem ConversationSidebar). */}

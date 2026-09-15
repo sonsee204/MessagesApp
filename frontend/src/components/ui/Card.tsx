@@ -25,7 +25,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
       <div
         ref={ref}
         className={cn(
-          "rounded-md border-2 border-uupm-line shadow-uupm-1 text-uupm-ink overflow-hidden transition-all",
+          "rounded-md border-2 border-uupm-line shadow-uupm-1 text-uupm-ink overflow-hidden transition-[background-color,box-shadow,transform]",
           variantStyles[variant],
           className
         )}

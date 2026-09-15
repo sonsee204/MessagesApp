@@ -82,7 +82,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             }
             className={cn(
               // Kích thước chuẩn UI/UX Pro Max: cao tối thiểu 48px, đệm tay thoải mái
-              "w-full h-12 min-h-[48px] px-3.5 text-sm font-bold text-uupm-ink bg-uupm-surface rounded-xs border-2 transition-all placeholder:text-uupm-ink-muted placeholder:font-normal",
+              "w-full h-12 min-h-[48px] px-3.5 text-sm font-bold text-uupm-ink bg-uupm-surface rounded-xs border-2 transition-[background-color,box-shadow,transform] placeholder:text-uupm-ink-muted placeholder:font-normal",
               // Tùy biến khoảng thụt đầu dòng theo icon
               leftIcon ? "pl-11" : "pl-3.5",
               isPassword ? "pr-12" : isValid ? "pr-10" : "pr-3.5",

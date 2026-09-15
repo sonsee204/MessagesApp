@@ -88,7 +88,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({ isOpen, on
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
                   aria-current={isActive ? "page" : undefined}
-                  className={`flex items-center gap-2.5 px-3.5 py-3 rounded-xs border-2 text-sm font-black whitespace-nowrap cursor-pointer transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-uupm-accent ${
+                  className={`flex items-center gap-2.5 px-3.5 py-3 rounded-xs border-2 text-sm font-black whitespace-nowrap cursor-pointer transition-[background-color,box-shadow,transform] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-uupm-accent ${
                     isActive
                       ? "bg-uupm-accent-soft border-uupm-line text-uupm-ink shadow-uupm-active"
                       : "bg-uupm-surface border-transparent text-uupm-ink-muted hover:bg-uupm-surface-hover hover:text-uupm-ink"

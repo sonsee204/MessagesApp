@@ -200,7 +200,7 @@ export const StickerPicker: React.FC<StickerPickerProps> = ({
                     onClick={() => handlePick(sticker)}
                     title={sticker.title}
                     aria-label={`Gửi sticker ${sticker.title}`}
-                    className="aspect-square rounded-xs border-2 border-uupm-line bg-uupm-page hover:border-uupm-accent hover:shadow-uupm-active flex items-center justify-center overflow-hidden cursor-pointer transition-all active:translate-x-[1px] active:translate-y-[1px]"
+                    className="aspect-square rounded-xs border-2 border-uupm-line bg-uupm-page hover:border-uupm-accent hover:shadow-uupm-active flex items-center justify-center overflow-hidden cursor-pointer transition-[background-color,box-shadow,transform] active:translate-x-[1px] active:translate-y-[1px]"
                   >
                     {/* Nền caro mờ hiển thị vùng trong suốt của sticker (kiểu Discord) */}
                     <img

@@ -73,7 +73,7 @@ const ToastCard: React.FC<ToastCardProps> = ({ toast, onClose }) => {
       role="alert"
       className={cn(
         "pointer-events-auto w-full p-3.5 rounded-xs border-2 border-uupm-line shadow-uupm-2 select-none",
-        "flex items-start gap-3 transition-all duration-200 ease-out",
+        "flex items-start gap-3 transition-[background-color,box-shadow,transform] duration-200 ease-out",
         "animate-in slide-in-from-top-3 fade-in duration-200",
         config.bgClass
       )}
@@ -104,7 +104,7 @@ const ToastCard: React.FC<ToastCardProps> = ({ toast, onClose }) => {
       <button
         type="button"
         onClick={() => onClose(toast.id)}
-        className="w-7 h-7 rounded-xs bg-uupm-surface hover:bg-uupm-surface-hover border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink shrink-0 cursor-pointer transition-all active:translate-x-[1px] active:translate-y-[1px]"
+        className="w-7 h-7 rounded-xs bg-uupm-surface hover:bg-uupm-surface-hover border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink shrink-0 cursor-pointer transition-[background-color,box-shadow,transform] active:translate-x-[1px] active:translate-y-[1px]"
         aria-label="Đóng thông báo"
       >
         <X className="w-3.5 h-3.5" />

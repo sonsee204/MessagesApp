@@ -70,7 +70,7 @@ export const BlockedUserItem: React.FC<BlockedUserItemProps> = ({
       <button
         type="button"
         onClick={() => onUnblock(targetUserId)}
-        className="px-3 py-1.5 rounded-xs bg-uupm-surface hover:bg-uupm-danger/10 text-uupm-danger-text border-2 border-uupm-line shadow-uupm-active flex items-center gap-1.5 text-xs font-black cursor-pointer transition-all active:translate-x-[1px] active:translate-y-[1px]"
+        className="px-3 py-1.5 rounded-xs bg-uupm-surface hover:bg-uupm-danger/10 text-uupm-danger-text border-2 border-uupm-line shadow-uupm-active flex items-center gap-1.5 text-xs font-black cursor-pointer transition-[background-color,box-shadow,transform] active:translate-x-[1px] active:translate-y-[1px]"
         title="Bỏ chặn người dùng này"
       >
         <ShieldOff className="w-3.5 h-3.5" />

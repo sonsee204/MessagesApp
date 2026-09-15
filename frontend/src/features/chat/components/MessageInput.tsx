@@ -154,13 +154,13 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       />
 
       {/* Khung nhập nổi dạng Discord (Floating Container) - Cân đối trọng tâm thẳng hàng với danh sách tin nhắn */}
-      <div className="w-full max-w-5xl xl:max-w-6xl mx-auto flex items-center gap-2 bg-uupm-page border-2 border-uupm-line rounded-xs shadow-uupm-active p-1.5 focus-within:bg-uupm-surface focus-within:shadow-uupm-2 transition-all">
+      <div className="w-full max-w-5xl xl:max-w-6xl mx-auto flex items-center gap-2 bg-uupm-page border-2 border-uupm-line rounded-xs shadow-uupm-active p-1.5 focus-within:bg-uupm-surface focus-within:shadow-uupm-2 transition-[background-color,box-shadow,transform]">
         {/* Nút "+" đính kèm tệp tin / ảnh ở góc trái — mở hộp chọn tệp hệ điều hành */}
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={!media}
-          className="w-8 h-8 rounded-xs bg-uupm-surface-strong hover:bg-uupm-accent hover:text-uupm-accent-text border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-accent-text shrink-0 cursor-pointer transition-all active:translate-x-[1px] active:translate-y-[1px] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-8 h-8 rounded-xs bg-uupm-surface-strong hover:bg-uupm-accent hover:text-uupm-accent-text border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-accent-text shrink-0 cursor-pointer transition-[background-color,box-shadow,transform] active:translate-x-[1px] active:translate-y-[1px] disabled:opacity-50 disabled:cursor-not-allowed"
           title="Tải lên tệp hoặc ảnh"
           aria-label="Tải lên tệp hoặc ảnh"
         >
@@ -263,7 +263,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             type="button"
             disabled={disabled || media?.isUploading || (!content.trim() && (!media || media.items.length === 0))}
             onClick={handleSend}
-            className="h-8 px-3 rounded-xs bg-uupm-accent hover:bg-uupm-accent-hover disabled:bg-uupm-surface-strong disabled:opacity-50 disabled:cursor-not-allowed border-2 border-uupm-line shadow-uupm-active text-uupm-accent-text font-black text-xs uppercase flex items-center gap-1 cursor-pointer transition-all active:translate-x-[1px] active:translate-y-[1px]"
+            className="h-8 px-3 rounded-xs bg-uupm-accent hover:bg-uupm-accent-hover disabled:bg-uupm-surface-strong disabled:opacity-50 disabled:cursor-not-allowed border-2 border-uupm-line shadow-uupm-active text-uupm-accent-text font-black text-xs uppercase flex items-center gap-1 cursor-pointer transition-[background-color,box-shadow,transform] active:translate-x-[1px] active:translate-y-[1px]"
             title="Gửi tin nhắn"
             aria-label="Gửi tin nhắn"
           >

@@ -46,26 +46,25 @@ export const UserProfilePanel: React.FC<UserProfilePanelProps> = ({
   // Trạng thái mở modal xem hồ sơ đầy đủ 2 cột kiểu Discord
   const [isFullProfileOpen, setIsFullProfileOpen] = useState<boolean>(false);
 
-  // Tải dữ liệu mới nhất từ API mỗi khi id đổi (nguồn dữ liệu chính).
-  // Bỏ mirror effect prop→state (rule no-mirror-prop-effect): dữ liệu prop chỉ dùng làm
-  // fallback khi fetch lỗi, không cần sync vào state mỗi render.
+  // Dữ liệu prop được seed một lần vào state tại khởi tạo (key remount theo user.id ở ChatLayout).
+  // Effect chỉ còn trách nhiệm fetch bản mới nhất từ API và ghi đè khi có kết quả,
+  // không mirror prop vào state nữa (triệt tiêu rule no-derived-state).
   useEffect(() => {
-    if (!user?.id) {
-      setProfileData(user);
-      return;
-    }
-    // Gán prop ngay để UI hiển thị tức thì (không chờ network), sau đó fetch ghi đè.
-    setProfileData(user);
+    if (!user?.id) return;
+    let cancelled = false;
     userService
       .getUserById(user.id)
       .then((freshUser) => {
-        if (freshUser) {
+        if (!cancelled && freshUser) {
           setProfileData(freshUser);
         }
       })
       .catch(() => {
-        // Bỏ qua lỗi và tiếp tục dùng dữ liệu sẵn có từ props
+        // Bỏ qua lỗi và tiếp tục dùng dữ liệu seed từ props
       });
+    return () => {
+      cancelled = true;
+    };
   }, [user?.id]);
 
   const activeUser = profileData || user;
@@ -80,7 +79,7 @@ export const UserProfilePanel: React.FC<UserProfilePanelProps> = ({
     : "Tháng 9, 2026";
 
   return (
-    <div className="w-80 xl:w-[320px] h-full bg-uupm-page border-l-2 border-uupm-line flex flex-col shrink-0 select-none transition-all duration-200 ease-out z-20">
+    <div className="w-80 xl:w-[320px] h-full bg-uupm-page border-l-2 border-uupm-line flex flex-col shrink-0 select-none transition-[background-color,box-shadow,transform] duration-200 ease-out z-20">
       {/* Thân danh sách cuộn mượt (Banner, Avatar và Thông tin cá nhân) */}
       <div className="flex-1 overflow-y-auto">
         {/* 1. Khu vực Banner thực & Nút Đóng */}
@@ -102,7 +101,7 @@ export const UserProfilePanel: React.FC<UserProfilePanelProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="relative z-10 w-8 h-8 rounded-xs bg-uupm-surface hover:bg-uupm-surface-hover border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink cursor-pointer transition-all active:translate-x-[1px] active:translate-y-[1px]"
+            className="relative z-10 w-8 h-8 rounded-xs bg-uupm-surface hover:bg-uupm-surface-hover border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink cursor-pointer transition-[background-color,box-shadow,transform] active:translate-x-[1px] active:translate-y-[1px]"
             title="Đóng hồ sơ"
             aria-label="Đóng hồ sơ người dùng"
           >

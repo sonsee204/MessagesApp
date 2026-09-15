@@ -57,7 +57,7 @@ export const AuthSwitch: React.FC<AuthSwitchProps> = ({
           aria-selected={mode === "register"}
           onClick={() => onChange("register")}
           className={cn(
-            "min-h-[46px] py-3 px-4 text-xs md:text-sm rounded-xs transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer",
+            "min-h-[46px] py-3 px-4 text-xs md:text-sm rounded-xs transition-[background-color,box-shadow,transform] duration-200 flex items-center justify-center gap-2 cursor-pointer",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1",
             // Tab đang chọn nằm trên thanh trượt nền accent -> phải dùng
             // --uupm-accent-text, không dùng --uupm-ink (xem chú thích AuthPage).
@@ -82,7 +82,7 @@ export const AuthSwitch: React.FC<AuthSwitchProps> = ({
           aria-selected={mode === "login"}
           onClick={() => onChange("login")}
           className={cn(
-            "min-h-[46px] py-3 px-4 text-xs md:text-sm rounded-xs transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer",
+            "min-h-[46px] py-3 px-4 text-xs md:text-sm rounded-xs transition-[background-color,box-shadow,transform] duration-200 flex items-center justify-center gap-2 cursor-pointer",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1",
             mode === "login"
               ? "text-uupm-accent-text font-black"

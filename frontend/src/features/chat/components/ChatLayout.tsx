@@ -361,6 +361,7 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({ onLogout }) => {
       {activeConversation && isProfileOpen && partner && (
         <div className="hidden lg:flex shrink-0 h-full">
           <UserProfilePanel
+            key={partner.id}
             user={partner}
             isOnline={isPartnerOnline}
             onClose={() => setIsProfileOpen(false)}

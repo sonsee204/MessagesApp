@@ -100,7 +100,7 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
             onChange={(e) => setFilterText(e.target.value)}
             placeholder="Tìm hoặc bắt đầu trò chuyện"
             aria-label="Tìm kiếm hoặc bắt đầu cuộc trò chuyện mới"
-            className="w-full pl-8 pr-12 py-1.5 bg-uupm-page hover:bg-uupm-surface-hover focus:bg-uupm-surface rounded-xs border-2 border-uupm-line shadow-uupm-active text-xs font-bold text-uupm-ink placeholder:text-uupm-ink-muted focus:outline-none focus:shadow-uupm-2 transition-all"
+            className="w-full pl-8 pr-12 py-1.5 bg-uupm-page hover:bg-uupm-surface-hover focus:bg-uupm-surface rounded-xs border-2 border-uupm-line shadow-uupm-active text-xs font-bold text-uupm-ink placeholder:text-uupm-ink-muted focus:outline-none focus:shadow-uupm-2 transition-[background-color,box-shadow,transform]"
           />
           <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[9px] font-black text-uupm-ink bg-uupm-surface border border-uupm-line rounded shadow-sm absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
             Ctrl K
@@ -119,7 +119,7 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
               onSelectFriendsView?.();
             }}
             className={cn(
-              "w-full flex items-center justify-between px-3 py-2 rounded-xs border-2 text-xs font-black transition-all cursor-pointer",
+              "w-full flex items-center justify-between px-3 py-2 rounded-xs border-2 text-xs font-black transition-[background-color,box-shadow,transform] cursor-pointer",
               activeView === "friends" && !activeConversationId
                 ? "bg-uupm-accent/20 border-uupm-line shadow-uupm-active text-uupm-ink translate-x-[1px] translate-y-[1px]"
                 : "bg-uupm-surface border-uupm-line shadow-uupm-active hover:bg-uupm-surface-hover hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[2px] active:translate-y-[2px] text-uupm-ink"
@@ -145,7 +145,7 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
             title="Xem thông báo hệ thống và tương tác"
             aria-label="Xem danh sách thông báo"
             className={cn(
-              "w-full flex items-center justify-between px-3 py-2 rounded-xs border-2 text-xs font-black transition-all cursor-pointer",
+              "w-full flex items-center justify-between px-3 py-2 rounded-xs border-2 text-xs font-black transition-[background-color,box-shadow,transform] cursor-pointer",
               isModalOpen
                 ? "bg-uupm-accent/20 border-uupm-line shadow-uupm-active text-uupm-ink translate-x-[1px] translate-y-[1px]"
                 : "bg-uupm-surface border-uupm-line shadow-uupm-active hover:bg-uupm-surface-hover hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[2px] active:translate-y-[2px] text-uupm-ink"
@@ -179,7 +179,7 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
             onClick={() => {
               toast.info("Hiện không có yêu cầu tin nhắn chờ nào.", "Hộp thư chờ");
             }}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-xs border-2 bg-uupm-surface border-uupm-line shadow-uupm-active hover:bg-uupm-surface-hover hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[2px] active:translate-y-[2px] text-xs font-black text-uupm-ink transition-all cursor-pointer"
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-xs border-2 bg-uupm-surface border-uupm-line shadow-uupm-active hover:bg-uupm-surface-hover hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[2px] active:translate-y-[2px] text-xs font-black text-uupm-ink transition-[background-color,box-shadow,transform] cursor-pointer"
           >
             <div className="w-6 h-6 rounded-xs bg-uupm-warn-soft border-2 border-uupm-line flex items-center justify-center shrink-0">
               <Mail className="w-3.5 h-3.5 text-uupm-warn-soft-ink" />
@@ -200,7 +200,7 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
             <button
               type="button"
               onClick={onOpenNewChatModal}
-              className="w-6 h-6 rounded-xs bg-uupm-surface hover:bg-uupm-accent border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink hover:text-uupm-accent-text cursor-pointer transition-all active:translate-x-[1px] active:translate-y-[1px]"
+              className="w-6 h-6 rounded-xs bg-uupm-surface hover:bg-uupm-accent border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink hover:text-uupm-accent-text cursor-pointer transition-[background-color,box-shadow,transform] active:translate-x-[1px] active:translate-y-[1px]"
               title="Tạo cuộc trò chuyện mới"
               aria-label="Tạo cuộc trò chuyện mới"
             >
@@ -301,7 +301,7 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
             <button
               type="button"
               onClick={() => setIsSettingsOpen(true)}
-              className="w-8 h-8 rounded-xs bg-uupm-surface hover:bg-uupm-surface-hover border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink transition-all cursor-pointer active:translate-x-[1px] active:translate-y-[1px]"
+              className="w-8 h-8 rounded-xs bg-uupm-surface hover:bg-uupm-surface-hover border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink transition-[background-color,box-shadow,transform] cursor-pointer active:translate-x-[1px] active:translate-y-[1px]"
               title="Cài đặt người dùng"
               aria-label="Cài đặt người dùng"
             >
@@ -313,7 +313,7 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
               <button
                 type="button"
                 onClick={onLogout}
-                className="w-8 h-8 rounded-xs bg-uupm-surface hover:bg-rose-100 border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-rose-600 transition-all cursor-pointer active:translate-x-[1px] active:translate-y-[1px]"
+                className="w-8 h-8 rounded-xs bg-uupm-surface hover:bg-rose-100 border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-rose-600 transition-[background-color,box-shadow,transform] cursor-pointer active:translate-x-[1px] active:translate-y-[1px]"
                 title="Đăng xuất tài khoản"
                 aria-label="Đăng xuất tài khoản"
               >

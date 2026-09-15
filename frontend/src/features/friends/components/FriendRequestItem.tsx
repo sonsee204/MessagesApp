@@ -89,7 +89,7 @@ export const FriendRequestItem: React.FC<FriendRequestItemProps> = ({
             <button
               type="button"
               onClick={() => onAccept?.(requestId)}
-              className="w-9 h-9 rounded-xs bg-uupm-accent hover:bg-uupm-accent-hover text-uupm-accent-text border-2 border-uupm-line shadow-uupm-active flex items-center justify-center cursor-pointer transition-all active:translate-x-[1px] active:translate-y-[1px]"
+              className="w-9 h-9 rounded-xs bg-uupm-accent hover:bg-uupm-accent-hover text-uupm-accent-text border-2 border-uupm-line shadow-uupm-active flex items-center justify-center cursor-pointer transition-[background-color,box-shadow,transform] active:translate-x-[1px] active:translate-y-[1px]"
               title="Chấp nhận kết bạn"
               aria-label="Chấp nhận lời mời kết bạn"
             >
@@ -100,7 +100,7 @@ export const FriendRequestItem: React.FC<FriendRequestItemProps> = ({
             <button
               type="button"
               onClick={() => onReject?.(requestId)}
-              className="w-9 h-9 rounded-xs bg-uupm-surface hover:bg-uupm-danger/10 text-uupm-danger-text border-2 border-uupm-line shadow-uupm-active flex items-center justify-center cursor-pointer transition-all active:translate-x-[1px] active:translate-y-[1px]"
+              className="w-9 h-9 rounded-xs bg-uupm-surface hover:bg-uupm-danger/10 text-uupm-danger-text border-2 border-uupm-line shadow-uupm-active flex items-center justify-center cursor-pointer transition-[background-color,box-shadow,transform] active:translate-x-[1px] active:translate-y-[1px]"
               title="Từ chối lời mời"
               aria-label="Từ chối lời mời kết bạn"
             >
@@ -112,7 +112,7 @@ export const FriendRequestItem: React.FC<FriendRequestItemProps> = ({
           <button
             type="button"
             onClick={() => onCancel?.(requestId)}
-            className="w-9 h-9 rounded-xs bg-uupm-surface hover:bg-uupm-danger/10 text-uupm-danger-text border-2 border-uupm-line shadow-uupm-active flex items-center justify-center cursor-pointer transition-all active:translate-x-[1px] active:translate-y-[1px]"
+            className="w-9 h-9 rounded-xs bg-uupm-surface hover:bg-uupm-danger/10 text-uupm-danger-text border-2 border-uupm-line shadow-uupm-active flex items-center justify-center cursor-pointer transition-[background-color,box-shadow,transform] active:translate-x-[1px] active:translate-y-[1px]"
             title="Hủy lời mời kết bạn"
             aria-label="Hủy lời mời kết bạn"
           >

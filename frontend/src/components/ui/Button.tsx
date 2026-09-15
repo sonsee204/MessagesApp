@@ -67,7 +67,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={disabled || isLoading}
         className={cn(
           // Định dạng cơ bản: Viền 2px #2d3748, font chữ Nunito, căn giữa, con trỏ pointer
-          "relative inline-flex items-center justify-center font-black tracking-wide cursor-pointer transition-all duration-100 ease-out select-none border-2",
+          "relative inline-flex items-center justify-center font-black tracking-wide cursor-pointer transition-[background-color,box-shadow,transform] duration-100 ease-out select-none border-2",
           // Hiệu ứng đổ bóng khối và cơ chế nhấn chìm vật lý (Tactile Neo-brutalist Press Down):
           // - Mặc định (Default): Nút nổi lên với bóng khối 4px (#2d3748)
           // - Rê chuột (Hover): Nút chìm xuống 2px (+2px, +2px) và bóng thu nhỏ còn 2px (tạo cảm giác bị nhấn chìm nhẹ xuống)
