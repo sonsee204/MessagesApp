@@ -31,4 +31,4 @@
   - Task Routing: Tuân thủ nghiêm ngặt quy tắc tự động phân loại và dispatch subagents tại `.claude/rules/task-routing.md`.
   - Frontend tasks: Tuân thủ `.claude/rules/frontend.md`.
   - Backend tasks: Tuân thủ `.claude/rules/backend.md`.
-- **Workflows SOP**: Phân tích và thực thi theo các kịch bản chuẩn trong `.claude/workflows/` (`create-component.md`, `create-api-endpoint.md`, `fix-bug.md`, `code-review-audit.md`).
+- **Workflows SOP**: Phân tích và thực thi theo các kịch bản chuẩn trong `.claude/workflows/` (`create-component.md`, `create-api-endpoint.md`, `fix-bug.md`, `code-review-audit.md`, `write-implementation-plan.md`).
