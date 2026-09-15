@@ -36,10 +36,11 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
   // Ref ô tìm kiếm — focus khi modal mở (tránh dùng autoFocus tĩnh rule no-autofocus)
   const searchInputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
-    if (isOpen) {
-      // Chờ render xong trước khi focus để animation hoàn tất
-      requestAnimationFrame(() => searchInputRef.current?.focus());
-    }
+    if (!isOpen) return;
+    // Chờ render xong trước khi focus để animation hoàn tất.
+    // Lưu id frame để hủy nếu modal đóng/unmount trước khi callback chạy.
+    const frame = requestAnimationFrame(() => searchInputRef.current?.focus());
+    return () => cancelAnimationFrame(frame);
   }, [isOpen]);
 
   // Tìm kiếm người dùng với cơ chế debounce 300ms
@@ -99,7 +100,7 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-150">
       {/* Khung Hộp thoại Neo-brutalist */}
       <div className="w-full max-w-md bg-uupm-surface border-2 border-uupm-line rounded-md shadow-uupm-1 overflow-hidden select-none">
         {/* Header Modal */}

@@ -1,5 +1,5 @@
-import React, { useCallback, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import React, { useCallback, useEffect, useState } from "react";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import * as Popover from "@radix-ui/react-popover";
 import { Search, X, Sticker as StickerIcon } from "lucide-react";
 import { MessageAttachment } from "../../../types/chat.types";
@@ -94,6 +94,9 @@ export const StickerPicker: React.FC<StickerPickerProps> = ({
     debounceTimerRef.current = setTimeout(() => setDebouncedQuery(value), 350);
   };
 
+  // Hủy timer còn treo khi unmount để tránh setState trên component đã gỡ
+  useEffect(() => () => clearTimeout(debounceTimerRef.current), []);
+
   // Tầng dữ liệu React Query lo fetch/cache/hủy request — thay cho useEffect thủ công
   const { data: stickers = [], isFetching: isLoading } = useQuery({
     queryKey: ["stickers", debouncedQuery],
@@ -101,6 +104,8 @@ export const StickerPicker: React.FC<StickerPickerProps> = ({
     enabled: open && !!KLIPY_API_KEY,
     staleTime: 60_000,
     gcTime: 5 * 60_000,
+    // Giữ kết quả cũ khi đổi từ khóa: lưới sticker không nháy trắng rồi mới hiện skeleton
+    placeholderData: keepPreviousData,
   });
 
   // Bấm một sticker: chuẩn hóa thành attachment webp và bắn ngược lên cha, đồng thời đóng popup
@@ -125,7 +130,9 @@ export const StickerPicker: React.FC<StickerPickerProps> = ({
           side="top"
           align="end"
           sideOffset={8}
-          className="z-50 w-[520px] rounded-xs border-2 border-uupm-line bg-uupm-surface shadow-uupm-2 outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 transition-transform duration-100"
+          // Bỏ transition-transform (xung đột với animate-in gây nháy lúc đóng) —
+          // thay bằng cặp animate-out đối xứng để đóng mượt đúng chủ đích.
+          className="z-50 w-[520px] rounded-xs border-2 border-uupm-line bg-uupm-surface shadow-uupm-2 outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 duration-100"
         >
           {/* Thanh tìm kiếm sticker cố định trên đầu */}
           <div className="flex items-center gap-2 p-2 border-b-2 border-uupm-line">
