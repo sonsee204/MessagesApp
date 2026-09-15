@@ -32,6 +32,167 @@ interface FullUserProfileModalProps {
 type ProfileTab = "activity" | "mutual_friends" | "mutual_servers";
 
 /**
+ * Khối hero (banner + avatar + tên + username + badge) ở cột trái modal hồ sơ.
+ * Tách thành child component để chuyển các nhánh điều kiện banner/avatar/role ra khỏi
+ * hàm FullUserProfileModal (rule no-high-complexity-react-function).
+ */
+function ProfileHero({
+  user,
+  displayName,
+  usernameHandle,
+  isOnline,
+}: {
+  user: User;
+  displayName: string;
+  usernameHandle: string;
+  isOnline: boolean;
+}) {
+  return (
+    <>
+      {/* Ảnh bìa (Banner) phóng to tỉ lệ chuẩn */}
+      <div className="relative h-36 md:h-44 bg-uupm-accent-soft border-b-2 border-uupm-line overflow-hidden shrink-0">
+        {user.bannerUrl ? (
+          <img
+            src={user.bannerUrl}
+            alt={`Ảnh bìa của ${displayName}`}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-uupm-accent via-uupm-accent-soft to-uupm-warn-soft">
+            {/* Lưới chấm Neo-Brutalist trang trí */}
+            <div className="w-full h-full opacity-15 bg-[radial-gradient(hsl(var(--uupm-ink))_1px,transparent_1px)] [background-size:8px_8px]" />
+          </div>
+        )}
+      </div>
+
+      {/* Avatar đè lên Banner kèm chấm trạng thái kết nối */}
+      <div className="-mt-14 px-5 relative z-10 flex items-end justify-between shrink-0">
+        <div className="relative inline-block">
+          <div className="w-24 h-24 rounded-full bg-uupm-surface border-3 border-uupm-line shadow-uupm-2 flex items-center justify-center overflow-hidden font-black text-3xl text-uupm-accent-text">
+            {user.avatarUrl ? (
+              <img
+                src={user.avatarUrl}
+                alt={displayName}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <UserIcon className="w-12 h-12 text-uupm-ink" />
+            )}
+          </div>
+          {/* Chấm tròn trạng thái Online lớn kiểu Discord */}
+          <span
+            className={cn(
+              "absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full border-2 border-uupm-line shadow-sm",
+              isOnline ? "bg-uupm-accent" : "bg-uupm-ink-muted"
+            )}
+            title={isOnline ? "Đang trực tuyến" : "Ngoại tuyến"}
+          />
+        </div>
+      </div>
+
+      {/* Nhãn Tên & Username */}
+      <div className="px-5 pt-3 pb-1 shrink-0">
+        <h2 className="text-xl font-black text-uupm-ink tracking-tight truncate">
+          {displayName}
+        </h2>
+        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+          <span className="text-xs font-bold text-uupm-ink-muted truncate">
+            {usernameHandle}
+          </span>
+          <span
+            className="w-4 h-4 rounded-full bg-uupm-accent text-uupm-accent-text text-[10px] font-black flex items-center justify-center border border-uupm-line shrink-0"
+            title="Định danh người dùng"
+          >
+            #
+          </span>
+
+          {user.role === "ADMIN" && (
+            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-xs bg-uupm-warn-soft border border-uupm-line text-[9px] font-black text-uupm-warn-soft-ink">
+              <ShieldCheck className="w-2.5 h-2.5" />
+              <span>Admin</span>
+            </span>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
+/**
+ * Khối thông tin chi tiết (Gia nhập, Dòng trạng thái, Ghi chú cá nhân).
+ * Tách thành child component để chuyển nhánh isEditingNote ternary ra khỏi
+ * hàm FullUserProfileModal (rule no-high-complexity-react-function).
+ */
+function ProfileInfoBlock({
+  formattedJoinedDate,
+  statusMessage,
+  personalNote,
+  isEditingNote,
+  onNoteChange,
+  onStartEditNote,
+  onFinishEditNote,
+}: {
+  formattedJoinedDate: string;
+  statusMessage?: string;
+  personalNote: string;
+  isEditingNote: boolean;
+  onNoteChange: (v: string) => void;
+  onStartEditNote: () => void;
+  onFinishEditNote: () => void;
+}) {
+  return (
+    <div className="px-5 py-3 border-t-2 border-uupm-line/20 space-y-3 mt-1 text-xs">
+      <div>
+        <span className="text-[10px] font-black uppercase tracking-wider text-uupm-ink-muted block mb-0.5">
+          Gia Nhập Từ
+        </span>
+        <p className="font-bold text-uupm-ink">{formattedJoinedDate}</p>
+      </div>
+
+      {statusMessage && (
+        <div>
+          <span className="text-[10px] font-black uppercase tracking-wider text-uupm-ink-muted block mb-0.5">
+            Dòng trạng thái
+          </span>
+          <p className="p-2 rounded-xs bg-uupm-surface border border-uupm-line/30 italic font-semibold text-uupm-ink-soft">
+            &ldquo;{statusMessage}&rdquo;
+          </p>
+        </div>
+      )}
+
+      <div>
+        <span className="text-[10px] font-black uppercase tracking-wider text-uupm-ink-muted block mb-0.5">
+          Ghi chú (chỉ hiển thị cho bạn)
+        </span>
+        {isEditingNote ? (
+          <input
+            type="text"
+            value={personalNote}
+            onChange={(e) => onNoteChange(e.target.value)}
+            onBlur={onFinishEditNote}
+            onKeyDown={(e) => e.key === "Enter" && onFinishEditNote()}
+            placeholder="Nhập ghi chú cho người này..."
+            aria-label="Ghi chú cá nhân cho người dùng này"
+            autoFocus
+            className="w-full px-2 py-1 bg-uupm-surface border border-uupm-line rounded-xs text-xs font-semibold text-uupm-ink outline-none"
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={onStartEditNote}
+            style={{ all: "unset" }}
+            className="italic text-xs font-semibold text-uupm-ink-muted hover:text-uupm-ink cursor-pointer truncate block w-full text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-uupm-accent"
+            title="Nhấp để sửa ghi chú"
+          >
+            {personalNote || "Nhấp để thêm ghi chú"}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
  * Modal hiển thị hồ sơ người dùng đầy đủ (Full User Profile Modal)
  * Thiết kế chuẩn 2 cột theo phong cách Discord kết hợp Tactile Neo-Brutalist:
  * - Cột trái (42%): Thẻ Profile Hero với Banner, Avatar lớn đè mép, Tên, Trạng thái, Nút kết bạn/chat, Thông tin ngày gia nhập
@@ -153,73 +314,13 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
 
         {/* ================= CỘT TRÁI: THẺ ĐỊNH DANH HỒ SƠ (Rộng ~380px) ================= */}
         <div className="w-full md:w-[380px] bg-uupm-page border-b-2 md:border-b-0 md:border-r-2 border-uupm-line flex flex-col shrink-0">
-          {/* Ảnh bìa (Banner) phóng to tỉ lệ chuẩn */}
-          <div className="relative h-36 md:h-44 bg-uupm-accent-soft border-b-2 border-uupm-line overflow-hidden shrink-0">
-            {user.bannerUrl ? (
-              <img
-                src={user.bannerUrl}
-                alt={`Ảnh bìa của ${displayName}`}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-uupm-accent via-uupm-accent-soft to-uupm-warn-soft">
-                {/* Lưới chấm Neo-Brutalist trang trí */}
-                <div className="w-full h-full opacity-15 bg-[radial-gradient(hsl(var(--uupm-ink))_1px,transparent_1px)] [background-size:8px_8px]" />
-              </div>
-            )}
-          </div>
-
-          {/* Avatar đè lên Banner kèm chấm trạng thái kết nối (shrink-0: giữ nguyên chiều cao,
-              chống cột flex co nén avatar gây đè chữ tên người dùng) */}
-          <div className="-mt-14 px-5 relative z-10 flex items-end justify-between shrink-0">
-            <div className="relative inline-block">
-              <div className="w-24 h-24 rounded-full bg-uupm-surface border-3 border-uupm-line shadow-uupm-2 flex items-center justify-center overflow-hidden font-black text-3xl text-uupm-accent-text">
-                {user.avatarUrl ? (
-                  <img
-                    src={user.avatarUrl}
-                    alt={displayName}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <UserIcon className="w-12 h-12 text-uupm-ink" />
-                )}
-              </div>
-              {/* Chấm tròn trạng thái Online lớn kiểu Discord */}
-              <span
-                className={cn(
-                  "absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full border-2 border-uupm-line shadow-sm",
-                  isOnline ? "bg-uupm-accent" : "bg-uupm-ink-muted"
-                )}
-                title={isOnline ? "Đang trực tuyến" : "Ngoại tuyến"}
-              />
-            </div>
-          </div>
-
-          {/* Nhãn Tên & Username (shrink-0 chống co nén dưới avatar khi khung modal chật) */}
-          <div className="px-5 pt-3 pb-1 shrink-0">
-            <h2 className="text-xl font-black text-uupm-ink tracking-tight truncate">
-              {displayName}
-            </h2>
-            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-              <span className="text-xs font-bold text-uupm-ink-muted truncate">
-                {usernameHandle}
-              </span>
-              {/* Huy hiệu dấu # định danh Discord */}
-              <span
-                className="w-4 h-4 rounded-full bg-uupm-accent text-uupm-accent-text text-[10px] font-black flex items-center justify-center border border-uupm-line shrink-0"
-                title="Định danh người dùng"
-              >
-                #
-              </span>
-
-              {user.role === "ADMIN" && (
-                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-xs bg-uupm-warn-soft border border-uupm-line text-[9px] font-black text-uupm-warn-soft-ink">
-                  <ShieldCheck className="w-2.5 h-2.5" />
-                  <span>Admin</span>
-                </span>
-              )}
-            </div>
-          </div>
+          {/* Khối hero (Banner + Avatar + Tên) — tách sang ProfileHero */}
+          <ProfileHero
+            user={user}
+            displayName={displayName}
+            usernameHandle={usernameHandle}
+            isOnline={isOnline}
+          />
 
           {/* Dải nút hành động chính (Thêm bạn, Nhắn tin, Menu) */}
           <ProfileRelationshipBar
@@ -243,58 +344,16 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
             onClickEditProfile={() => setIsSelfSettingsOpen(true)}
           />
 
-          {/* Khối thông tin chi tiết cố định (Gia nhập, Dòng trạng thái, Ghi chú) */}
-          <div className="px-5 py-3 border-t-2 border-uupm-line/20 space-y-3 mt-1 text-xs">
-            {/* Mốc thời gian gia nhập */}
-            <div>
-              <span className="text-[10px] font-black uppercase tracking-wider text-uupm-ink-muted block mb-0.5">
-                Gia Nhập Từ
-              </span>
-              <p className="font-bold text-uupm-ink">{formattedJoinedDate}</p>
-            </div>
-
-            {/* Dòng trạng thái thực tế */}
-            {user.statusMessage && (
-              <div>
-                <span className="text-[10px] font-black uppercase tracking-wider text-uupm-ink-muted block mb-0.5">
-                  Dòng trạng thái
-                </span>
-                <p className="p-2 rounded-xs bg-uupm-surface border border-uupm-line/30 italic font-semibold text-uupm-ink-soft">
-                  &ldquo;{user.statusMessage}&rdquo;
-                </p>
-              </div>
-            )}
-
-            {/* Khung ghi chú cá nhân (chỉ hiển thị cho bạn - giống hệt Discord) */}
-            <div>
-              <span className="text-[10px] font-black uppercase tracking-wider text-uupm-ink-muted block mb-0.5">
-                Ghi chú (chỉ hiển thị cho bạn)
-              </span>
-              {isEditingNote ? (
-                <input
-                  type="text"
-                  value={personalNote}
-                  onChange={(e) => setPersonalNote(e.target.value)}
-                  onBlur={() => setIsEditingNote(false)}
-                  onKeyDown={(e) => e.key === "Enter" && setIsEditingNote(false)}
-                  placeholder="Nhập ghi chú cho người này..."
-                  aria-label="Ghi chú cá nhân cho người dùng này"
-                  autoFocus
-                  className="w-full px-2 py-1 bg-uupm-surface border border-uupm-line rounded-xs text-xs font-semibold text-uupm-ink outline-none"
-                />
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setIsEditingNote(true)}
-                  style={{ all: "unset" }}
-                  className="italic text-xs font-semibold text-uupm-ink-muted hover:text-uupm-ink cursor-pointer truncate block w-full text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-uupm-accent"
-                  title="Nhấp để sửa ghi chú"
-                >
-                  {personalNote || "Nhấp để thêm ghi chú"}
-                </button>
-              )}
-            </div>
-          </div>
+          {/* Khối thông tin chi tiết — tách sang ProfileInfoBlock */}
+          <ProfileInfoBlock
+            formattedJoinedDate={formattedJoinedDate}
+            statusMessage={user.statusMessage || undefined}
+            personalNote={personalNote}
+            isEditingNote={isEditingNote}
+            onNoteChange={setPersonalNote}
+            onStartEditNote={() => setIsEditingNote(true)}
+            onFinishEditNote={() => setIsEditingNote(false)}
+          />
         </div>
 
         {/* ================= CỘT PHẢI: PHÂN MỤC TABS NỘI DUNG (~60%) ================= */}
