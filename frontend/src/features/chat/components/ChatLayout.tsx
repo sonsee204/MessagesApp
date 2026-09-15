@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { MessageSquare, ShieldCheck, Sparkles, ShieldAlert, Upload } from "lucide-react";
 import { useAuthStore } from "../../../stores/auth.store";
 import { useChatStore } from "../stores/chat.store";
 import { useChatSocket } from "../hooks/useChatSocket";
 import { useMediaUpload } from "../hooks/useMediaUpload";
 import { ConversationSidebar } from "./ConversationSidebar";
-import { ChatHeader } from "./ChatHeader";
-import { MessageList } from "./MessageList";
-import { MessageInput } from "./MessageInput";
+import { ChatConversationPane } from "./ChatConversationPane";
 import { UserProfilePanel } from "./UserProfilePanel";
+import { WelcomeScreen } from "./WelcomeScreen";
 import { Message } from "../../../types/chat.types";
 import { NewConversationModal } from "./NewConversationModal";
 import { FriendsView } from "../../friends/components/FriendsView";
@@ -16,7 +14,6 @@ import { useFriendStore } from "../../friends/stores/friend.store";
 import { FullUserProfileModal } from "../../users/components/FullUserProfileModal";
 import { userService } from "../../users/services/user.service";
 import { User } from "../../../types/auth.types";
-import { Button } from "../../../components/ui/Button";
 import { toast } from "../../../stores/toast.store";
 
 interface ChatLayoutProps {
@@ -59,9 +56,6 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({ onLogout }) => {
   // Hàng đợi upload media dùng chung cho khung nhập + vùng kéo-thả (lift state).
   // Owner ở ChatLayout để MessageInput chỉ render; conversationId rỗng → hook không ký được.
   const media = useMediaUpload(activeConversationId ?? "");
-
-  // Cờ hiển thị overlay khi người dùng kéo tệp vào vùng chat.
-  const [isDragOver, setIsDragOver] = useState<boolean>(false);
 
   // Trạng thái hiển thị giao diện: "friends" (mặc định như Discord) hoặc "chat"
   const [activeView, setActiveView] = useState<"friends" | "chat">("friends");
@@ -252,67 +246,24 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({ onLogout }) => {
         }`}
       >
         {activeConversation ? (
-          /* Vùng kéo-thả file bao quanh toàn bộ khung chat khi có cuộc trò chuyện.
-             Drag-over hiển thị overlay chấm nét đứt; drop chuyển file vào media.pickFiles.
-             position:relative để overlay phủ đúng khung, absolute inset-0 chỉ bao đúng box. */
-          <div
-            className="relative flex flex-col flex-1 min-h-0"
-            onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
-            onDragLeave={() => setIsDragOver(false)}
-            onDrop={(e) => {
-              e.preventDefault();
-              setIsDragOver(false);
-              if (e.dataTransfer.files.length > 0) media.pickFiles(e.dataTransfer.files);
-            }}
-          >
-            {/* Overlay chỉ hiện khi đang kéo tệp vào */}
-            {isDragOver && (
-              <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-uupm-accent-soft/80 border-4 border-dashed border-uupm-line rounded-xs select-none pointer-events-none">
-                <Upload className="w-10 h-10 text-uupm-ink mb-2" />
-                <span className="text-sm font-bold text-uupm-ink">Thả tệp để đính kèm</span>
-              </div>
-            )}
-            {/* Header cuộc trò chuyện với dàn nút tác vụ Discord */}
-            <ChatHeader
-              conversation={activeConversation}
-              currentUserId={user?.id}
-              isOnline={isPartnerOnline}
-              typingUsers={activeTypingList}
-              isProfileOpen={isProfileOpen}
-              onToggleProfile={() => setIsProfileOpen((prev) => !prev)}
-              onBack={() => selectConversation(null)}
-            />
-
-            {/* Danh sách tin nhắn dạng Stream kiểu Discord */}
-            <MessageList
-              messages={activeMessages}
-              currentUserId={user?.id}
-              hasMore={activePagination?.hasMore}
-              isLoadingMore={activePagination?.isLoading}
-              onLoadOlder={handleLoadOlder}
-            />
-
-            {/* Đối tác đã bị chặn: hiển thị thông báo và khóa ô nhập tin nhắn
-                (giữ nguyên hội thoại theo đúng phạm vi được duyệt, không tự đóng) */}
-            {partnerIsBlocked ? (
-              <div className="h-[84px] px-4 border-t-2 border-uupm-line bg-uupm-page flex items-center gap-2 text-xs font-bold text-uupm-ink-muted shrink-0">
-                <ShieldAlert className="w-4 h-4 shrink-0 text-uupm-danger-text" />
-                <span>Bạn đã chặn người dùng này. Bỏ chặn để tiếp tục trò chuyện.</span>
-              </div>
-            ) : (
-              /* Khung nhập tin nhắn nổi với nút '+' và emoji — media truyền từ ChatLayout
-                  key={activeConversation.id}: remount khi đổi cuộc hội thoại để bỏ state cục bộ
-                  (content/emoji/sticker/mediaclear) tự nhiên thay vì reset tay trong effect
-                  (giải quyết no-reset-all-state-on-prop-change / no-adjust-state-on-prop-change). */
-              <MessageInput
-                key={activeConversation.id}
-                partnerName={partnerDisplayName}
-                onSendMessage={handleSendMessage}
-                onTyping={handleTyping}
-                media={media}
-              />
-            )}
-          </div>
+          <ChatConversationPane
+            conversation={activeConversation}
+            currentUserId={user?.id}
+            isPartnerOnline={isPartnerOnline}
+            partnerDisplayName={partnerDisplayName}
+            typingUsers={activeTypingList}
+            messages={activeMessages}
+            hasMore={activePagination?.hasMore}
+            isLoadingMore={activePagination?.isLoading}
+            partnerIsBlocked={partnerIsBlocked}
+            isProfileOpen={isProfileOpen}
+            onToggleProfile={() => setIsProfileOpen((prev) => !prev)}
+            onBack={() => selectConversation(null)}
+            onLoadOlder={handleLoadOlder}
+            onSendMessage={handleSendMessage}
+            onTyping={handleTyping}
+            media={media}
+          />
         ) : activeView === "friends" ? (
           /* Màn hình trung tâm Bạn bè kiểu Discord */
           <FriendsView
@@ -321,39 +272,8 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({ onLogout }) => {
             onBack={() => setIsMobileFriendsActive(false)}
           />
         ) : (
-          /* Màn hình chào mừng khi chưa chọn cuộc trò chuyện nào */
-          <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-uupm-page select-none">
-            <div className="w-16 h-16 rounded-xs bg-uupm-accent border-2 border-uupm-line shadow-uupm-2 flex items-center justify-center mb-4">
-              <MessageSquare className="w-8 h-8 text-uupm-ink" />
-            </div>
-
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xs bg-uupm-accent-soft border-2 border-uupm-line shadow-uupm-active text-xs font-black uppercase text-uupm-accent-text mb-2">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Discord-Style Workspace</span>
-            </div>
-
-            <h2 className="text-xl md:text-2xl font-black text-uupm-ink tracking-tight">
-              Chào mừng bạn đến với AppMessaging!
-            </h2>
-            <p className="text-xs md:text-sm font-semibold text-uupm-ink-muted mt-2 max-w-sm">
-              Chọn một người bạn từ danh sách bên trái hoặc nhấn nút bên dưới để bắt đầu gửi tin nhắn bảo mật thời gian thực.
-            </p>
-
-            <Button
-              type="button"
-              variant="primary"
-              size="md"
-              onClick={() => setIsModalOpen(true)}
-              className="mt-6"
-            >
-              Bắt Đầu Cuộc Trò Chuyện Mới
-            </Button>
-
-            <div className="mt-8 flex items-center gap-2 text-uupm-ink-muted text-xs font-bold">
-              <ShieldCheck className="w-4 h-4 text-uupm-accent" />
-              <span>Bảo mật kết nối Socket.IO & Access Token trong RAM</span>
-            </div>
-          </div>
+          /* Màn hình chào mừng khi chưa chọn cuộc trò chuyện nào (tách riêng thành WelcomeScreen) */
+          <WelcomeScreen onStartNewChat={() => setIsModalOpen(true)} />
         )}
       </div>
 
