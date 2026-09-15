@@ -26,18 +26,6 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({ isOpen, on
   const [activeTab, setActiveTab] = useState<SettingsTab>("account");
   const theme = useThemeStore((state) => state.theme);
 
-  // Đóng hộp thoại bằng phím Escape cho người dùng chỉ dùng bàn phím
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
-
   // activeTab được reset tự nhiên qua key remount ở call site (ConversationSidebar)
   // — không cần effect reset thủ công (rule no-reset-all-state-on-prop-change).
 
@@ -58,11 +46,13 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({ isOpen, on
   ];
 
   return (
+    // Pattern B: không có m-0 ⇒ UA margin:auto căn giữa.
+    // onClose={onClose} đảm bảo Esc đồng bộ state, KHÔNG cần handler thủ công.
     <dialog
       ref={dialogRef}
       onClose={onClose}
       aria-label="Cài đặt người dùng"
-      className="m-0 p-0 w-[90vw] max-w-4xl h-[700px] max-h-[90vh] bg-uupm-surface border-2 border-uupm-line rounded-md shadow-uupm-1 overflow-hidden select-none flex flex-col backdrop:bg-black/40 backdrop:backdrop-blur-xs"
+      className="m-auto p-0 w-[90vw] max-w-4xl max-h-[90dvh] bg-uupm-surface border-2 border-uupm-line rounded-md shadow-uupm-1 overflow-hidden select-none flex flex-col backdrop:bg-black/40 backdrop:backdrop-blur-sm"
     >
         {/* Header Modal */}
         <div className="px-6 py-4 bg-uupm-accent-soft border-b-2 border-uupm-line flex items-center justify-between shrink-0">

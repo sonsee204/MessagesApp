@@ -43,20 +43,16 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   }, [isOpen]);
 
   return (
+    // onClose đồng bộ state khi Esc / close() — bắt buộc để không bị kẹt Esc.
+    // Dùng margin:auto (m-auto) của UA để căn giữa thay vì fixed inset-0.
+    // Không có backdrop button: hộp xác nhận không đóng khi click ra ngoài (đúng chủ đích).
     <dialog
       ref={dialogRef}
+      onClose={onCancel}
       aria-label={title}
-      className="bg-transparent p-0 backdrop:bg-black/60 backdrop:backdrop-blur-xs"
+      className="m-auto w-full max-w-sm bg-transparent border-0 p-4 backdrop:bg-black/60 backdrop:backdrop-blur-sm"
     >
-      {/* Vùng backdrop: nút ẩn che phủ toàn bộ, click ra ngoài => hủy */}
-      <button
-        type="button"
-        aria-label="Đóng hộp thoại"
-        className="fixed inset-0 w-full h-full cursor-default bg-transparent border-0 p-0 m-0"
-        onClick={onCancel}
-        style={{ outline: "none" }}
-      />
-      <div className="relative z-10 w-full max-w-sm bg-uupm-surface border-3 border-uupm-line rounded-xs shadow-uupm-2 p-5 animate-in fade-in zoom-in-95 duration-150">
+      <div className="relative z-10 w-full bg-uupm-surface border-[3px] border-uupm-line rounded-xs shadow-uupm-2 p-5 animate-in fade-in zoom-in-95 duration-150">
         <div className="flex items-center gap-3 text-uupm-danger-text mb-3">
           <AlertTriangle className="w-6 h-6 shrink-0" />
           <h3 className="font-black text-base text-uupm-ink">{title}</h3>
@@ -79,5 +75,6 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         </div>
       </div>
     </dialog>
+
   );
 };

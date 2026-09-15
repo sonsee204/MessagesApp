@@ -32,17 +32,22 @@ export const LightboxModal: React.FC<{
   }, [index, images.length, onNav]);
 
   return (
+    // Pattern A: fixed inset-0 (không dùng w-screen/h-screen). Nút backdrop
+    // absolute phủ toàn khung; ảnh có stopPropagation nên click vào ảnh không đóng.
     <dialog
       ref={dialogRef}
       onClose={onClose}
       aria-label="Xem ảnh phóng to"
-      className="m-0 w-screen h-screen max-h-none max-w-none border-0 bg-black/90 p-0 flex items-center justify-center"
+      // h-full w-full thắng `width/height: fit-content` mặc định của UA trên
+      // dialog:modal — nếu không nền tối chỉ phủ đúng cỡ ảnh, không phủ hết màn hình.
+      className="fixed inset-0 m-0 h-full w-full max-h-none max-w-none border-0 bg-black/90 p-0 flex items-center justify-center"
     >
       {/* Backdrop là nút ẩn: click ra ngoài ảnh => đóng */}
       <button
         type="button"
+        tabIndex={-1}
         aria-label="Đóng"
-        className="fixed inset-0 w-full h-full cursor-default bg-transparent border-0 p-0 m-0"
+        className="absolute inset-0 w-full h-full cursor-default bg-transparent border-0 p-0 m-0"
         onClick={onClose}
       />
 
@@ -51,7 +56,7 @@ export const LightboxModal: React.FC<{
         type="button"
         aria-label="Đóng"
         onClick={onClose}
-        className="relative z-10 absolute top-4 right-4 text-white hover:scale-110 transition-transform"
+        className="absolute top-4 right-4 z-10 text-white hover:scale-110 transition-transform"
       >
         <X className="w-6 h-6" />
       </button>
@@ -59,11 +64,12 @@ export const LightboxModal: React.FC<{
       <img
         src={images[index]}
         alt={`Ảnh ${index + 1}`}
-        className="relative z-10 max-w-[90vw] max-h-[90vh] object-contain"
+        onClick={(e) => e.stopPropagation()}
+        className="relative z-10 max-w-[90vw] max-h-[90dvh] object-contain"
       />
 
       {images.length > 1 && (
-        <div className="relative z-10 absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-sm bg-black/50 px-3 py-1 rounded-xs">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 text-white text-sm bg-black/50 px-3 py-1 rounded-xs">
           {index + 1} / {images.length}
         </div>
       )}

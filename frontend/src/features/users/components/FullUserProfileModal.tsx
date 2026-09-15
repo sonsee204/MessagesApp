@@ -68,7 +68,7 @@ function ProfileHero({
       {/* Avatar đè lên Banner kèm chấm trạng thái kết nối */}
       <div className="-mt-14 px-5 relative z-10 flex items-end justify-between shrink-0">
         <div className="relative inline-block">
-          <div className="w-24 h-24 rounded-full bg-uupm-surface border-3 border-uupm-line shadow-uupm-2 flex items-center justify-center overflow-hidden font-black text-3xl text-uupm-accent-text">
+          <div className="w-24 h-24 rounded-full bg-uupm-surface border-[3px] border-uupm-line shadow-uupm-2 flex items-center justify-center overflow-hidden font-black text-3xl text-uupm-accent-text">
             {user.avatarUrl ? (
               <img
                 src={user.avatarUrl}
@@ -107,7 +107,7 @@ function ProfileHero({
           </span>
 
           {user.role === "ADMIN" && (
-            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-xs bg-uupm-warn-soft border border-uupm-line text-[9px] font-black text-uupm-warn-soft-ink">
+            <span className="inline-flex items-center gap-0.5 px-1.5 py-[2px] rounded-xs bg-uupm-warn-soft border border-uupm-line text-[9px] font-black text-uupm-warn-soft-ink">
               <ShieldCheck className="w-2.5 h-2.5" />
               <span>Admin</span>
             </span>
@@ -180,8 +180,10 @@ function ProfileInfoBlock({
           <button
             type="button"
             onClick={onStartEditNote}
-            style={{ all: "unset" }}
-            className="italic text-xs font-semibold text-uupm-ink-muted hover:text-uupm-ink cursor-pointer truncate block w-full text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-uupm-accent"
+            // Thay style all:"unset" (đè sạch class) bằng class rõ ràng: giữ
+            // w-full/truncate/block/text-left + focus-visible, thêm appearance-none
+            // để trông như chữ mà vẫn nhận vòng focus bàn phím.
+            className="italic text-xs font-semibold text-uupm-ink-muted hover:text-uupm-ink cursor-pointer truncate block w-full text-left appearance-none bg-transparent border-0 p-0 text-inherit focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-uupm-accent"
             title="Nhấp để sửa ghi chú"
           >
             {personalNote || "Nhấp để thêm ghi chú"}
@@ -253,6 +255,15 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
   const displayName = user.displayName || user.username;
   const usernameHandle = `@${user.username}`;
 
+  // Đóng modal hồ sơ và ĐÓNG LUÔN các dialog con đang mở.
+  // Dialog con là top-layer riêng nên đóng cha KHÔNG tự đóng con ⇒ phải reset
+  // state của con tại đây, nếu không chúng sẽ mồ côi trên màn hình.
+  const handleClose = () => {
+    setIsUnfriendConfirmOpen(false);
+    setIsSelfSettingsOpen(false);
+    onClose();
+  };
+
   // Định dạng ngày tham gia tiếng Việt
   const formattedJoinedDate = user.createdAt
     ? JOINED_DATE_FMT.format(new Date(user.createdAt))
@@ -288,25 +299,33 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
   };
 
   return (
+    // Pattern A: fixed inset-0 phủ viewport (không dùng w-screen/h-screen).
+    // onClose={handleClose} đóng cả dialog con đang mở để không bị mồ côi.
     <dialog
       ref={dialogRef}
-      onClose={onClose}
+      onClose={handleClose}
       aria-label={`Hồ sơ chi tiết của ${displayName}`}
-      className="m-0 w-screen h-screen max-h-none max-w-none p-4 flex items-center justify-center bg-transparent backdrop:bg-black/60 backdrop:backdrop-blur-xs select-none"
+      // fixed inset-0 + h-full w-full để THẮNG `width/height: fit-content` mặc định
+      // của UA trên dialog:modal — nếu không dialog co lại bằng nội dung, dính góc
+      // trên-trái và "đè lên main" mà không phủ toàn màn hình (bug trong ảnh).
+      className="fixed inset-0 m-0 h-full w-full max-h-none max-w-none p-4 flex items-center justify-center bg-transparent backdrop:bg-black/60 backdrop:backdrop-blur-sm select-none"
     >
-      {/* Backdrop: nút ẩn che phủ toàn bộ, click ra ngoài khung => đóng modal */}
+      {/* Backdrop: nút trong suốt phủ vùng padding — click ra ngoài khung => đóng.
+          tabIndex={-1} để nút không lọt vào thứ tự tab. */}
       <button
         type="button"
+        tabIndex={-1}
         aria-label="Đóng hồ sơ"
-        className="fixed inset-0 w-full h-full cursor-default bg-transparent border-0 p-0 m-0"
-        onClick={onClose}
+        className="absolute inset-0 w-full h-full cursor-default bg-transparent border-0 p-0 m-0"
+        onClick={handleClose}
       />
-      {/* Khung chính Modal 2 cột theo phong cách Discord được phóng to rộng rãi */}
-      <div className="relative z-10 w-full max-w-4xl bg-uupm-surface border-3 border-uupm-line rounded-sm shadow-uupm-2 overflow-hidden flex flex-col md:flex-row animate-in fade-in zoom-in-95 duration-150 max-h-[92vh] overflow-y-auto md:overflow-y-visible">
+      {/* Khung chính Modal 2 cột: chỉ giữ hướng cuộn dọc trên mobile,
+          desktop cuộn tự do (bỏ overflow-hidden gây xung đột với overflow-y). */}
+      <div className="relative z-10 w-full max-w-4xl bg-uupm-surface border-[3px] border-uupm-line rounded-sm shadow-uupm-2 flex flex-col md:flex-row animate-in fade-in zoom-in-95 duration-150 max-h-[92dvh] overflow-y-auto md:overflow-visible">
         {/* Nút đóng góc trên bên phải */}
         <button
           type="button"
-          onClick={onClose}
+          onClick={handleClose}
           className="absolute top-3 right-3 z-30 w-8 h-8 rounded-xs bg-uupm-surface hover:bg-uupm-surface-hover border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink cursor-pointer transition-[background-color,box-shadow,transform] active:translate-x-[1px] active:translate-y-[1px]"
           title="Đóng hồ sơ"
           aria-label="Đóng cửa sổ hồ sơ"
@@ -368,7 +387,7 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
             relationshipStatus={relationshipStatus}
             mutualConversations={mutualConversations}
             onSelectConversation={(id) => void selectConversation(id)}
-            onClose={onClose}
+            onClose={handleClose}
           />
         </div>
       </div>

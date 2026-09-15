@@ -260,25 +260,9 @@ export const NotificationListModal: React.FC = () => {
     [processingRequestId, acceptFriendRequest, rejectFriendRequest, markAsRead]
   );
 
-  // Đóng modal khi nhấn phím Escape
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        closeModal();
-      }
-    },
-    [closeModal]
-  );
-
-  useEffect(() => {
-    if (isModalOpen) {
-      window.addEventListener("keydown", handleKeyDown);
-    }
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isModalOpen, handleKeyDown]);
-
+  // Đồng bộ isOpen với native dialog: showModal() tự trap focus + Escape,
+  // onClose={closeModal} ở thẻ <dialog> lo phần đồng bộ state — KHÔNG cần
+  // handler bàn phím thủ công (trước đây gọi closeModal 2 lần mỗi lần Esc).
   const dialogRef = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -288,16 +272,25 @@ export const NotificationListModal: React.FC = () => {
   }, [isModalOpen]);
 
   return (
+    // Pattern A: fixed inset-0 phủ viewport (không dùng w-screen/h-screen vì
+    // 100vw > clientWidth khi có scrollbar dọc ⇒ sinh scrollbar ngang).
     <dialog
       ref={dialogRef}
+      onClose={closeModal}
       aria-labelledby="notification-modal-title"
-      className="w-screen h-screen max-h-none max-w-none m-0 p-0 flex items-center justify-center bg-transparent backdrop:bg-black/60 backdrop:backdrop-blur-xs"
+      // fixed inset-0 + h-full w-full để THẮNG `width/height: fit-content` mặc
+      // định của UA trên dialog:modal — nếu không dialog co lại bằng cỡ nội dung
+      // và dính góc trên-trái (bug trong ảnh). Dùng %-viewport (h-full), KHÔNG
+      // dùng h-screen/w-screen (100vw/100vh gây scrollbar khi có thanh cuộn).
+      className="fixed inset-0 m-0 h-full w-full max-h-none max-w-none p-4 flex items-center justify-center bg-transparent backdrop:bg-black/60 backdrop:backdrop-blur-sm"
     >
-      {/* Backdrop: nút ẩn che phủ toàn bộ, click ra ngoài => đóng modal */}
+      {/* Backdrop: nút trong suốt phủ vùng padding — click ra ngoài khung => đóng.
+          tabIndex={-1} để nút không lọt vào thứ tự tab. */}
       <button
         type="button"
+        tabIndex={-1}
         aria-label="Đóng modal thông báo"
-        className="fixed inset-0 w-full h-full cursor-default bg-transparent border-0 p-0 m-0"
+        className="absolute inset-0 w-full h-full cursor-default bg-transparent border-0 p-0 m-0"
         onClick={closeModal}
       />
 
@@ -315,7 +308,7 @@ export const NotificationListModal: React.FC = () => {
               Trung tâm thông báo
             </h3>
             {unreadCount > 0 && (
-              <span className="px-1.5 py-0.2 rounded-xs bg-uupm-danger text-white text-[10px] font-black border border-uupm-line">
+              <span className="px-1.5 py-[2px] rounded-xs bg-uupm-danger text-white text-[10px] font-black border border-uupm-line">
                 {unreadCount} mới
               </span>
             )}
