@@ -107,8 +107,7 @@ function ProfileDropdownMenu({
 
 /**
  * Sinh cấu hình nút hành động chính theo trạng thái quan hệ (trừ PENDING_RECEIVED xử lý riêng).
- * Pure helper module-scope: gom các nhánh status vào một lookup duy nhất để
- * RelationshipPrimaryAction chỉ render đúng 1 Button (rule no-high-complexity-react-function).
+ * Gom nhánh status vào lookup duy nhất — RelationshipPrimaryAction chỉ render 1 Button.
  */
 function resolveRelationshipButtonConfig(
   status: RelationshipStatus,
@@ -175,8 +174,7 @@ function resolveRelationshipButtonConfig(
 
 /**
  * Nút hành động quan hệ chính theo trạng thái (Thêm Bạn / Hủy lời mời / Bạn bè / Đã chặn).
- * Dùng tra cứu cấu hình theo relationshipStatus để gom 5-6 nhánh JSX rời rạc
- * thành duy nhất một phần tử render (rule no-high-complexity-react-function).
+ * Gom nhánh thành lookup + render duy nhất 1 Button.
  */
 function RelationshipPrimaryAction({
   relationshipStatus,
@@ -246,12 +244,7 @@ function RelationshipPrimaryAction({
   }
 
   // Tra cứu cấu hình cho các trạng thái còn lại (NONE / PENDING_SENT / FRIENDS / BLOCKED+bởi mình)
-  const config = resolveRelationshipButtonConfig(
-    relationshipStatus,
-    blockedByMe,
-    isSubmitting,
-    isLoadingStatus
-  );
+  const config = resolveRelationshipButtonConfig(relationshipStatus, blockedByMe, isSubmitting, isLoadingStatus);
   const handlers: Record<string, () => void> = {
     send: onSendFriendRequest,
     cancel: onCancel,
@@ -279,8 +272,7 @@ function RelationshipPrimaryAction({
 
 /**
  * Các nút hành động quan hệ bạn bè (chỉ khi không phải chính mình).
- * Tách thành child component để chuyển toàn bộ nhánh relationshipStatus
- * ra khỏi ProfileRelationshipBar (rule no-high-complexity-react-function).
+ * Tách thành child component để giảm nhánh trong ProfileRelationshipBar.
  */
 function ProfileRelationshipActions({
   relationshipStatus,
@@ -387,7 +379,6 @@ function ProfileRelationshipActions({
 
 /**
  * Dải nút hành động chính trong FullUserProfileModal (Thêm bạn / Bạn bè / Nhắn tin / Menu).
- * Tách khỏi modal cha để giảm độ phức tạp hàm (rule no-high-complexity-react-function).
  */
 export const ProfileRelationshipBar: React.FC<ProfileRelationshipBarProps> = ({
   isMe,

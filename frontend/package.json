@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "size-gate": "node scripts/size-gate.mjs",
+    "size-gate:strict": "node scripts/size-gate.mjs --strict",
+    "size-gate:update": "node scripts/size-gate.mjs --update"
   },
   "dependencies": {
     "@emoji-mart/data": "^1.2.1",
