@@ -51,7 +51,7 @@ Plan lưu tại `docs/plans/<kebab-case-ten-tinh-nang>.md`, cấu trúc:
 
 ## 3. Danh sách công việc (Task Breakdown)
 - Đánh số T1, T2, ... Mỗi task: 1 block trách nhiệm duy nhất, ghi rõ tier phụ trách
-  (`feature-builder` hay `deep-architect` tự làm), file đích预计 tạo/sửa, task nào phụ thuộc task nào.
+  (`feature-builder` hay `deep-architect` tự làm), file đích dự kiến tạo/sửa, task nào phụ thuộc task nào.
 
 ## 4. Test Gate
 - Mỗi task gắn tiêu chí nghiệm thu đo được (test pass, typecheck, curl checklist, 4 UI states).
@@ -64,7 +64,7 @@ Plan lưu tại `docs/plans/<kebab-case-ten-tinh-nang>.md`, cấu trúc:
 
 ### Bước 4: Test Gate & Handoff Contract
 1. `deep-architect` KHÔNG tự code toàn bộ plan; các task gắn `feature-builder` được dispatch tuần tự theo thứ tự phụ thuộc, mỗi lượt kèm Context Package trỏ thẳng tới `docs/plans/<file>.md` + mục task tương ứng.
-2.Task của Tier 1 (đọc/tra cứu đối chứng) -> dispatch `quick-worker` song song trước khi vào Tier 2.
+2. Task của Tier 1 (đọc/tra cứu đối chứng) -> dispatch `quick-worker` song song trước khi vào Tier 2.
 3. Kết thúc plan phải ghi rõ giả định (assumptions) để người dùng phản biện trước khi tốn token thực thi.
 
 ---
