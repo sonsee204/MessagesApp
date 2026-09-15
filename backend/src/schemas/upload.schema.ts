@@ -1,15 +1,32 @@
+/**
+ * Schema validate request ký upload Cloudinary.
+ * Shape { body: {...} } tuân thủ convention validate middleware
+ * (wrap {body, query, params} rồi parseAsync).
+ */
 import { z } from "zod";
 
-// Schema xác thực yêu cầu ký upload (Zero-Trust).
-// Chỉ chấp nhận 3 loại resource Cloudinary: image / video / raw (file).
-// folder bắt buộc khớp whitelist: chỉ được upload vào thư mục chat/<ObjectId>,
-// ngăn chặn upload vào thư mục avatar/banner hay bất kỳ path nào khác.
-// .strict() chặn Mass Assignment — từ chối mọi field không khai báo.
-export const SignUploadSchema = z
-  .object({
-    resourceType: z.enum(["image", "video", "raw"]),
-    folder: z.string().regex(/^chat\/[a-f0-9]{24}$/, "Folder phải có dạng chat/<ObjectId>"),
-  })
-  .strict();
+// Resource type Cloudinary: ảnh / video / file thô.
+const resourceTypeEnum = z.enum(["image", "video", "raw"], {
+  errorMap: () => ({ message: "resourceType phải là image, video hoặc raw" }),
+});
 
-export type SignUploadDTO = z.infer<typeof SignUploadSchema>;
+// Folder upload: bắt buộc đúng định dạng `chat/<ObjectId 24 hex>` (spec §3).
+// Regex whitelist chặn user tự ý gõ folder lạ → Cloudinary chỉ nhận file đúng conversation.
+const folderRegex = /^chat\/[a-f0-9]{24}$/;
+
+/**
+ * Schema chính cho POST /api/uploads/sign.
+ * Wrap `body` để khớp convention của validate middleware.
+ * Dùng `.strict()` ở body để reject field lạ (Zero-Trust).
+ */
+export const SignUploadSchema = z.object({
+  body: z.object({
+    resourceType: resourceTypeEnum,
+    folder: z
+      .string()
+      .regex(folderRegex, "Folder phải có dạng chat/<ObjectId>"),
+  }).strict(),
+});
+
+// Kiểu dữ liệu trích từ body (controller dùng để truyền vào service).
+export type SignUploadDTO = z.infer<typeof SignUploadSchema>["body"];

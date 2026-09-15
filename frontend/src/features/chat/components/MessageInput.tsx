@@ -59,16 +59,20 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   // Trạng thái mở/đóng popup kho sticker (bind vào nút Sticker để highlight khi đang mở)
   const [isStickerOpen, setIsStickerOpen] = useState<boolean>(false);
 
-  // Tự động điều chỉnh tiêu điểm vào ô nhập khi chuyển cuộc hội thoại
+  // Tự động điều chỉnh tiêu điểm vào ô nhập khi chuyển cuộc hội thoại.
+  // MediaRef giữ ref ổn định để effect không phụ thuộc object media (tạo mới mỗi render).
+  const mediaClearRef = useRef(media?.clear);
+  mediaClearRef.current = media?.clear;
+
   useEffect(() => {
     setContent("");
     onTyping(false);
     setIsEmojiOpen(false);
     setIsStickerOpen(false);
     // Xoá queue media cũ khi chuyển sang cuộc hội thoại khác.
-    media?.clear();
+    mediaClearRef.current?.();
     textareaRef.current?.focus();
-  }, [conversationId, onTyping, media]);
+  }, [conversationId, onTyping]);
 
   // Chèn emoji vào ĐÚNG vị trí con trỏ đang đứng (không append mù quáng vào cuối chuỗi),
   // sau đó trả con trỏ ngay sau emoji và giữ tiêu điểm để người dùng gõ tiếp.

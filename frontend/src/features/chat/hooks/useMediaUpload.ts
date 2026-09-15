@@ -248,10 +248,12 @@ export function useMediaUpload(conversationId: string) {
   }, [items, conversationId, patchItem]);
 
   // Reset queue sau khi gửi tin nhắn thành công (huỷ mọi XHR còn treo).
+  // Trả về mảng cũ khi queue đã rỗng để tránh re-render thừa (phòng infinite-loop
+  // khi clear() được gọi từ useEffect có dependency không ổn định).
   const clear = useCallback(() => {
     Object.values(xhrs.current).forEach((x) => x.abort());
     xhrs.current = {};
-    setItems([]);
+    setItems((prev) => (prev.length === 0 ? prev : []));
   }, []);
 
   return { items, pickFiles, removeItem, uploadAll, clear, isUploading };
