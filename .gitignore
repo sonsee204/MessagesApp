@@ -68,3 +68,6 @@ frontend/*.png
 .playwright-mcp/
 .superpowers/
 
+
+# Cache build cua Vite (Playwright/vitest deps)
+.vite/

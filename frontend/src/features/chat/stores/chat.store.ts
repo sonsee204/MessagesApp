@@ -5,6 +5,7 @@ import {
   CreateConversationPayload,
   SendMessagePayload,
   MessageType,
+  MessageAttachment,
 } from "../../../types/chat.types";
 import { chatService } from "../services/chat.service";
 import { formatApiError } from "../../../lib/error-formatter";
@@ -58,8 +59,13 @@ export interface ChatState {
   // Tải lịch sử tin nhắn của cuộc trò chuyện (hỗ trợ phân trang cuộn lên để tải tin nhắn cũ hơn)
   fetchMessages: (conversationId: string, loadOlder?: boolean) => Promise<void>;
 
-  // Gửi tin nhắn mới vào cuộc trò chuyện đang chọn
-  sendMessage: (conversationId: string, content: string, type?: MessageType) => Promise<Message | null>;
+  // Gửi tin nhắn mới vào cuộc trò chuyện đang chọn (kèm tệp đính kèm sticker/GIF nếu có)
+  sendMessage: (
+    conversationId: string,
+    content: string,
+    type?: MessageType,
+    attachments?: MessageAttachment[]
+  ) => Promise<Message | null>;
 
   // Khởi tạo cuộc trò chuyện mới (Trực tiếp hoặc Nhóm)
   createConversation: (payload: CreateConversationPayload) => Promise<Conversation | null>;
@@ -224,8 +230,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
   /**
    * 4. Gửi tin nhắn mới vào cuộc trò chuyện
    */
-  sendMessage: async (conversationId: string, content: string, type: MessageType = "TEXT") => {
-    if (!content.trim()) return null;
+  sendMessage: async (
+    conversationId: string,
+    content: string,
+    type: MessageType = "TEXT",
+    attachments?: MessageAttachment[]
+  ) => {
+    // Tin nhắn hợp lệ khi có chữ OR có tệp đính kèm (đúng ràng buộc Backend: content || attachments)
+    if (!content.trim() && !(attachments && attachments.length > 0)) return null;
 
     try {
       set({ isSendingMessage: true, error: null });
@@ -233,6 +245,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const payload: SendMessagePayload = {
         content: content.trim(),
         type,
+        ...(attachments && attachments.length > 0 ? { attachments } : {}),
       };
 
       // Gửi tin nhắn qua REST API

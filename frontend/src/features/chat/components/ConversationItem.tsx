@@ -86,7 +86,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
         // Trạng thái được chọn (Active)
         isActive
           ? "bg-uupm-accent/20 border-uupm-line shadow-uupm-active font-bold translate-x-[1px] translate-y-[1px]"
-          : "bg-uupm-surface border-uupm-line shadow-uupm-active hover:bg-uupm-page hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[2px] active:translate-y-[2px]",
+          : "bg-uupm-surface border-uupm-line shadow-uupm-active hover:bg-uupm-surface-hover hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[2px] active:translate-y-[2px] text-uupm-ink",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
       )}
     >

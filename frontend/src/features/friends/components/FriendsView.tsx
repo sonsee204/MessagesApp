@@ -15,6 +15,7 @@ import { FriendRequestItem } from "./FriendRequestItem";
 import { BlockedUserItem } from "./BlockedUserItem";
 import { AddFriendTab } from "./AddFriendTab";
 import { Button } from "../../../components/ui/Button";
+import { ThemeToggle } from "../../../components/ui/ThemeToggle";
 
 export interface FriendsViewProps {
   onStartChat: (userId: string) => void;
@@ -213,6 +214,11 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
             <UserPlus className="w-3.5 h-3.5" />
             <span>Thêm Bạn</span>
           </button>
+        </div>
+
+        {/* Phía bên phải: nút đổi Theme sáng/tối đồng bộ với ChatHeader */}
+        <div className="flex items-center gap-2 shrink-0">
+          <ThemeToggle />
         </div>
       </header>
 

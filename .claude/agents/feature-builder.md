@@ -1,7 +1,7 @@
 ---
 name: feature-builder
 description: Developer agent chuyên triển khai tính năng fullstack, viết API, React component và sửa bug thông thường.
-model: sonnet
+model: Sonnet
 tools:
   - Read
   - Edit
