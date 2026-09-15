@@ -12,6 +12,72 @@ export interface FriendRequestItemProps {
 }
 
 /**
+ * Chuẩn hóa người đối diện thành đối tượng FriendRequestUser.
+ * Hỗ trợ cả trường hợp populate object hoặc chỉ id thuần (string).
+ * Pure helper module-scope để giảm complexity của FriendRequestItem.
+ */
+function resolveOtherUser(raw: FriendRequestUser | string | undefined): FriendRequestUser {
+  if (typeof raw === "object" && raw !== null) return raw;
+  return { id: String(raw), username: "user", displayName: "Người dùng" };
+}
+
+/**
+ * Cụm nút hành động cho mỗi loại lời mời (received: Accept/Reject, sent: Cancel).
+ * Tách thành child component để chuyển các nhánh điều kiện ra khỏi FriendRequestItem
+ * (rule no-high-complexity-react-function).
+ */
+function FriendRequestActions({
+  type,
+  requestId,
+  onAccept,
+  onReject,
+  onCancel,
+}: {
+  type: "received" | "sent";
+  requestId: string;
+  onAccept?: (requestId: string) => void;
+  onReject?: (requestId: string) => void;
+  onCancel?: (requestId: string) => void;
+}) {
+  if (type === "received") {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => onAccept?.(requestId)}
+          className="w-9 h-9 rounded-xs bg-uupm-accent hover:bg-uupm-accent-hover text-uupm-accent-text border-2 border-uupm-line shadow-uupm-active flex items-center justify-center cursor-pointer transition-[background-color,box-shadow,transform] active:translate-x-[1px] active:translate-y-[1px]"
+          title="Chấp nhận kết bạn"
+          aria-label="Chấp nhận lời mời kết bạn"
+        >
+          <Check className="w-4 h-4 stroke-[3]" />
+        </button>
+        <button
+          type="button"
+          onClick={() => onReject?.(requestId)}
+          className="w-9 h-9 rounded-xs bg-uupm-surface hover:bg-uupm-danger/10 text-uupm-danger-text border-2 border-uupm-line shadow-uupm-active flex items-center justify-center cursor-pointer transition-[background-color,box-shadow,transform] active:translate-x-[1px] active:translate-y-[1px]"
+          title="Từ chối lời mời"
+          aria-label="Từ chối lời mời kết bạn"
+        >
+          <X className="w-4 h-4 stroke-[3]" />
+        </button>
+      </>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => onCancel?.(requestId)}
+      className="w-9 h-9 rounded-xs bg-uupm-surface hover:bg-uupm-danger/10 text-uupm-danger-text border-2 border-uupm-line shadow-uupm-active flex items-center justify-center cursor-pointer transition-[background-color,box-shadow,transform] active:translate-x-[1px] active:translate-y-[1px]"
+      title="Hủy lời mời kết bạn"
+      aria-label="Hủy lời mời kết bạn"
+    >
+      <X className="w-4 h-4 stroke-[3]" />
+    </button>
+  );
+}
+
+/**
  * Thành phần hiển thị một mục lời mời kết bạn (dành cho cả lời mời nhận được và đã gửi)
  */
 export const FriendRequestItem: React.FC<FriendRequestItemProps> = ({
@@ -24,18 +90,19 @@ export const FriendRequestItem: React.FC<FriendRequestItemProps> = ({
 }) => {
   const requestId = request._id || request.id || "";
 
-  // Xác định người dùng đối diện trong quan hệ
-  const otherUserRaw = type === "received" ? request.senderId : request.receiverId;
-  const otherUser: FriendRequestUser =
-    typeof otherUserRaw === "object" && otherUserRaw !== null
-      ? otherUserRaw
-      : {
-          id: String(otherUserRaw),
-          username: "user",
-          displayName: "Người dùng",
-        };
-
+  // Xác định người dùng đối diện — dùng pure helper module-scope
+  const otherUser = resolveOtherUser(
+    type === "received" ? request.senderId : request.receiverId
+  );
   const targetUserId = otherUser.id || otherUser._id || "";
+
+  // Ghi chú/mô tả cho từng loại lời mời
+  const noteText =
+    type === "received"
+      ? request.note
+        ? `"${request.note}"`
+        : "Lời mời kết bạn nhận được"
+      : "Lời mời kết bạn đã gửi — Đang chờ phản hồi";
 
   return (
     <div className="flex items-center justify-between p-3 rounded-xs border-b border-uupm-line/20 hover:bg-uupm-surface-hover transition-colors gap-3">
@@ -70,55 +137,19 @@ export const FriendRequestItem: React.FC<FriendRequestItemProps> = ({
               @{otherUser.username}
             </span>
           </div>
-
-          <p className="text-xs text-uupm-ink-muted font-medium mt-0.5 truncate">
-            {type === "received"
-              ? request.note
-                ? `"${request.note}"`
-                : "Lời mời kết bạn nhận được"
-              : "Lời mời kết bạn đã gửi — Đang chờ phản hồi"}
-          </p>
+          <p className="text-xs text-uupm-ink-muted font-medium mt-0.5 truncate">{noteText}</p>
         </div>
       </button>
 
-      {/* Khối nút tương tác */}
+      {/* Khối nút tương tác — tách sang FriendRequestActions */}
       <div className="flex items-center gap-2 shrink-0">
-        {type === "received" ? (
-          <>
-            {/* Nút Chấp nhận */}
-            <button
-              type="button"
-              onClick={() => onAccept?.(requestId)}
-              className="w-9 h-9 rounded-xs bg-uupm-accent hover:bg-uupm-accent-hover text-uupm-accent-text border-2 border-uupm-line shadow-uupm-active flex items-center justify-center cursor-pointer transition-[background-color,box-shadow,transform] active:translate-x-[1px] active:translate-y-[1px]"
-              title="Chấp nhận kết bạn"
-              aria-label="Chấp nhận lời mời kết bạn"
-            >
-              <Check className="w-4 h-4 stroke-[3]" />
-            </button>
-
-            {/* Nút Từ chối */}
-            <button
-              type="button"
-              onClick={() => onReject?.(requestId)}
-              className="w-9 h-9 rounded-xs bg-uupm-surface hover:bg-uupm-danger/10 text-uupm-danger-text border-2 border-uupm-line shadow-uupm-active flex items-center justify-center cursor-pointer transition-[background-color,box-shadow,transform] active:translate-x-[1px] active:translate-y-[1px]"
-              title="Từ chối lời mời"
-              aria-label="Từ chối lời mời kết bạn"
-            >
-              <X className="w-4 h-4 stroke-[3]" />
-            </button>
-          </>
-        ) : (
-          /* Nút Hủy lời mời đã gửi */
-          <button
-            type="button"
-            onClick={() => onCancel?.(requestId)}
-            className="w-9 h-9 rounded-xs bg-uupm-surface hover:bg-uupm-danger/10 text-uupm-danger-text border-2 border-uupm-line shadow-uupm-active flex items-center justify-center cursor-pointer transition-[background-color,box-shadow,transform] active:translate-x-[1px] active:translate-y-[1px]"
-            title="Hủy lời mời kết bạn"
-            aria-label="Hủy lời mời kết bạn"
-          >
-            <X className="w-4 h-4 stroke-[3]" />
-          </button>
-        )}
+        <FriendRequestActions
+          type={type}
+          requestId={requestId}
+          onAccept={onAccept}
+          onReject={onReject}
+          onCancel={onCancel}
+        />
       </div>
     </div>
   );
