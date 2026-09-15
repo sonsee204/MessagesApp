@@ -127,12 +127,14 @@ Input.displayName = "Input";
 const InputField = React.forwardRef<
   HTMLInputElement,
   Omit<InputProps, "isPassword" | "isValid"> & {
-    inputId: string;
+    inputId?: string;
     inputType: string;
     showPassword: boolean;
     onTogglePassword: () => void;
     describedById?: string;
     label?: string;
+    isPassword: boolean;
+    isValid: boolean;
   }
 >(
   (

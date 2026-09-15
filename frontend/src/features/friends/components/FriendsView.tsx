@@ -9,6 +9,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useFriendStore } from "../stores/friend.store";
+import type { FriendItem, BlockedUserItem as BlockedUserItemType } from "../types/friend.types";
 import { BlockedUserItem } from "./BlockedUserItem";
 import { AddFriendTab } from "./AddFriendTab";
 import { FriendListSection } from "./FriendListSection";
@@ -182,8 +183,8 @@ function FriendsBody(props: {
   error?: string | null;
   searchQuery: string;
   setSearchQuery: (v: string) => void;
-  filteredFriends: Array<{ user: { displayName: string; username: string; avatarUrl?: string | null; isOnline: boolean }; _id?: string; id?: string }>;
-  filteredBlockedUsers: Array<{ _id: string; id?: string }>;
+  filteredFriends: FriendItem[];
+  filteredBlockedUsers: BlockedUserItemType[];
   onStartChat: (userId: string) => void;
   onOpenProfile: (userId: string) => void;
   onSelectTab: (tab: FriendsTab) => void;
@@ -290,8 +291,8 @@ function FriendsTabContent({
   onUnblockUser,
 }: {
   activeTab: FriendsTab;
-  filteredFriends: Array<{ user: { displayName: string; username: string; avatarUrl?: string | null; isOnline: boolean }; _id?: string; id?: string }>;
-  filteredBlockedUsers: Array<{ _id: string; id?: string }>;
+  filteredFriends: FriendItem[];
+  filteredBlockedUsers: BlockedUserItemType[];
   onStartChat: (userId: string) => void;
   onOpenProfile: (userId: string) => void;
   onSelectTab: (tab: FriendsTab) => void;
@@ -378,7 +379,7 @@ function FriendsTabContent({
           {filteredBlockedUsers.map((b) => (
             <BlockedUserItem
               key={b._id || b.id}
-              block={b as never}
+              block={b}
               onUnblock={onUnblockUser}
               onOpenProfile={onOpenProfile}
             />
