@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { X, User as UserIcon, KeyRound, Palette, IdCard } from "lucide-react";
 import { User } from "../../../types/auth.types";
 import { ThemeToggle } from "../../../components/ui/ThemeToggle";
@@ -41,7 +41,13 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({ isOpen, on
   // activeTab được reset tự nhiên qua key remount ở call site (ConversationSidebar)
   // — không cần effect reset thủ công (rule no-reset-all-state-on-prop-change).
 
-  if (!isOpen) return null;
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (isOpen && !dialog.open) dialog.showModal();
+    else if (!isOpen && dialog.open) dialog.close();
+  }, [isOpen]);
 
   // Danh sách phân mục hiển thị ở cột điều hướng bên trái
   const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
@@ -52,14 +58,12 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({ isOpen, on
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-150">
-      {/* Khung Hộp thoại Neo-brutalist rộng rãi, bố cục 2 cột giống User Settings của Discord */}
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Cài đặt người dùng"
-        className="w-full max-w-4xl h-[700px] max-h-[90vh] bg-uupm-surface border-2 border-uupm-line rounded-md shadow-uupm-1 overflow-hidden select-none flex flex-col"
-      >
+    <dialog
+      ref={dialogRef}
+      onClose={onClose}
+      aria-label="Cài đặt người dùng"
+      className="m-0 p-0 w-[90vw] max-w-4xl h-[700px] max-h-[90vh] bg-uupm-surface border-2 border-uupm-line rounded-md shadow-uupm-1 overflow-hidden select-none flex flex-col backdrop:bg-black/40 backdrop:backdrop-blur-xs"
+    >
         {/* Header Modal */}
         <div className="px-6 py-4 bg-uupm-accent-soft border-b-2 border-uupm-line flex items-center justify-between shrink-0">
           <h3 className="text-lg font-black text-uupm-ink uppercase tracking-wide">Cài đặt người dùng</h3>
@@ -134,7 +138,6 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({ isOpen, on
             )}
           </div>
         </div>
-      </div>
-    </div>
+    </dialog>
   );
 };

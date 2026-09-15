@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useState } from "react";
+import React, { useEffect, useCallback, useRef, useState } from "react";
 import {
   Bell,
   BellOff,
@@ -279,20 +279,26 @@ export const NotificationListModal: React.FC = () => {
     };
   }, [isModalOpen, handleKeyDown]);
 
-  if (!isModalOpen) return null;
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (isModalOpen && !dialog.open) dialog.showModal();
+    else if (!isModalOpen && dialog.open) dialog.close();
+  }, [isModalOpen]);
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
+    <dialog
+      ref={dialogRef}
       aria-labelledby="notification-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150"
+      className="w-screen h-screen max-h-none max-w-none m-0 p-0 flex items-center justify-center bg-transparent backdrop:bg-black/60 backdrop:backdrop-blur-xs"
     >
-      {/* Lớp nền bắt sự kiện click ra ngoài để đóng */}
-      <div
-        className="fixed inset-0"
+      {/* Backdrop: nút ẩn che phủ toàn bộ, click ra ngoài => đóng modal */}
+      <button
+        type="button"
+        aria-label="Đóng modal thông báo"
+        className="fixed inset-0 w-full h-full cursor-default bg-transparent border-0 p-0 m-0"
         onClick={closeModal}
-        aria-hidden="true"
       />
 
       <div className="relative w-full max-w-lg max-h-[85vh] flex flex-col bg-uupm-surface border-2 border-uupm-line shadow-uupm-2 rounded-xs overflow-hidden z-10 animate-in zoom-in-95 duration-150">
@@ -418,6 +424,6 @@ export const NotificationListModal: React.FC = () => {
           )}
         </div>
       </div>
-    </div>
+    </dialog>
   );
 };

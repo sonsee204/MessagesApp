@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   X,
   User as UserIcon,
@@ -239,16 +239,14 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
   // Popup Cài đặt người dùng mở từ nút "Chỉnh sửa hồ sơ" khi xem chính mình (giống Discord)
   const [isSelfSettingsOpen, setIsSelfSettingsOpen] = useState<boolean>(false);
 
-  // Đóng modal khi nhấn phím Escape
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  // native <dialog>.showModal() đã trap focus + Escape đóng (rule prefer-html-dialog)
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isOpen) {
-        onClose();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (isOpen && !dialog.open) dialog.showModal();
+    else if (!isOpen && dialog.open) dialog.close();
+  }, [isOpen]);
 
   if (!isOpen || !user) return null;
 
@@ -290,17 +288,21 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
   };
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
+    <dialog
+      ref={dialogRef}
+      onClose={onClose}
       aria-label={`Hồ sơ chi tiết của ${displayName}`}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs select-none"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+      className="m-0 w-screen h-screen max-h-none max-w-none p-4 flex items-center justify-center bg-transparent backdrop:bg-black/60 backdrop:backdrop-blur-xs select-none"
     >
+      {/* Backdrop: nút ẩn che phủ toàn bộ, click ra ngoài khung => đóng modal */}
+      <button
+        type="button"
+        aria-label="Đóng hồ sơ"
+        className="fixed inset-0 w-full h-full cursor-default bg-transparent border-0 p-0 m-0"
+        onClick={onClose}
+      />
       {/* Khung chính Modal 2 cột theo phong cách Discord được phóng to rộng rãi */}
-      <div className="w-full max-w-4xl bg-uupm-surface border-3 border-uupm-line rounded-sm shadow-uupm-2 overflow-hidden flex flex-col md:flex-row relative animate-in fade-in zoom-in-95 duration-150 max-h-[92vh] overflow-y-auto md:overflow-y-visible">
+      <div className="relative z-10 w-full max-w-4xl bg-uupm-surface border-3 border-uupm-line rounded-sm shadow-uupm-2 overflow-hidden flex flex-col md:flex-row animate-in fade-in zoom-in-95 duration-150 max-h-[92vh] overflow-y-auto md:overflow-y-visible">
         {/* Nút đóng góc trên bên phải */}
         <button
           type="button"
@@ -372,16 +374,15 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
       </div>
 
       {/* Modal xác nhận Hủy kết bạn (dùng ConfirmDialog chung để triệt tiêu duplicate JSX) */}
-      {isUnfriendConfirmOpen && (
-        <ConfirmDialog
-          title="Hủy kết bạn"
-          description={`Bạn có chắc chắn muốn hủy kết bạn với ${displayName} (${usernameHandle}) không?`}
-          confirmLabel="Xác nhận hủy"
-          isLoading={isSubmitting}
-          onConfirm={handleConfirmRemoveFriend}
-          onCancel={() => setIsUnfriendConfirmOpen(false)}
-        />
-      )}
+      <ConfirmDialog
+        isOpen={isUnfriendConfirmOpen}
+        title="Hủy kết bạn"
+        description={`Bạn có chắc chắn muốn hủy kết bạn với ${displayName} (${usernameHandle}) không?`}
+        confirmLabel="Xác nhận hủy"
+        isLoading={isSubmitting}
+        onConfirm={handleConfirmRemoveFriend}
+        onCancel={() => setIsUnfriendConfirmOpen(false)}
+      />
 
       {/* Popup Cài đặt mở chồng lên khi bấm "Chỉnh sửa hồ sơ" trên chính hồ sơ của mình */}
       {isMe && currentUser && (
@@ -391,6 +392,6 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
           currentUser={currentUser}
         />
       )}
-    </div>
+    </dialog>
   );
 };

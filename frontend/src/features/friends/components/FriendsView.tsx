@@ -146,26 +146,24 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
       />
 
       {/* ================= MODAL XÁC NHẬN HỦY KẾT BẠN ================= */}
-      {unfriendConfirmId && (
-        <ConfirmDialog
-          title="Hủy kết bạn"
-          description="Bạn có chắc chắn muốn hủy kết bạn với người dùng này không? Hành động này sẽ xóa quan hệ bạn bè giữa hai người."
-          confirmLabel="Xác nhận hủy"
-          onConfirm={handleConfirmRemoveFriend}
-          onCancel={() => setUnfriendConfirmId(null)}
-        />
-      )}
+      <ConfirmDialog
+        isOpen={Boolean(unfriendConfirmId)}
+        title="Hủy kết bạn"
+        description="Bạn có chắc chắn muốn hủy kết bạn với người dùng này không? Hành động này sẽ xóa quan hệ bạn bè giữa hai người."
+        confirmLabel="Xác nhận hủy"
+        onConfirm={handleConfirmRemoveFriend}
+        onCancel={() => setUnfriendConfirmId(null)}
+      />
 
       {/* ================= MODAL XÁC NHẬN CHẶN NGƯỜI DÙNG ================= */}
-      {blockConfirmId && (
-        <ConfirmDialog
-          title="Chặn người dùng"
-          description="Người dùng này sẽ bị hủy kết bạn và không thể gửi tin nhắn hoặc lời mời kết bạn cho bạn nữa."
-          confirmLabel="Chặn người dùng"
-          onConfirm={handleConfirmBlockUser}
-          onCancel={() => setBlockConfirmId(null)}
-        />
-      )}
+      <ConfirmDialog
+        isOpen={Boolean(blockConfirmId)}
+        title="Chặn người dùng"
+        description="Người dùng này sẽ bị hủy kết bạn và không thể gửi tin nhắn hoặc lời mời kết bạn cho bạn nữa."
+        confirmLabel="Chặn người dùng"
+        onConfirm={handleConfirmBlockUser}
+        onCancel={() => setBlockConfirmId(null)}
+      />
     </div>
   );
 };

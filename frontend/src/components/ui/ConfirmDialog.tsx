@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { Button } from "./Button";
 
 interface ConfirmDialogProps {
+  /** Trạng thái hiển thị — dùng native <dialog>.showModal() thay vì mount/unmount */
+  isOpen: boolean;
   title: string;
   description: string;
   confirmLabel: string;
@@ -15,9 +17,10 @@ interface ConfirmDialogProps {
 
 /**
  * Hộp thoại xác nhận hành động nhạy cảm (hủy kết bạn, chặn người dùng...).
- * Tách thành molecule dùng chung để triệt tiêu duplicate JSX giữa các modal confirm.
+ * Dùng native <dialog> để có focus trap & Escape đóng sẵn (rule prefer-html-dialog).
  */
 export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
+  isOpen,
   title,
   description,
   confirmLabel,
@@ -25,34 +28,56 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   isLoading = false,
   onConfirm,
   onCancel,
-}) => (
-  <div
-    role="dialog"
-    aria-modal="true"
-    aria-label={title}
-    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs select-none"
-  >
-    <div className="w-full max-w-sm bg-uupm-surface border-3 border-uupm-line rounded-xs shadow-uupm-2 p-5 animate-in fade-in zoom-in-95 duration-150">
-      <div className="flex items-center gap-3 text-uupm-danger-text mb-3">
-        <AlertTriangle className="w-6 h-6 shrink-0" />
-        <h3 className="font-black text-base text-uupm-ink">{title}</h3>
+}) => {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  // Đồng bộ trạng thái mở/đóng với native dialog (showModal tự trap focus + Escape)
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (isOpen && !dialog.open) {
+      dialog.showModal();
+    } else if (!isOpen && dialog.open) {
+      dialog.close();
+    }
+  }, [isOpen]);
+
+  return (
+    <dialog
+      ref={dialogRef}
+      aria-label={title}
+      className="bg-transparent p-0 backdrop:bg-black/60 backdrop:backdrop-blur-xs"
+    >
+      {/* Vùng backdrop: nút ẩn che phủ toàn bộ, click ra ngoài => hủy */}
+      <button
+        type="button"
+        aria-label="Đóng hộp thoại"
+        className="fixed inset-0 w-full h-full cursor-default bg-transparent border-0 p-0 m-0"
+        onClick={onCancel}
+        style={{ outline: "none" }}
+      />
+      <div className="relative z-10 w-full max-w-sm bg-uupm-surface border-3 border-uupm-line rounded-xs shadow-uupm-2 p-5 animate-in fade-in zoom-in-95 duration-150">
+        <div className="flex items-center gap-3 text-uupm-danger-text mb-3">
+          <AlertTriangle className="w-6 h-6 shrink-0" />
+          <h3 className="font-black text-base text-uupm-ink">{title}</h3>
+        </div>
+        <p className="text-xs text-uupm-ink-soft font-medium leading-relaxed mb-5">{description}</p>
+        <div className="flex items-center justify-end gap-2">
+          <Button type="button" variant="outline" size="sm" onClick={onCancel} disabled={isLoading}>
+            {cancelLabel}
+          </Button>
+          <Button
+            type="button"
+            variant="danger"
+            size="sm"
+            onClick={onConfirm}
+            disabled={isLoading}
+            leftIcon={isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : undefined}
+          >
+            {confirmLabel}
+          </Button>
+        </div>
       </div>
-      <p className="text-xs text-uupm-ink-soft font-medium leading-relaxed mb-5">{description}</p>
-      <div className="flex items-center justify-end gap-2">
-        <Button type="button" variant="outline" size="sm" onClick={onCancel} disabled={isLoading}>
-          {cancelLabel}
-        </Button>
-        <Button
-          type="button"
-          variant="danger"
-          size="sm"
-          onClick={onConfirm}
-          disabled={isLoading}
-          leftIcon={isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : undefined}
-        >
-          {confirmLabel}
-        </Button>
-      </div>
-    </div>
-  </div>
-);
+    </dialog>
+  );
+};

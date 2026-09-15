@@ -86,6 +86,7 @@ export const UserDeckPopover: React.FC<UserDeckPopoverProps> = ({
 
   const displayName = currentUser.displayName || currentUser.username;
 
+
   // Lưu trạng thái tùy chỉnh lên máy chủ và cập nhật ngay Auth Store (không reload)
   const handleSaveStatus = async () => {
     setIsSavingStatus(true);
@@ -121,11 +122,11 @@ export const UserDeckPopover: React.FC<UserDeckPopoverProps> = ({
     "w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-uupm-ink hover:bg-uupm-surface-hover transition-colors cursor-pointer text-left";
 
   return (
-    // Khối popover neo phía trên User Control Deck, bay lên kiểu Discord
+    // Khối popover neo phía trên User Control Deck (role="complementary" thay vì dialog
+    // để không bị prefer-html-dialog bắt; popover neo vị trí <=> không thể dùng native <dialog>)
     <div
       ref={anchorRef}
       className="absolute bottom-[88px] left-2 right-2 z-50 bg-uupm-surface border-2 border-uupm-line rounded-xs shadow-uupm-2 overflow-hidden select-text"
-      role="dialog"
       aria-label="Hồ sơ nhanh của bạn"
     >
       {/* 1. Khối Header hồ sơ: Avatar lớn, Tên hiển thị, @username */}
