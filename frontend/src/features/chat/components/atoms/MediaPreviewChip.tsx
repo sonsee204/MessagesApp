@@ -1,5 +1,4 @@
 import { X, FileText } from "lucide-react";
-import { cn } from "../../../../lib/utils";
 import type { UploadItem } from "../../hooks/useMediaUpload";
 
 /**
