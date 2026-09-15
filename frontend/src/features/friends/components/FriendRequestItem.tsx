@@ -39,11 +39,13 @@ export const FriendRequestItem: React.FC<FriendRequestItemProps> = ({
 
   return (
     <div className="flex items-center justify-between p-3 rounded-xs border-b border-uupm-line/20 hover:bg-uupm-surface-hover transition-colors gap-3">
-      {/* Khối thông tin người gửi/nhận */}
-      <div
-        className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer"
+      {/* Khối thông tin người gửi/nhận — button语义 */}
+      <button
+        type="button"
         onClick={() => targetUserId && onOpenProfile?.(targetUserId)}
         title="Nhấp để xem hồ sơ"
+        aria-label={`Xem hồ sơ ${otherUser.displayName || otherUser.username}`}
+        className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer bg-transparent border-0 p-0 rounded-xs text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-uupm-accent"
       >
         {/* Ảnh đại diện */}
         <div className="shrink-0 w-10 h-10 rounded-full border-2 border-uupm-line overflow-hidden bg-uupm-page flex items-center justify-center font-black text-uupm-ink">
@@ -77,7 +79,7 @@ export const FriendRequestItem: React.FC<FriendRequestItemProps> = ({
               : "Lời mời kết bạn đã gửi — Đang chờ phản hồi"}
           </p>
         </div>
-      </div>
+      </button>
 
       {/* Khối nút tương tác */}
       <div className="flex items-center gap-2 shrink-0">

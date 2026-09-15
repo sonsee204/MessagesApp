@@ -186,6 +186,7 @@ export const UserDeckPopover: React.FC<UserDeckPopoverProps> = ({
                 if (e.key === "Escape") setIsEditingStatus(false);
               }}
               placeholder="Đặt trạng thái của bạn..."
+              aria-label="Nhập trạng thái hoạt động của bạn"
               className="flex-1 min-w-0 px-2 py-1.5 bg-uupm-page border-2 border-uupm-line rounded-xs shadow-uupm-active text-xs font-bold text-uupm-ink placeholder:text-uupm-ink-muted focus:outline-none focus:bg-uupm-surface transition-all"
             />
             <button

@@ -99,6 +99,7 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
             value={filterText}
             onChange={(e) => setFilterText(e.target.value)}
             placeholder="Tìm hoặc bắt đầu trò chuyện"
+            aria-label="Tìm kiếm hoặc bắt đầu cuộc trò chuyện mới"
             className="w-full pl-8 pr-12 py-1.5 bg-uupm-page hover:bg-uupm-surface-hover focus:bg-uupm-surface rounded-xs border-2 border-uupm-line shadow-uupm-active text-xs font-bold text-uupm-ink placeholder:text-uupm-ink-muted focus:outline-none focus:shadow-uupm-2 transition-all"
           />
           <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[9px] font-black text-uupm-ink bg-uupm-surface border border-uupm-line rounded shadow-sm absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">

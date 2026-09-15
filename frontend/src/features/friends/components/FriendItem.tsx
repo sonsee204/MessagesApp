@@ -41,11 +41,13 @@ export const FriendItem: React.FC<FriendItemProps> = ({
 
   return (
     <div className="group relative flex items-center justify-between p-3 rounded-xs border-b border-uupm-line/20 hover:bg-uupm-surface-hover transition-colors">
-      {/* Khối bên trái: Avatar và thông tin tài khoản */}
-      <div
-        className="flex items-center gap-3 cursor-pointer min-w-0 flex-1"
+      {/* Khối bên trái: Avatar và thông tin tài khoản — button语义 để mở hồ sơ bằng chuột lẫn bàn phím */}
+      <button
+        type="button"
         onClick={() => onOpenProfile(user.id)}
         title="Nhấp để xem hồ sơ"
+        aria-label={`Xem hồ sơ ${user.displayName || user.username}`}
+        className="flex items-center gap-3 cursor-pointer min-w-0 flex-1 text-left bg-transparent border-0 p-0 rounded-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-uupm-accent"
       >
         {/* Ảnh đại diện với chỉ báo trạng thái trực tuyến */}
         <div className="relative shrink-0 w-10 h-10 rounded-full border-2 border-uupm-line overflow-visible bg-uupm-page flex items-center justify-center font-black text-uupm-ink">
@@ -84,7 +86,7 @@ export const FriendItem: React.FC<FriendItemProps> = ({
             </p>
           )}
         </div>
-      </div>
+      </button>
 
       {/* Khối bên phải: Các nút hành động */}
       <div className="flex items-center gap-2 shrink-0">

@@ -71,25 +71,28 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
     : "Ngoại tuyến";
 
   return (
-    <div
-      onClick={onClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onClick();
-        }
-      }}
-      className={cn(
-        "group w-full text-left p-2.5 rounded-xs border-2 transition-all duration-150 ease-out select-none cursor-pointer flex items-center gap-3 relative",
-        // Trạng thái được chọn (Active)
-        isActive
-          ? "bg-uupm-accent/20 border-uupm-line shadow-uupm-active font-bold translate-x-[1px] translate-y-[1px]"
-          : "bg-uupm-surface border-uupm-line shadow-uupm-active hover:bg-uupm-surface-hover hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[2px] active:translate-y-[2px] text-uupm-ink",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-      )}
-    >
+    // Khối ngoài cùng không tương tác: nút đóng là sibling, tránh lồng điều khiển tương tác
+    <div className="relative group">
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onClick}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onClick();
+          }
+        }}
+        aria-label={`Mở cuộc trò chuyện ${displayName}`}
+        className={cn(
+          "w-full text-left p-2.5 rounded-xs border-2 transition-all duration-150 ease-out select-none cursor-pointer flex items-center gap-3",
+          // Trạng thái được chọn (Active)
+          isActive
+            ? "bg-uupm-accent/20 border-uupm-line shadow-uupm-active font-bold translate-x-[1px] translate-y-[1px]"
+            : "bg-uupm-surface border-uupm-line shadow-uupm-active hover:bg-uupm-surface-hover hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[2px] active:translate-y-[2px] text-uupm-ink",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+        )}
+      >
       {/* Khung Avatar kèm chỉ báo trực tuyến */}
       <div className="relative shrink-0">
         <div
@@ -154,7 +157,9 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
         </div>
       </div>
 
-      {/* Nút X đóng/ẩn cuộc trò chuyện kiểu Discord (Hiện khi hover vào item) */}
+      </div>
+
+      {/* Nút X đóng/ẩn cuộc trò chuyện kiểu Discord (Hiện khi hover vào item) — sibling, không lồng trong role=button */}
       {onCloseConversation && (
         <button
           type="button"

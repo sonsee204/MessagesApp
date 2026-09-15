@@ -682,17 +682,20 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
                   onBlur={() => setIsEditingNote(false)}
                   onKeyDown={(e) => e.key === "Enter" && setIsEditingNote(false)}
                   placeholder="Nhập ghi chú cho người này..."
+                  aria-label="Ghi chú cá nhân cho người dùng này"
                   autoFocus
                   className="w-full px-2 py-1 bg-uupm-surface border border-uupm-line rounded-xs text-xs font-semibold text-uupm-ink outline-none"
                 />
               ) : (
-                <p
+                <button
+                  type="button"
                   onClick={() => setIsEditingNote(true)}
-                  className="italic text-xs font-semibold text-uupm-ink-muted hover:text-uupm-ink cursor-pointer truncate"
+                  style={{ all: "unset" }}
+                  className="italic text-xs font-semibold text-uupm-ink-muted hover:text-uupm-ink cursor-pointer truncate block w-full text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-uupm-accent"
                   title="Nhấp để sửa ghi chú"
                 >
                   {personalNote || "Nhấp để thêm ghi chú"}
-                </p>
+                </button>
               )}
             </div>
           </div>
@@ -797,13 +800,14 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
             <div className="flex-1 space-y-2 overflow-y-auto max-h-[260px] pr-1">
               {mutualConversations.length > 0 ? (
                 mutualConversations.map((conv) => (
-                  <div
+                  <button
+                    type="button"
                     key={conv.id}
                     onClick={() => {
                       void selectConversation(conv.id);
                       onClose();
                     }}
-                    className="p-2.5 bg-uupm-page hover:bg-uupm-surface-hover border-2 border-uupm-line rounded-xs shadow-uupm-active flex items-center justify-between cursor-pointer transition-colors"
+                    className="p-2.5 bg-uupm-page hover:bg-uupm-surface-hover border-2 border-uupm-line rounded-xs shadow-uupm-active flex items-center justify-between cursor-pointer transition-colors w-full text-left bg-transparent border-0 p-2.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-uupm-accent"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div className="w-8 h-8 rounded-xs bg-uupm-accent border-2 border-uupm-line flex items-center justify-center shrink-0">
@@ -819,15 +823,10 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
                       </div>
                     </div>
 
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="text-[10px] py-1 px-2 shrink-0 font-bold"
-                    >
+                    <span className="text-[10px] py-1 px-2 shrink-0 font-bold border-2 border-uupm-line rounded-xs bg-uupm-surface text-uupm-ink-muted">
                       Mở chat
-                    </Button>
-                  </div>
+                    </span>
+                  </button>
                 ))
               ) : (
                 <div className="flex-1 flex flex-col items-center justify-center p-6 text-center my-auto">
@@ -852,6 +851,7 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
         <div
           role="dialog"
           aria-modal="true"
+          aria-label="Xác nhận hủy kết bạn"
           className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs select-none"
         >
           <div className="w-full max-w-sm bg-uupm-surface border-3 border-uupm-line rounded-xs shadow-uupm-2 p-5 animate-in fade-in zoom-in-95 duration-150">

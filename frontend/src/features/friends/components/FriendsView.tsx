@@ -237,6 +237,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Tìm kiếm bạn bè..."
+                aria-label="Tìm kiếm bạn bè"
                 className="w-full bg-uupm-page border-2 border-uupm-line rounded-xs pl-9 pr-3 py-2 text-xs font-bold text-uupm-ink placeholder:text-uupm-ink-muted focus:border-uupm-accent shadow-uupm-active outline-none transition-colors"
               />
             </div>
@@ -447,6 +448,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
         <div
           role="dialog"
           aria-modal="true"
+          aria-label="Xác nhận hủy kết bạn"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs select-none"
         >
           <div className="w-full max-w-sm bg-uupm-surface border-3 border-uupm-line rounded-xs shadow-uupm-2 p-5 animate-in fade-in zoom-in-95 duration-150">
@@ -484,6 +486,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
         <div
           role="dialog"
           aria-modal="true"
+          aria-label="Xác nhận chặn người dùng"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs select-none"
         >
           <div className="w-full max-w-sm bg-uupm-surface border-3 border-uupm-line rounded-xs shadow-uupm-2 p-5 animate-in fade-in zoom-in-95 duration-150">

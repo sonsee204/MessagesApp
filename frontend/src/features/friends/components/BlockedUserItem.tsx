@@ -29,11 +29,13 @@ export const BlockedUserItem: React.FC<BlockedUserItemProps> = ({
 
   return (
     <div className="flex items-center justify-between p-3 rounded-xs border-b border-uupm-line/20 hover:bg-uupm-surface-hover transition-colors gap-3">
-      {/* Thông tin người bị chặn */}
-      <div
-        className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer"
+      {/* Thông tin người bị chặn — button语义 mở hồ sơ */}
+      <button
+        type="button"
         onClick={() => targetUserId && onOpenProfile?.(targetUserId)}
         title="Nhấp để xem hồ sơ"
+        aria-label={`Xem hồ sơ ${blockedUser.displayName || blockedUser.username}`}
+        className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer bg-transparent border-0 p-0 rounded-xs text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-uupm-accent"
       >
         {/* Avatar */}
         <div className="shrink-0 w-10 h-10 rounded-full border-2 border-uupm-line overflow-hidden bg-uupm-page flex items-center justify-center font-black text-uupm-ink">
@@ -62,7 +64,7 @@ export const BlockedUserItem: React.FC<BlockedUserItemProps> = ({
             Đã chặn
           </p>
         </div>
-      </div>
+      </button>
 
       {/* Nút Bỏ chặn */}
       <button

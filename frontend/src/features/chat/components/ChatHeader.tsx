@@ -239,6 +239,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Tìm kiếm..."
+            aria-label="Tìm kiếm tin nhắn trong cuộc trò chuyện"
             className="w-32 xl:w-40 pl-2.5 pr-7 py-1 text-xs font-semibold bg-uupm-page rounded-xs border-2 border-uupm-line shadow-uupm-active focus:bg-uupm-surface focus:outline-none focus:w-48 transition-all"
           />
         </div>

@@ -121,6 +121,7 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Tìm theo username hoặc email..."
+              aria-label="Tìm kiếm người dùng theo username hoặc email"
               className="w-full pl-10 pr-4 py-2.5 text-sm font-semibold bg-uupm-page rounded-xs border-2 border-uupm-line shadow-uupm-active focus:bg-uupm-surface focus:outline-none focus:ring-2 focus:ring-blue-500"
               autoFocus
             />
