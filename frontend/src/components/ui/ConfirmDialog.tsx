@@ -1,5 +1,5 @@
 import React from "react";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Loader2 } from "lucide-react";
 import { Button } from "./Button";
 
 interface ConfirmDialogProps {
@@ -7,6 +7,8 @@ interface ConfirmDialogProps {
   description: string;
   confirmLabel: string;
   cancelLabel?: string;
+  /** Cờ đang thực thi hành động — khóa nút và hiện spinner (tùy chọn) */
+  isLoading?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -20,6 +22,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   description,
   confirmLabel,
   cancelLabel = "Hủy bỏ",
+  isLoading = false,
   onConfirm,
   onCancel,
 }) => (
@@ -36,10 +39,17 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
       </div>
       <p className="text-xs text-uupm-ink-soft font-medium leading-relaxed mb-5">{description}</p>
       <div className="flex items-center justify-end gap-2">
-        <Button type="button" variant="outline" size="sm" onClick={onCancel}>
+        <Button type="button" variant="outline" size="sm" onClick={onCancel} disabled={isLoading}>
           {cancelLabel}
         </Button>
-        <Button type="button" variant="danger" size="sm" onClick={onConfirm}>
+        <Button
+          type="button"
+          variant="danger"
+          size="sm"
+          onClick={onConfirm}
+          disabled={isLoading}
+          leftIcon={isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : undefined}
+        >
           {confirmLabel}
         </Button>
       </div>

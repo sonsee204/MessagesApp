@@ -3,11 +3,9 @@ import {
   X,
   User as UserIcon,
   ShieldCheck,
-  Loader2,
-  AlertTriangle,
 } from "lucide-react";
 import { User } from "../../../types/auth.types";
-import { Button } from "../../../components/ui/Button";
+import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import { toast } from "../../../stores/toast.store";
 import { useAuthStore } from "../../../stores/auth.store";
 import { useChatStore } from "../../chat/stores/chat.store";
@@ -314,45 +312,16 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
         </div>
       </div>
 
-      {/* Modal xác nhận Hủy kết bạn */}
+      {/* Modal xác nhận Hủy kết bạn (dùng ConfirmDialog chung để triệt tiêu duplicate JSX) */}
       {isUnfriendConfirmOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Xác nhận hủy kết bạn"
-          className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs select-none"
-        >
-          <div className="w-full max-w-sm bg-uupm-surface border-3 border-uupm-line rounded-xs shadow-uupm-2 p-5 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center gap-3 text-uupm-danger-text mb-3">
-              <AlertTriangle className="w-6 h-6 shrink-0" />
-              <h3 className="font-black text-base text-uupm-ink">Hủy kết bạn</h3>
-            </div>
-            <p className="text-xs text-uupm-ink-soft font-medium leading-relaxed mb-5">
-              Bạn có chắc chắn muốn hủy kết bạn với <strong className="text-uupm-ink font-black">{displayName}</strong> ({usernameHandle}) không?
-            </p>
-            <div className="flex items-center justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setIsUnfriendConfirmOpen(false)}
-                disabled={isSubmitting}
-              >
-                Hủy bỏ
-              </Button>
-              <Button
-                type="button"
-                variant="danger"
-                size="sm"
-                onClick={handleConfirmRemoveFriend}
-                disabled={isSubmitting}
-                leftIcon={isSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : undefined}
-              >
-                Xác nhận hủy
-              </Button>
-            </div>
-          </div>
-        </div>
+        <ConfirmDialog
+          title="Hủy kết bạn"
+          description={`Bạn có chắc chắn muốn hủy kết bạn với ${displayName} (${usernameHandle}) không?`}
+          confirmLabel="Xác nhận hủy"
+          isLoading={isSubmitting}
+          onConfirm={handleConfirmRemoveFriend}
+          onCancel={() => setIsUnfriendConfirmOpen(false)}
+        />
       )}
 
       {/* Popup Cài đặt mở chồng lên khi bấm "Chỉnh sửa hồ sơ" trên chính hồ sơ của mình */}
