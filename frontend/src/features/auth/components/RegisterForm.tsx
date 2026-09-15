@@ -210,21 +210,15 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
               <span className="font-extrabold">{passwordStrength.label}</span>
             </div>
             <div className="grid grid-cols-3 gap-1.5 h-2">
-              <div
-                className={`rounded-xs transition-[background-color,box-shadow,transform] border border-uupm-line ${
-                  passwordStrength.score >= 1 ? passwordStrength.color : "bg-uupm-surface-strong"
-                }`}
-              />
-              <div
-                className={`rounded-xs transition-[background-color,box-shadow,transform] border border-uupm-line ${
-                  passwordStrength.score >= 2 ? passwordStrength.color : "bg-uupm-surface-strong"
-                }`}
-              />
-              <div
-                className={`rounded-xs transition-[background-color,box-shadow,transform] border border-uupm-line ${
-                  passwordStrength.score >= 3 ? passwordStrength.color : "bg-uupm-surface-strong"
-                }`}
-              />
+              {/* 3 thanh biểu thị mức yếu — trung bình — mạnh (score >= thanh index) */}
+              {[1, 2, 3].map((level) => (
+                <div
+                  key={level}
+                  className={`rounded-xs transition-[background-color,box-shadow,transform] border border-uupm-line ${
+                    passwordStrength.score >= level ? passwordStrength.color : "bg-uupm-surface-strong"
+                  }`}
+                />
+              ))}
             </div>
           </div>
         )}

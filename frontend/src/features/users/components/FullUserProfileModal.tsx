@@ -2,21 +2,9 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   X,
   User as UserIcon,
-  MessageSquare,
-  UserPlus,
-  UserCheck,
-  UserMinus,
-  Check,
-  MoreHorizontal,
-  ShieldAlert,
   ShieldCheck,
-  Copy,
-  Users,
-  Sparkles,
-  MessageCircle,
   Loader2,
   AlertTriangle,
-  Settings,
 } from "lucide-react";
 import { User } from "../../../types/auth.types";
 import { Button } from "../../../components/ui/Button";
@@ -27,6 +15,8 @@ import { useFriendStore } from "../../friends/stores/friend.store";
 import { friendService, RelationshipStatus } from "../services/friend.service";
 import { cn } from "../../../lib/utils";
 import { UserSettingsModal } from "./UserSettingsModal";
+import { ProfileTabs } from "./ProfileTabs";
+import { ProfileRelationshipBar } from "./ProfileRelationshipBar";
 
 // Formatter ngày tham gia (tiếng Việt) — tạo 1 lần ở module scope (rule js-hoist-intl).
 const JOINED_DATE_FMT = new Intl.DateTimeFormat("vi-VN", {
@@ -422,230 +412,27 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
             </div>
           </div>
 
-          {/* Dải nút hành động chính (Thêm bạn, Nhắn tin, Menu) - Chống tràn layout */}
-          <div className="px-5 py-3 flex items-center gap-2 flex-wrap sm:flex-nowrap">
-            {!isMe ? (
-              <>
-                {/* Trạng thái lỗi: không tra cứu được quan hệ -> chỉ hiện nút Thử lại,
-                    tuyệt đối không hiển thị nút hành động dựa trên trạng thái không xác định */}
-                {statusError && !isLoadingStatus ? (
-                  <div className="flex-1 flex items-center gap-2 min-w-0">
-                    <span
-                      className="flex-1 text-[11px] font-bold text-uupm-danger-text truncate"
-                      title={statusError}
-                    >
-                      Không tải được trạng thái quan hệ
-                    </span>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setStatusReloadKey((k) => k + 1)}
-                      className="shrink-0 justify-center text-xs font-black"
-                      leftIcon={<AlertTriangle className="w-3.5 h-3.5" />}
-                    >
-                      Thử lại
-                    </Button>
-                  </div>
-                ) : (
-                  <>
-                {/* Nút quan hệ bạn bè đa trạng thái */}
-                {relationshipStatus === "NONE" && (
-                  <Button
-                    type="button"
-                    variant="primary"
-                    size="sm"
-                    onClick={handleSendFriendRequest}
-                    disabled={isLoadingStatus || isSubmitting}
-                    className="flex-1 min-w-0 justify-center text-xs font-black"
-                    leftIcon={isSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" /> : <UserPlus className="w-3.5 h-3.5 shrink-0" />}
-                  >
-                    <span className="truncate">Thêm Bạn</span>
-                  </Button>
-                )}
-
-                {relationshipStatus === "PENDING_SENT" && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleCancelFriendRequest}
-                    disabled={isSubmitting}
-                    title="Nhấp để hủy lời mời kết bạn đã gửi"
-                    className="flex-1 min-w-0 justify-center text-xs font-black hover:text-uupm-danger hover:border-uupm-danger transition-colors cursor-pointer"
-                    leftIcon={isSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" /> : <X className="w-3.5 h-3.5 shrink-0" />}
-                  >
-                    <span className="truncate">Hủy lời mời</span>
-                  </Button>
-                )}
-
-                {relationshipStatus === "PENDING_RECEIVED" && (
-                  <div className="flex-1 flex items-center gap-2 min-w-0">
-                    <Button
-                      type="button"
-                      variant="primary"
-                      size="sm"
-                      onClick={handleAcceptFriendRequest}
-                      disabled={isSubmitting}
-                      className="flex-1 min-w-0 justify-center text-xs font-black px-2.5"
-                      leftIcon={isSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" /> : <Check className="w-3.5 h-3.5 shrink-0" />}
-                    >
-                      <span className="truncate">Đồng ý</span>
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleRejectFriendRequest}
-                      disabled={isSubmitting}
-                      className="flex-1 min-w-0 justify-center text-xs font-black hover:text-uupm-danger hover:border-uupm-danger cursor-pointer px-2.5"
-                      leftIcon={<X className="w-3.5 h-3.5 shrink-0" />}
-                    >
-                      <span className="truncate">Từ chối</span>
-                    </Button>
-                  </div>
-                )}
-
-                {relationshipStatus === "FRIENDS" && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsUnfriendConfirmOpen(true)}
-                    className="flex-1 min-w-0 justify-center text-xs font-black bg-uupm-accent-soft text-uupm-accent-text hover:bg-uupm-danger/10 hover:text-uupm-danger-text hover:border-uupm-danger transition-colors cursor-pointer"
-                    title="Nhấp để mở xác nhận hủy kết bạn"
-                    leftIcon={<UserCheck className="w-3.5 h-3.5 shrink-0" />}
-                  >
-                    <span className="truncate">Bạn bè</span>
-                  </Button>
-                )}
-
-                {/* Đang bị đối phương chặn: hiển thị nhãn KHÔNG bấm được vì thao tác bỏ chặn
-                    là có hướng, chỉ bên chủ động chặn mới thực hiện được */}
-                {relationshipStatus === "BLOCKED" && !blockedByMe && (
-                  <span
-                    className="flex-1 min-w-0 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xs border-2 border-uupm-line bg-uupm-page text-xs font-black text-uupm-ink-muted cursor-not-allowed select-none"
-                    title="Người dùng này đã chặn bạn. Bạn không thể bỏ chặn từ phía mình."
-                    aria-disabled="true"
-                  >
-                    <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
-                    <span className="truncate">Bạn đã bị chặn</span>
-                  </span>
-                )}
-
-                {relationshipStatus === "BLOCKED" && blockedByMe && (
-                  <Button
-                    type="button"
-                    variant="danger"
-                    size="sm"
-                    onClick={handleToggleBlock}
-                    disabled={isSubmitting}
-                    className="flex-1 min-w-0 justify-center text-xs font-black"
-                    leftIcon={<ShieldAlert className="w-3.5 h-3.5 shrink-0" />}
-                  >
-                    <span className="truncate">Đã chặn</span>
-                  </Button>
-                )}
-
-                {/* Nút nhắn tin trực tiếp */}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleStartChat}
-                  className="px-3 shrink-0"
-                  title="Nhắn tin"
-                  aria-label="Gửi tin nhắn"
-                >
-                  <MessageSquare className="w-4 h-4" />
-                </Button>
-
-                {/* Nút menu tùy chọn mở rộng */}
-                <div className="relative shrink-0">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsMenuOpen(!isMenuOpen)}
-                    className="px-2.5 shrink-0"
-                    title="Tùy chọn khác"
-                    aria-label="Mở tùy chọn"
-                  >
-                    <MoreHorizontal className="w-4 h-4" />
-                  </Button>
-
-                  {/* Dropdown danh sách tùy chọn phụ */}
-                  {isMenuOpen && (
-                    <div className="absolute left-0 bottom-full mb-1.5 w-44 bg-uupm-surface border-2 border-uupm-line rounded-xs shadow-uupm-2 py-1 z-30 animate-in fade-in zoom-in-95 duration-100">
-                      <button
-                        type="button"
-                        onClick={handleCopyId}
-                        className="w-full px-3 py-1.5 text-left text-xs font-bold text-uupm-ink hover:bg-uupm-surface-hover flex items-center gap-2 cursor-pointer"
-                      >
-                        <Copy className="w-3.5 h-3.5 text-uupm-ink-muted" />
-                        <span>Sao chép ID</span>
-                      </button>
-
-                      {relationshipStatus === "FRIENDS" && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setIsMenuOpen(false);
-                            setIsUnfriendConfirmOpen(true);
-                          }}
-                          className="w-full px-3 py-1.5 text-left text-xs font-bold text-uupm-danger-text hover:bg-uupm-danger/10 flex items-center gap-2 cursor-pointer border-t border-uupm-line/20"
-                        >
-                          <UserMinus className="w-3.5 h-3.5" />
-                          <span>Hủy kết bạn</span>
-                        </button>
-                      )}
-
-                      {/* Chỉ cho phép bỏ chặn khi CHÍNH MÌNH là bên đã chặn;
-                          nếu bị đối phương chặn thì chỉ hiển thị nhãn thông tin */}
-                      <button
-                        type="button"
-                        onClick={relationshipStatus === "BLOCKED" && !blockedByMe ? undefined : handleToggleBlock}
-                        disabled={relationshipStatus === "BLOCKED" && !blockedByMe}
-                        aria-disabled={relationshipStatus === "BLOCKED" && !blockedByMe}
-                        className={cn(
-                          "w-full px-3 py-1.5 text-left text-xs font-bold flex items-center gap-2 border-t border-uupm-line/20",
-                          relationshipStatus === "BLOCKED" && !blockedByMe
-                            ? "text-uupm-ink-muted cursor-not-allowed opacity-60"
-                            : "text-uupm-danger-text hover:bg-uupm-danger/10 cursor-pointer"
-                        )}
-                      >
-                        <ShieldAlert className="w-3.5 h-3.5" />
-                        <span>
-                          {relationshipStatus === "BLOCKED"
-                            ? blockedByMe
-                              ? "Bỏ chặn"
-                              : "Bạn đã bị chặn"
-                            : "Chặn người dùng"}
-                        </span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-                  </>
-                )}
-              </>
-            ) : (
-              /* Hồ sơ của chính mình: thay dải nhãn thụ động bằng nút Chỉnh sửa hồ sơ
-                 (mở UserSettingsModal ngay trong popup theo đúng hành vi bấm ảnh đại diện của Discord) */
-              <div className="w-full">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsSelfSettingsOpen(true)}
-                  className="w-full justify-center text-xs font-black"
-                  leftIcon={<Settings className="w-3.5 h-3.5 shrink-0" />}
-                >
-                  Chỉnh sửa hồ sơ
-                </Button>
-              </div>
-            )}
-          </div>
+          {/* Dải nút hành động chính (Thêm bạn, Nhắn tin, Menu) */}
+          <ProfileRelationshipBar
+            isMe={isMe}
+            relationshipStatus={relationshipStatus}
+            statusError={statusError}
+            isLoadingStatus={isLoadingStatus}
+            isSubmitting={isSubmitting}
+            blockedByMe={blockedByMe}
+            isMenuOpen={isMenuOpen}
+            setIsMenuOpen={setIsMenuOpen}
+            setStatusReloadKey={setStatusReloadKey}
+            setIsUnfriendConfirmOpen={setIsUnfriendConfirmOpen}
+            onSendFriendRequest={handleSendFriendRequest}
+            onAccept={handleAcceptFriendRequest}
+            onReject={handleRejectFriendRequest}
+            onCancel={handleCancelFriendRequest}
+            onStartChat={handleStartChat}
+            onToggleBlock={handleToggleBlock}
+            onCopyId={handleCopyId}
+            onClickEditProfile={() => setIsSelfSettingsOpen(true)}
+          />
 
           {/* Khối thông tin chi tiết cố định (Gia nhập, Dòng trạng thái, Ghi chú) */}
           <div className="px-5 py-3 border-t-2 border-uupm-line/20 space-y-3 mt-1 text-xs">
@@ -703,146 +490,16 @@ export const FullUserProfileModal: React.FC<FullUserProfileModalProps> = ({
 
         {/* ================= CỘT PHẢI: PHÂN MỤC TABS NỘI DUNG (~60%) ================= */}
         <div className="flex-1 bg-uupm-surface p-6 flex flex-col min-h-[440px] md:min-h-[480px]">
-          {/* Thanh chuyển tab trên đỉnh */}
-          <div className="flex items-center gap-6 border-b-2 border-uupm-line/20 pb-2 mb-4">
-            <button
-              type="button"
-              onClick={() => setActiveTab("activity")}
-              className={cn(
-                "text-xs font-black uppercase tracking-wider transition-colors pb-1 cursor-pointer relative",
-                activeTab === "activity"
-                  ? "text-uupm-ink after:absolute after:bottom-[-9px] after:left-0 after:right-0 after:h-[2.5px] after:bg-uupm-accent after:rounded-full"
-                  : "text-uupm-ink-muted hover:text-uupm-ink"
-              )}
-            >
-              Hoạt động
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab("mutual_friends")}
-              className={cn(
-                "text-xs font-black uppercase tracking-wider transition-colors pb-1 cursor-pointer relative",
-                activeTab === "mutual_friends"
-                  ? "text-uupm-ink after:absolute after:bottom-[-9px] after:left-0 after:right-0 after:h-[2.5px] after:bg-uupm-accent after:rounded-full"
-                  : "text-uupm-ink-muted hover:text-uupm-ink"
-              )}
-            >
-              Bạn Chung
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab("mutual_servers")}
-              className={cn(
-                "text-xs font-black uppercase tracking-wider transition-colors pb-1 cursor-pointer relative",
-                activeTab === "mutual_servers"
-                  ? "text-uupm-ink after:absolute after:bottom-[-9px] after:left-0 after:right-0 after:h-[2.5px] after:bg-uupm-accent after:rounded-full"
-                  : "text-uupm-ink-muted hover:text-uupm-ink"
-              )}
-            >
-              {mutualConversations.length} Hội Thoại Chung
-            </button>
-          </div>
-
-          {/* Nội dung Tab 1: Hoạt động & Tiểu sử */}
-          {activeTab === "activity" && (
-            <div className="space-y-4 flex-1">
-              {/* Thẻ tiểu sử cá nhân */}
-              <div className="p-3.5 bg-uupm-page border-2 border-uupm-line rounded-xs shadow-uupm-active space-y-1.5">
-                <span className="text-[11px] font-black uppercase tracking-wider text-uupm-ink-muted block">
-                  Tiểu sử cá nhân
-                </span>
-                <p className="text-xs font-semibold text-uupm-ink leading-relaxed whitespace-pre-wrap">
-                  {user.bio ? user.bio : "Chưa có lời giới thiệu nào được cài đặt."}
-                </p>
-              </div>
-
-              {/* Thẻ trạng thái phiên hiện tại */}
-              <div className="p-3.5 bg-uupm-page border-2 border-uupm-line rounded-xs shadow-uupm-active space-y-2">
-                <span className="text-[11px] font-black uppercase tracking-wider text-uupm-ink-muted block">
-                  Trạng thái kết nối
-                </span>
-                <div className="flex items-center gap-2">
-                  <span
-                    className={cn(
-                      "w-2.5 h-2.5 rounded-full border border-uupm-line",
-                      isOnline ? "bg-uupm-accent" : "bg-uupm-ink-muted"
-                    )}
-                  />
-                  <span className="text-xs font-bold text-uupm-ink">
-                    {isOnline ? "Đang trực tuyến trên ứng dụng" : "Hiện đang ngoại tuyến"}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Nội dung Tab 2: Bạn Chung */}
-          {activeTab === "mutual_friends" && (
-            <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-              <div className="w-12 h-12 rounded-xs bg-uupm-accent-soft border-2 border-uupm-line shadow-uupm-active flex items-center justify-center mb-3">
-                <Users className="w-6 h-6 text-uupm-ink" />
-              </div>
-              <h4 className="text-xs font-black text-uupm-ink uppercase tracking-wide">
-                Bạn bè chung
-              </h4>
-              <p className="text-xs font-semibold text-uupm-ink-muted mt-1 max-w-xs">
-                {relationshipStatus === "FRIENDS"
-                  ? "Hai bạn đã là bạn bè trực tiếp của nhau!"
-                  : "Chưa có người bạn chung nào được tìm thấy giữa hai tài khoản."}
-              </p>
-            </div>
-          )}
-
-          {/* Nội dung Tab 3: Hội thoại & Nhóm chung */}
-          {activeTab === "mutual_servers" && (
-            <div className="flex-1 space-y-2 overflow-y-auto max-h-[260px] pr-1">
-              {mutualConversations.length > 0 ? (
-                mutualConversations.map((conv) => (
-                  <button
-                    type="button"
-                    key={conv.id}
-                    onClick={() => {
-                      void selectConversation(conv.id);
-                      onClose();
-                    }}
-                    className="p-2.5 bg-uupm-page hover:bg-uupm-surface-hover border-2 border-uupm-line rounded-xs shadow-uupm-active flex items-center justify-between cursor-pointer transition-colors w-full text-left bg-transparent border-0 p-2.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-uupm-accent"
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-8 h-8 rounded-xs bg-uupm-accent border-2 border-uupm-line flex items-center justify-center shrink-0">
-                        <MessageCircle className="w-4 h-4 text-uupm-ink" />
-                      </div>
-                      <div className="min-w-0">
-                        <h4 className="text-xs font-black text-uupm-ink truncate">
-                          {conv.title || "Cuộc trò chuyện trực tiếp"}
-                        </h4>
-                        <p className="text-[10px] font-semibold text-uupm-ink-muted truncate">
-                          {conv.type === "DIRECT" ? "Trò chuyện 1-1" : "Nhóm trò chuyện"}
-                        </p>
-                      </div>
-                    </div>
-
-                    <span className="text-[10px] py-1 px-2 shrink-0 font-bold border-2 border-uupm-line rounded-xs bg-uupm-surface text-uupm-ink-muted">
-                      Mở chat
-                    </span>
-                  </button>
-                ))
-              ) : (
-                <div className="flex-1 flex flex-col items-center justify-center p-6 text-center my-auto">
-                  <div className="w-12 h-12 rounded-xs bg-uupm-page border-2 border-uupm-line shadow-uupm-active flex items-center justify-center mb-3">
-                    <Sparkles className="w-6 h-6 text-uupm-ink-muted" />
-                  </div>
-                  <h4 className="text-xs font-black text-uupm-ink uppercase tracking-wide">
-                    Chưa có hội thoại chung
-                  </h4>
-                  <p className="text-xs font-semibold text-uupm-ink-muted mt-1 max-w-xs">
-                    Hãy bấm nút Nhắn tin ở cột bên trái để bắt đầu cuộc hội thoại đầu tiên!
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
+          <ProfileTabs
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            user={user}
+            isOnline={isOnline}
+            relationshipStatus={relationshipStatus}
+            mutualConversations={mutualConversations}
+            onSelectConversation={(id) => void selectConversation(id)}
+            onClose={onClose}
+          />
         </div>
       </div>
 
