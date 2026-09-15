@@ -7,7 +7,7 @@
 ## Quy Trình Thực Hiện (SOP Flow)
 
 ```
-[Bước 1: Khảo Sát Props] ──> [Bước 2: Viết Type Safe Definition] ──> [Bước 3: Scaffolding 4 UI States] ──> [Bước 4: Type-Check & Verification]
+[Bước 1: Khảo Sát Props] ──> [Bước 2: Viết Type Safe Definition] ──> [Bước 3: Scaffolding 4 UI States] ──> [Bước 4: Type-Check & Verification] ──> [Bước 5: React Doctor Gate]
 ```
 
 ---
@@ -63,3 +63,12 @@
    npm run build -- --noEmit # hoặc tsc --noEmit
    ```
 2. Đảm bảo không có lỗi type mismatch, props bị thiếu, hoặc cảnh báo từ linter.
+
+### Bước 5: React Doctor Gate (Bắt Buộc)
+Sau khi build xanh, chạy React Doctor làm gate chất lượng cuối cùng:
+```bash
+cd frontend && npx react-doctor@latest
+```
+- Nếu có lỗi: sửa code đạt chuẩn, không suppress tùy tiện. Chỉ suppress khi có lý do kỹ thuật rõ ràng và ghi chú Tiếng Việt tại chỗ.
+- Nếu lệnh không chạy được (mất mạng/registry): báo **CHƯA verify được React Doctor**, không tuyên bố task xong.
+- Ghi điểm kết quả vào báo cáo xác minh.

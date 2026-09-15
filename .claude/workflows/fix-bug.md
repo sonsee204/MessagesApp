@@ -7,7 +7,7 @@
 ## Quy Trình Thực Hiện (SOP Flow)
 
 ```
-[Bước 1: Đọc Log & Traces] ──> [Bước 2: Cô Lập Vị Trí] ──> [Bước 3: Tóm Tắt Root Cause 1 Câu] ──> [Bước 4: Bản Vá Tối Giản] ──> [Bước 5: Chạy Test Kiểm Chứng]
+[Bước 1: Đọc Log & Traces] ──> [Bước 2: Cô Lập Vị Trí] ──> [Bước 3: Tóm Tắt Root Cause 1 Câu] ──> [Bước 4: Bản Vá Tối Giản] ──> [Bước 5: Chạy Test Kiểm Chứng] ──> [Bước 6: React Doctor Gate (frontend)]
 ```
 
 ---
@@ -64,3 +64,14 @@
    - Lỗi ban đầu đã được giải quyết triệt để.
    - Không gây ra hồi quy (regression) cho các chức năng khác.
    - Nếu test vẫn thất bại sau 2 lần sửa, dừng lại đánh giá lại giả định kiến trúc ban đầu.
+
+---
+
+### Bước 6: React Doctor Gate (Bắt Buộc — chỉ task frontend)
+Nếu bản vá chạm vào mã nguồn frontend (`frontend/src/`), chạy React Doctor sau khi test xanh:
+```bash
+cd frontend && npx react-doctor@latest
+```
+- Mục tiêu: không phát sinh lỗi mới so với trước khi vá. Nếu có: sửa code, không suppress tùy tiện; chỉ suppress khi lý do kỹ thuật rõ ràng và phải ghi chú Tiếng Việt tại chỗ.
+- Nếu lệnh không chạy được (mất mạng/registry lỗi): báo trung thực **CHƯA verify được React Doctor**, không tuyên bố bug đã xong.
+- Task backend thuần: bỏ qua bước này.

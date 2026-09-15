@@ -48,3 +48,17 @@ Mọi component hiển thị dữ liệu động (Data-driven UI) bắt buộc x
   - Luôn cung cấp trạng thái trực quan rõ ràng: `hover:`, `active:`, `focus-visible:` (ring nổi bật cho keyboard navigation).
   - Trạng thái `disabled:` phải có `cursor-not-allowed`, giảm opacity và kèm thuộc tính `aria-disabled="true"`.
 - **Form Accessibility**: Mọi field phải liên kết với label (`htmlFor` / `id`), trường lỗi phải kèm `aria-invalid="true"` và `aria-describedby`.
+
+---
+
+## 6. Bắt Buộc Chạy React Doctor Khi Kết Thúc Task
+Mọi task có thay đổi mã nguồn frontend (`frontend/src/`) phải chạy React Doctor trước khi báo hoàn thành. Đây là gate chất lượng cuối cùng, tương đương `tsc --noEmit` + `npm run build`.
+
+```bash
+cd frontend && npx react-doctor@latest
+```
+
+- **Bắt buộc sau khi xong**, không phải tuỳ chọn: mọi task frontend tạo/sửa component, hook, modal, layout.
+- Nếu React Doctor báo lỗi: **sửa code cho đạt, không suppress** trừ khi có lý do kỹ thuật chính đáng và phải ghi rõ trong chú thích Tiếng Việt tại chỗ đó (kèm lý do và ngày).
+- Nếu `npx react-doctor@latest` không chạy được (mất mạng, registry lỗi): báo trung thực là **CHƯA verify được React Doctor**, không được im lặng bỏ qua rồi tuyên bố task xong.
+- Ghi kết quả điểm (vd `100/100` hoặc danh sách còn tồn tại) vào bước xác minh của task.
