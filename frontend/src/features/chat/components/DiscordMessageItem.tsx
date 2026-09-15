@@ -8,6 +8,7 @@ import {
 import { Message } from "../../../types/chat.types";
 import { toast } from "../../../stores/toast.store";
 import { useChatStore } from "../stores/chat.store";
+import { AttachmentRenderer } from "./AttachmentRenderer";
 import { cn } from "../../../lib/utils";
 
 interface DiscordMessageItemProps {
@@ -124,10 +125,15 @@ export const DiscordMessageItem: React.FC<DiscordMessageItemProps> = ({
           </span>
         </div>
 
-        {/* Nội dung văn bản */}
-        <p className="text-sm font-semibold text-uupm-ink whitespace-pre-wrap break-words leading-relaxed">
-          {message.content}
-        </p>
+        {/* Nội dung văn bản (luôn hiển thị, kể cả khi có attachments — mixed content) */}
+        {message.content && (
+          <p className="text-sm font-semibold text-uupm-ink whitespace-pre-wrap break-words leading-relaxed">
+            {message.content}
+          </p>
+        )}
+
+        {/* Attachments: render qua AttachmentRenderer (phân loại ảnh/video/file) */}
+        <AttachmentRenderer attachments={message.attachments ?? []} />
 
         {/* Dải cảm xúc đã thả nếu có */}
         {Object.keys(reactions).length > 0 && (
