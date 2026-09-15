@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { CheckCircle2, ShieldAlert, AlertTriangle, Info, X } from "lucide-react";
 import { useToastStore, ToastItem, ToastType } from "../../stores/toast.store";
 import { cn } from "../../lib/utils";
@@ -119,17 +119,38 @@ const ToastCard: React.FC<ToastCardProps> = ({ toast, onClose }) => {
  */
 export const ToastContainer: React.FC = () => {
   const { toasts, removeToast } = useToastStore();
+  const popoverRef = useRef<HTMLDivElement>(null);
 
-  if (toasts.length === 0) return null;
+  // Đưa khay toast vào top-layer bằng Popover API.
+  // Bắt buộc: toast dùng `fixed` + z-index nên bị top-layer của <dialog> che mất
+  // khi modal đang mở. popover="manual" đưa lên top-layer mà KHÔNG trap focus
+  // và KHÔNG chặn tương tác — khác hẳn dialog.showModal().
+  // Gán thuộc tính qua setAttribute vì @types/react 18.3 chưa khai báo `popover`.
+  useEffect(() => {
+    const el = popoverRef.current;
+    if (!el) return;
+    el.setAttribute("popover", "manual");
+    const api = el as HTMLDivElement & {
+      showPopover?: () => void;
+      hidePopover?: () => void;
+    };
+    if (toasts.length > 0) api.showPopover?.();
+    else api.hidePopover?.();
+  }, [toasts.length]);
 
+  // Phần tử luôn tồn tại trong DOM để showPopover() có đích; khi không có toast
+  // thì hidePopover() ẩn đi — nên không còn `return null`.
   return (
     <div
+      ref={popoverRef}
       aria-live="polite"
-      className="fixed top-5 right-5 z-[9999] flex flex-col gap-2.5 max-w-sm w-[calc(100%-40px)] pointer-events-none"
+      className="fixed top-5 right-5 z-[9999] m-0 w-[calc(100%-40px)] max-w-sm border-0 bg-transparent p-0 pointer-events-none"
     >
-      {toasts.map((toast) => (
-        <ToastCard key={toast.id} toast={toast} onClose={removeToast} />
-      ))}
+      <div className="flex flex-col gap-2.5">
+        {toasts.map((toast) => (
+          <ToastCard key={toast.id} toast={toast} onClose={removeToast} />
+        ))}
+      </div>
     </div>
   );
 };

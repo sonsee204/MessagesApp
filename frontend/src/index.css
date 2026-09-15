@@ -178,6 +178,23 @@
     @apply bg-background text-foreground;
     font-family: "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   }
+
+  /* Khay toast dùng popover="manual" để lên top-layer (không bị <dialog>:modal che).
+     Reset các giá trị UA mặc định của [popover] (inset:0 + margin:auto +
+     width/height:fit-content + viền/nền/màu mặc định) về auto/0/transparent.
+     Đặt trong @layer base để utility Tailwind (top-5 right-5 ...) vẫn thắng phần
+     định vị, nhưng inset:0 của UA bị vô hiệu (nếu viết ngoài layer sẽ đè top-5). */
+  [popover] {
+    inset: auto;
+    margin: 0;
+    width: auto;
+    height: auto;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: inherit;
+    overflow: visible;
+  }
 }
 
 /* Thanh cuộn hiện đại (Custom Scrollbar) */
@@ -194,4 +211,15 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Ẩn thanh cuộn nhưng vẫn cuộn được — dùng cho dải tab ngang ở đầu trang Bạn bè. */
+@layer utilities {
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }
