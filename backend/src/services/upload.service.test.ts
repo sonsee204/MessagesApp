@@ -8,11 +8,11 @@ vi.mock("../repositories/conversation.repository", () => ({
 }));
 
 vi.mock("../config/cloudinary", () => ({
-  CLOUDINARY: {
+  getCloudinaryConfig: () => ({
     cloudName: "test_cloud",
     apiKey: "test_api_key",
     apiSecret: "test_api_secret",
-  },
+  }),
 }));
 
 import { signUpload } from "./upload.service";

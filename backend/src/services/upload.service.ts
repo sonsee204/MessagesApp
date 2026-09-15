@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { CLOUDINARY } from "../config/cloudinary";
+import { getCloudinaryConfig } from "../config/cloudinary";
 import { conversationRepository } from "../repositories/conversation.repository";
 import { ForbiddenError, NotFoundError } from "../core/errors";
 import type { SignUploadDTO } from "../schemas/upload.schema";
@@ -48,6 +48,8 @@ export async function signUpload(userId: string, dto: SignUploadDTO): Promise<Si
 
   // Bước 3: Sinh timestamp + max_file_size, ký SHA-1 theo thứ tự key tăng dần
   // (Cloudinary yêu cầu params được sort trước khi hash).
+  // Lấy config Cloudinary lazily — chỉ throw nếu env chưa set khi thực sự cần ký.
+  const cloudinary = getCloudinaryConfig();
   const timestamp = Math.floor(Date.now() / 1000);
   const maxFileSize = MAX_SIZE[dto.resourceType];
   const paramsToSign = {
@@ -60,11 +62,11 @@ export async function signUpload(userId: string, dto: SignUploadDTO): Promise<Si
     .sort()
     .map((k) => `${k}=${paramsToSign[k as keyof typeof paramsToSign]}`)
     .join("&");
-  const signature = crypto.createHash("sha1").update(sorted + CLOUDINARY.apiSecret).digest("hex");
+  const signature = crypto.createHash("sha1").update(sorted + cloudinary.apiSecret).digest("hex");
 
   return {
-    cloudName: CLOUDINARY.cloudName,
-    apiKey: CLOUDINARY.apiKey,
+    cloudName: cloudinary.cloudName,
+    apiKey: cloudinary.apiKey,
     timestamp,
     folder: dto.folder,
     resourceType: dto.resourceType,

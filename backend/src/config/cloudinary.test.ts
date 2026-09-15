@@ -1,17 +1,14 @@
 /**
- * Kiểm thử cấu hình Cloudinary (fail-fast khi thiếu biến môi trường).
+ * Kiểm thử cấu hình Cloudinary (lazy validation khi thiếu biến môi trường).
  */
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { describe, it, expect, afterEach, vi } from "vitest";
 
 describe("Cloudinary config", () => {
   const originalEnv = { ...process.env };
 
-  beforeEach(() => {
-    vi.resetModules();
-  });
-
   afterEach(() => {
     process.env = { ...originalEnv };
+    vi.resetModules();
   });
 
   it("throws nếu thiếu CLOUDINARY_CLOUD_NAME", async () => {
@@ -19,7 +16,8 @@ describe("Cloudinary config", () => {
     process.env.CLOUDINARY_API_KEY = "test_key";
     process.env.CLOUDINARY_API_SECRET = "test_secret";
 
-    await expect(import("./cloudinary")).rejects.toThrow(
+    const { getCloudinaryConfig } = await import("./cloudinary");
+    expect(() => getCloudinaryConfig()).toThrow(
       "[Cloudinary] Thiếu biến môi trường CLOUDINARY_CLOUD_NAME / CLOUDINARY_API_KEY / CLOUDINARY_API_SECRET"
     );
   });
@@ -29,7 +27,8 @@ describe("Cloudinary config", () => {
     delete process.env.CLOUDINARY_API_KEY;
     process.env.CLOUDINARY_API_SECRET = "test_secret";
 
-    await expect(import("./cloudinary")).rejects.toThrow(
+    const { getCloudinaryConfig } = await import("./cloudinary");
+    expect(() => getCloudinaryConfig()).toThrow(
       "[Cloudinary] Thiếu biến môi trường CLOUDINARY_CLOUD_NAME / CLOUDINARY_API_KEY / CLOUDINARY_API_SECRET"
     );
   });
@@ -39,19 +38,19 @@ describe("Cloudinary config", () => {
     process.env.CLOUDINARY_API_KEY = "test_key";
     delete process.env.CLOUDINARY_API_SECRET;
 
-    await expect(import("./cloudinary")).rejects.toThrow(
+    const { getCloudinaryConfig } = await import("./cloudinary");
+    expect(() => getCloudinaryConfig()).toThrow(
       "[Cloudinary] Thiếu biến môi trường CLOUDINARY_CLOUD_NAME / CLOUDINARY_API_KEY / CLOUDINARY_API_SECRET"
     );
   });
 
-  it("khởi tạo thành công CLOUDINARY object khi có đầy đủ biến môi trường", async () => {
+  it("khởi tạo thành công khi có đầy đủ biến môi trường", async () => {
     process.env.CLOUDINARY_CLOUD_NAME = "test_cloud";
     process.env.CLOUDINARY_API_KEY = "test_key";
     process.env.CLOUDINARY_API_SECRET = "test_secret";
 
-    const { CLOUDINARY } = await import("./cloudinary");
-
-    expect(CLOUDINARY).toEqual({
+    const { getCloudinaryConfig } = await import("./cloudinary");
+    expect(getCloudinaryConfig()).toEqual({
       cloudName: "test_cloud",
       apiKey: "test_key",
       apiSecret: "test_secret",

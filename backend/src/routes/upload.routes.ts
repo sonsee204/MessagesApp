@@ -6,8 +6,8 @@ import { SignUploadSchema } from "../schemas/upload.schema";
 
 const router = Router();
 
-// Mọi tuyến upload đều yêu cầu JWT hợp lệ (Zero-Trust: không ai gọi thẳng API ký mà chưa đăng nhập).
-router.use(requireAuth);
+// Chặn requireAuth trên đúng route cần bảo vệ (/sign) thay vì toàn bộ prefix /uploads
+// để express.static (phục vụ ảnh local) không bị 401 khi GET /uploads/<file> không có token.
 
 /**
  * [POST /api/uploads/sign]
@@ -15,6 +15,6 @@ router.use(requireAuth);
  * Body: { resourceType: 'image'|'video'|'raw', folder: 'chat/<ObjectId>' }.
  * 200 OK: { success: true, data: SignedParams }
  */
-router.post("/sign", validate(SignUploadSchema), uploadController.sign);
+router.post("/sign", requireAuth, validate(SignUploadSchema), uploadController.sign);
 
 export const uploadRoutes = router;
