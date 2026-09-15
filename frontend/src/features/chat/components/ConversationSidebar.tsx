@@ -2,13 +2,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import {
   Search,
   Plus,
-  Users,
-  Mail,
-  Bell,
   Loader2,
-  Settings,
-  LogOut,
-  User as UserIcon,
 } from "lucide-react";
 import { Conversation } from "../../../types/chat.types";
 import { User } from "../../../types/auth.types";
@@ -20,7 +14,8 @@ import { FullUserProfileModal } from "../../users/components/FullUserProfileModa
 import { useNotificationStore } from "../../notifications/stores/notification.store";
 import { NotificationListModal } from "../../notifications/components/NotificationListModal";
 import { useFriendStore } from "../../friends/stores/friend.store";
-import { cn } from "../../../lib/utils";
+import { SidebarQuickLinks } from "./SidebarQuickLinks";
+import { UserControlDeck } from "./UserControlDeck";
 
 interface ConversationSidebarProps {
   conversations: Conversation[];
@@ -110,83 +105,16 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
 
       {/* Thân danh sách cuộn mượt đồng nhất (Quick Links và Danh sách Hội thoại) */}
       <div className="flex-1 overflow-y-auto p-2 space-y-2.5">
-        {/* 2. Menu liên kết điều hướng nhanh (Quick Links chuẩn Tactile Neo-Brutalist) */}
-        <div className="space-y-1.5">
-          {/* Nút Bạn bè */}
-          <button
-            type="button"
-            onClick={() => {
-              onSelectFriendsView?.();
-            }}
-            className={cn(
-              "w-full flex items-center justify-between px-3 py-2 rounded-xs border-2 text-xs font-black transition-[background-color,box-shadow,transform] cursor-pointer",
-              activeView === "friends" && !activeConversationId
-                ? "bg-uupm-accent/20 border-uupm-line shadow-uupm-active text-uupm-ink translate-x-[1px] translate-y-[1px]"
-                : "bg-uupm-surface border-uupm-line shadow-uupm-active hover:bg-uupm-surface-hover hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[2px] active:translate-y-[2px] text-uupm-ink"
-            )}
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-6 h-6 rounded-xs bg-uupm-accent-soft border-2 border-uupm-line flex items-center justify-center shrink-0">
-                <Users className="w-3.5 h-3.5 text-uupm-ink" />
-              </div>
-              <span>Bạn bè</span>
-            </div>
-            {receivedRequestsCount > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full bg-uupm-danger text-uupm-danger-ink text-[10px] font-black border border-uupm-line">
-                {receivedRequestsCount > 99 ? "99+" : receivedRequestsCount}
-              </span>
-            )}
-          </button>
-
-          {/* Nút Thông báo */}
-          <button
-            type="button"
-            onClick={openModal}
-            title="Xem thông báo hệ thống và tương tác"
-            aria-label="Xem danh sách thông báo"
-            className={cn(
-              "w-full flex items-center justify-between px-3 py-2 rounded-xs border-2 text-xs font-black transition-[background-color,box-shadow,transform] cursor-pointer",
-              isModalOpen
-                ? "bg-uupm-accent/20 border-uupm-line shadow-uupm-active text-uupm-ink translate-x-[1px] translate-y-[1px]"
-                : "bg-uupm-surface border-uupm-line shadow-uupm-active hover:bg-uupm-surface-hover hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[2px] active:translate-y-[2px] text-uupm-ink"
-            )}
-          >
-            <div className="flex items-center gap-3">
-              <div
-                className={cn(
-                  "w-6 h-6 rounded-xs border-2 border-uupm-line flex items-center justify-center shrink-0 transition-colors",
-                  unreadCount > 0 ? "bg-uupm-danger text-white" : "bg-uupm-accent text-uupm-ink"
-                )}
-              >
-                <Bell className="w-3.5 h-3.5" />
-              </div>
-              <span>Thông báo</span>
-            </div>
-            {unreadCount > 0 ? (
-              <span className="px-1.5 py-0.2 rounded-full bg-uupm-danger text-white text-[10px] font-black border border-uupm-line animate-pulse">
-                {unreadCount > 99 ? "99+" : unreadCount}
-              </span>
-            ) : (
-              <span className="px-1.5 py-0.2 rounded-full bg-uupm-surface-hover text-uupm-ink-muted text-[10px] font-bold border border-uupm-line/50">
-                0
-              </span>
-            )}
-          </button>
-
-          {/* Nút Yêu cầu tin nhắn */}
-          <button
-            type="button"
-            onClick={() => {
-              toast.info("Hiện không có yêu cầu tin nhắn chờ nào.", "Hộp thư chờ");
-            }}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-xs border-2 bg-uupm-surface border-uupm-line shadow-uupm-active hover:bg-uupm-surface-hover hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[2px] active:translate-y-[2px] text-xs font-black text-uupm-ink transition-[background-color,box-shadow,transform] cursor-pointer"
-          >
-            <div className="w-6 h-6 rounded-xs bg-uupm-warn-soft border-2 border-uupm-line flex items-center justify-center shrink-0">
-              <Mail className="w-3.5 h-3.5 text-uupm-warn-soft-ink" />
-            </div>
-            <span>Yêu cầu tin nhắn</span>
-          </button>
-        </div>
+        {/* 2. Menu liên kết điều hướng nhanh — tách thành SidebarQuickLinks để giảm complexity */}
+        <SidebarQuickLinks
+          activeView={activeView}
+          activeConversationId={activeConversationId}
+          receivedRequestsCount={receivedRequestsCount}
+          unreadCount={unreadCount}
+          isNotificationsOpen={isModalOpen}
+          onSelectFriendsView={() => onSelectFriendsView?.()}
+          onOpenNotifications={openModal}
+        />
 
         {/* Đường kẻ phân cách tinh tế giữa Danh mục điều hướng và Danh sách tin nhắn */}
         <div className="border-t-2 border-uupm-line/20 mx-1" />
@@ -250,78 +178,15 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
         </div>
       </div>
 
-      {/* 4. Thanh điều khiển tài khoản người dùng (User Control Deck) ở chân cột (Cố định h-[84px] đồng bộ đường kẻ ngang với MessageInput cột 2) */}
+      {/* 4. Thanh điều khiển tài khoản người dùng (User Control Deck) ở chân cột — tách thành component riêng để giảm complexity */}
       {currentUser && (
-        <div className="h-[84px] px-3 border-t-2 border-uupm-line bg-uupm-surface flex items-center justify-between gap-1 shrink-0">
-          {/* Avatar và Thông tin người dùng: bấm để mở popup Hồ sơ nhanh kiểu Discord */}
-          <button
-            type="button"
-            onClick={() => setIsDeckPopoverOpen((prev) => !prev)}
-            aria-haspopup="dialog"
-            aria-expanded={isDeckPopoverOpen}
-            aria-label="Mở hồ sơ nhanh của bạn"
-            className={cn(
-              "flex items-center gap-2.5 min-w-0 flex-1 text-left p-1.5 rounded-xs transition-colors cursor-pointer",
-              isDeckPopoverOpen
-                ? "bg-uupm-surface-hover"
-                : "hover:bg-uupm-surface-hover"
-            )}
-          >
-            <div className="relative shrink-0">
-              <div className="w-9 h-9 rounded-xs bg-uupm-accent-soft border-2 border-uupm-line shadow-uupm-active flex items-center justify-center font-black text-xs overflow-hidden">
-                {currentUser.avatarUrl ? (
-                  <img
-                    src={currentUser.avatarUrl}
-                    alt={currentUser.username}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <UserIcon className="w-4 h-4 text-uupm-ink" />
-                )}
-              </div>
-              <span
-                className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-uupm-accent border-2 border-uupm-line"
-                title="Trực tuyến"
-              />
-            </div>
-
-            <div className="min-w-0 flex-1">
-              <h4 className="text-xs font-black text-uupm-ink truncate leading-tight">
-                {currentUser.displayName || currentUser.username}
-              </h4>
-              <p className="text-[10px] font-bold text-uupm-ink-muted truncate">
-                @{currentUser.username}
-              </p>
-            </div>
-          </button>
-
-          {/* Cụm nút tiện ích tài khoản: Cài đặt và Đăng xuất */}
-          <div className="flex items-center gap-1.5 shrink-0">
-            {/* Nút Cài đặt */}
-            <button
-              type="button"
-              onClick={() => setIsSettingsOpen(true)}
-              className="w-8 h-8 rounded-xs bg-uupm-surface hover:bg-uupm-surface-hover border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-uupm-ink transition-[background-color,box-shadow,transform] cursor-pointer active:translate-x-[1px] active:translate-y-[1px]"
-              title="Cài đặt người dùng"
-              aria-label="Cài đặt người dùng"
-            >
-              <Settings className="w-4 h-4" />
-            </button>
-
-            {/* Nút Đăng xuất tài khoản */}
-            {onLogout && (
-              <button
-                type="button"
-                onClick={onLogout}
-                className="w-8 h-8 rounded-xs bg-uupm-surface hover:bg-rose-100 border-2 border-uupm-line shadow-uupm-active flex items-center justify-center text-rose-600 transition-[background-color,box-shadow,transform] cursor-pointer active:translate-x-[1px] active:translate-y-[1px]"
-                title="Đăng xuất tài khoản"
-                aria-label="Đăng xuất tài khoản"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-        </div>
+        <UserControlDeck
+          currentUser={currentUser}
+          isDeckPopoverOpen={isDeckPopoverOpen}
+          onToggleDeckPopover={() => setIsDeckPopoverOpen((prev) => !prev)}
+          onOpenSettings={() => setIsSettingsOpen(true)}
+          onLogout={onLogout}
+        />
       )}
 
       {/* Popup Hồ sơ nhanh kiểu Discord (UserDeckPopover): neo trên đầu User Control Deck.
