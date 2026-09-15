@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import * as Popover from "@radix-ui/react-popover";
 import { Search, X, Sticker as StickerIcon } from "lucide-react";
 import { MessageAttachment } from "../../../types/chat.types";
@@ -82,35 +83,25 @@ export const StickerPicker: React.FC<StickerPickerProps> = ({
   children,
 }) => {
   const [query, setQuery] = useState<string>("");
-  const [stickers, setStickers] = useState<KlipySticker[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  // Số thứ tự request: hủy kết quả cũ khi người dùng gõ nhanh (chống race condition)
-  const requestSeq = useRef<number>(0);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  // Từ khóa trễ 350ms chống bão request khi gõ nhanh
+  const [debouncedQuery, setDebouncedQuery] = useState<string>("");
+  const debounceTimerRef = React.useRef<ReturnType<typeof setTimeout>>();
 
-  // Tải danh sách theo từ khóa (debounce 350ms chống bão request); mở popup lần đầu tải "Thịnh hành"
-  // Dùng AbortController để huỷ request đang chờ khi query/open đổi (rule no-fetch-in-effect).
-  useEffect(() => {
-    if (!open || !KLIPY_API_KEY) return;
-    clearTimeout(debounceRef.current);
-    const seq = ++requestSeq.current;
-    const controller = new AbortController();
-    setIsLoading(true);
-    debounceRef.current = setTimeout(async () => {
-      try {
-        const result = await fetchStickers(query, controller.signal);
-        if (seq !== requestSeq.current || controller.signal.aborted) return;
-        setStickers(result);
-        setIsLoading(false);
-      } catch {
-        // Bỏ qua lỗi (fetch đã xử lý nội bộ)
-      }
-    }, 350);
-    return () => {
-      clearTimeout(debounceRef.current);
-      controller.abort();
-    };
-  }, [open, query]);
+  // Đồng bộ từ khóa đã debounce (không fetch — chỉ đổi state, rule no-fetch-in-effect)
+  const handleQueryChange = (value: string) => {
+    setQuery(value);
+    clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(() => setDebouncedQuery(value), 350);
+  };
+
+  // Tầng dữ liệu React Query lo fetch/cache/hủy request — thay cho useEffect thủ công
+  const { data: stickers = [], isFetching: isLoading } = useQuery({
+    queryKey: ["stickers", debouncedQuery],
+    queryFn: ({ signal }) => fetchStickers(debouncedQuery, signal),
+    enabled: open && !!KLIPY_API_KEY,
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
+  });
 
   // Bấm một sticker: chuẩn hóa thành attachment webp và bắn ngược lên cha, đồng thời đóng popup
   const handlePick = useCallback(
@@ -142,7 +133,7 @@ export const StickerPicker: React.FC<StickerPickerProps> = ({
             <input
               type="text"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => handleQueryChange(e.target.value)}
               placeholder="Tìm kiếm sticker..."
               className="flex-1 text-xs font-semibold text-uupm-ink placeholder:text-uupm-ink-muted bg-transparent focus:outline-none"
               aria-label="Tìm kiếm sticker"
@@ -150,7 +141,7 @@ export const StickerPicker: React.FC<StickerPickerProps> = ({
             {query && (
               <button
                 type="button"
-                onClick={() => setQuery("")}
+                onClick={() => { setQuery(""); setDebouncedQuery(""); }}
                 className="p-0.5 rounded-xs hover:bg-uupm-surface-strong text-uupm-ink-muted cursor-pointer"
                 aria-label="Xóa từ khóa tìm kiếm"
               >
