@@ -79,7 +79,7 @@ export const FriendsHeader: React.FC<FriendsHeaderProps> = ({
             <span>{tab.label}</span>
             {/* Badge số lượng: pending hiển thị badge đỏ nếu > 0, các tab khác hiện count thường */}
             {tab.key === "pending" && count > 0 ? (
-              <span className="px-1.5 py-0.2 rounded-full bg-uupm-danger text-uupm-danger-ink text-[10px] font-black">{count}</span>
+              <span className="px-1.5 py-[2px] rounded-full bg-uupm-danger text-uupm-danger-ink text-[10px] font-black">{count}</span>
             ) : !tab.highlight && (
               <span className="text-[10px] opacity-75 font-bold">({count})</span>
             )}

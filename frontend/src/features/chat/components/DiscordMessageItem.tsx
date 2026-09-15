@@ -115,7 +115,7 @@ export const DiscordMessageItem: React.FC<DiscordMessageItemProps> = ({
           )}
 
           {isMe && (
-            <span className="px-1.5 py-0.2 rounded-xs bg-uupm-accent border border-uupm-line text-[9px] font-black text-uupm-accent-text uppercase">
+            <span className="px-1.5 py-[2px] rounded-xs bg-uupm-accent border border-uupm-line text-[9px] font-black text-uupm-accent-text uppercase">
               Bạn
             </span>
           )}

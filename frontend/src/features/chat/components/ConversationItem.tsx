@@ -182,7 +182,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
 
           {/* Huy hiệu số tin nhắn chưa đọc (Unread Badge) */}
           {Boolean(conversation.unreadCount && conversation.unreadCount > 0) && (
-            <span className="shrink-0 min-w-[18px] h-4.5 px-1.5 rounded-full bg-uupm-danger border-2 border-uupm-line text-[9px] font-black text-uupm-danger-ink flex items-center justify-center shadow-uupm-active">
+            <span className="shrink-0 min-w-[18px] h-[18px] px-1.5 rounded-full bg-uupm-danger border-2 border-uupm-line text-[9px] font-black text-uupm-danger-ink flex items-center justify-center shadow-uupm-active">
               {conversation.unreadCount! > 99 ? "99+" : conversation.unreadCount}
             </span>
           )}

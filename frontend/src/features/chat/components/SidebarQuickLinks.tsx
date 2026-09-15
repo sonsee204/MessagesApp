@@ -45,7 +45,7 @@ export const SidebarQuickLinks: React.FC<SidebarQuickLinksProps> = ({
         <span>Bạn bè</span>
       </div>
       {receivedRequestsCount > 0 && (
-        <span className="px-1.5 py-0.2 rounded-full bg-uupm-danger text-uupm-danger-ink text-[10px] font-black border border-uupm-line">
+        <span className="px-1.5 py-[2px] rounded-full bg-uupm-danger text-uupm-danger-ink text-[10px] font-black border border-uupm-line">
           {receivedRequestsCount > 99 ? "99+" : receivedRequestsCount}
         </span>
       )}
@@ -76,11 +76,11 @@ export const SidebarQuickLinks: React.FC<SidebarQuickLinksProps> = ({
         <span>Thông báo</span>
       </div>
       {unreadCount > 0 ? (
-        <span className="px-1.5 py-0.2 rounded-full bg-uupm-danger text-white text-[10px] font-black border border-uupm-line animate-pulse">
+        <span className="px-1.5 py-[2px] rounded-full bg-uupm-danger text-white text-[10px] font-black border border-uupm-line animate-pulse">
           {unreadCount > 99 ? "99+" : unreadCount}
         </span>
       ) : (
-        <span className="px-1.5 py-0.2 rounded-full bg-uupm-surface-hover text-uupm-ink-muted text-[10px] font-bold border border-uupm-line/50">
+        <span className="px-1.5 py-[2px] rounded-full bg-uupm-surface-hover text-uupm-ink-muted text-[10px] font-bold border border-uupm-line/50">
           0
         </span>
       )}

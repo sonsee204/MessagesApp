@@ -112,7 +112,7 @@ export const UserProfilePanel: React.FC<UserProfilePanelProps> = ({
         {/* 2. Avatar Lớn 80x80 đè Banner & Trạng thái Online */}
         <div className="px-5 -mt-12 relative z-10">
           <div className="relative inline-block">
-            <div className="w-20 h-20 rounded-xs bg-uupm-surface border-3 border-uupm-line shadow-uupm-2 flex items-center justify-center overflow-hidden font-black text-xl text-uupm-accent-text">
+            <div className="w-20 h-20 rounded-xs bg-uupm-surface border-[3px] border-uupm-line shadow-uupm-2 flex items-center justify-center overflow-hidden font-black text-xl text-uupm-accent-text">
               {activeUser.avatarUrl ? (
                 <img
                   src={activeUser.avatarUrl}
