@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { X, Search, User as UserIcon, MessageSquarePlus, Loader2 } from "lucide-react";
 import { User } from "../../../types/auth.types";
 import { userService } from "../../users/services/user.service";
@@ -32,6 +32,15 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
   const [isCreating, setIsCreating] = useState<string | null>(null);
 
   const { createConversation, selectConversation } = useChatStore();
+
+  // Ref ô tìm kiếm — focus khi modal mở (tránh dùng autoFocus tĩnh rule no-autofocus)
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (isOpen) {
+      // Chờ render xong trước khi focus để animation hoàn tất
+      requestAnimationFrame(() => searchInputRef.current?.focus());
+    }
+  }, [isOpen]);
 
   // Tìm kiếm người dùng với cơ chế debounce 300ms
   useEffect(() => {
@@ -117,13 +126,13 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
           <div className="relative">
             <Search className="w-5 h-5 text-uupm-ink-muted absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
+              ref={searchInputRef}
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Tìm theo username hoặc email..."
               aria-label="Tìm kiếm người dùng theo username hoặc email"
               className="w-full pl-10 pr-4 py-2.5 text-sm font-semibold bg-uupm-page rounded-xs border-2 border-uupm-line shadow-uupm-active focus:bg-uupm-surface focus:outline-none focus:ring-2 focus:ring-blue-500"
-              autoFocus
             />
           </div>
 

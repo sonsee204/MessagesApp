@@ -98,7 +98,7 @@ export const EmojiPicker: React.FC<EmojiPickerProps> = ({
           side="top"
           align="end"
           sideOffset={8}
-          className="z-50 rounded-xs border-2 border-uupm-line bg-uupm-surface shadow-uupm-2 outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 duration-100"
+          className="z-50 rounded-xs border-2 border-uupm-line bg-uupm-surface shadow-uupm-2 outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 transition-transform duration-100"
           // Map biến màu custom của emoji-mart sang tokens thiết kế uupm.
           // --em-rgb-* phải là TRIPLET kênh thô (thư viện render rgb(var(--em-rgb-x) / α)).
           // Token uupm lưu HSL thô nên dùng Relative Color Syntax: oklch(from ...) xuất kênh

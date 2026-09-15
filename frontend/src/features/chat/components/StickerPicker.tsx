@@ -134,14 +134,13 @@ export const StickerPicker: React.FC<StickerPickerProps> = ({
           side="top"
           align="end"
           sideOffset={8}
-          className="z-50 w-[520px] rounded-xs border-2 border-uupm-line bg-uupm-surface shadow-uupm-2 outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 duration-100"
+          className="z-50 w-[520px] rounded-xs border-2 border-uupm-line bg-uupm-surface shadow-uupm-2 outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 transition-transform duration-100"
         >
           {/* Thanh tìm kiếm sticker cố định trên đầu */}
           <div className="flex items-center gap-2 p-2 border-b-2 border-uupm-line">
             <Search className="w-3.5 h-3.5 text-uupm-ink-muted shrink-0" />
             <input
               type="text"
-              autoFocus
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Tìm kiếm sticker..."
