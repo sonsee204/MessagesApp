@@ -12,6 +12,91 @@ interface ConversationItemProps {
   onCloseConversation?: (e: React.MouseEvent) => void;
 }
 
+/** Định dạng thời gian tin nhắn: hôm nay → giờ, khác ngày → dd/MM. Pure helper module-scope. */
+function formatTime(dateString?: string): string {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  const now = new Date();
+  const isToday =
+    date.getDate() === now.getDate() &&
+    date.getMonth() === now.getMonth() &&
+    date.getFullYear() === now.getFullYear();
+
+  if (isToday) {
+    return date.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+  }
+  return date.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" });
+}
+
+/** Tóm tắt nội dung tin nhắn cuối hoặc trạng thái trực tuyến. Pure helper module-scope. */
+function resolveLastMessageText(
+  lastMessage: Conversation["lastMessage"],
+  isOnline: boolean
+): string {
+  if (!lastMessage) return isOnline ? "Đang trực tuyến" : "Ngoại tuyến";
+  if (lastMessage.type === "IMAGE") return "[Hình ảnh]";
+  if (lastMessage.type === "FILE") return "[Tập tin]";
+  return lastMessage.content;
+}
+
+/** Tên hiển thị của cuộc trò chuyện (nhóm hoặc đối tác 1-1). Pure helper module-scope. */
+function resolveDisplayName(
+  conversation: Conversation,
+  partner: Conversation["participants"][number] | null
+): string {
+  if (conversation.type === "GROUP") return conversation.title || "Cuộc trò chuyện nhóm";
+  return partner?.displayName || partner?.username || "Người dùng";
+}
+
+/**
+ * Khung avatar hội thoại kèm chấm trạng thái trực tuyến.
+ * Tách thành child component để chuyển các nhánh điều kiện (isGroup/avatarUrl/online)
+ * ra khỏi ConversationItem (rule no-high-complexity-react-function).
+ */
+function ConversationItemAvatar({
+  isGroup,
+  avatarUrl,
+  displayName,
+  isOnline,
+}: {
+  isGroup: boolean;
+  avatarUrl?: string | null;
+  displayName: string;
+  isOnline: boolean;
+}) {
+  return (
+    <div className="relative shrink-0">
+      <div
+        className={cn(
+          "w-10 h-10 rounded-xs border-2 border-uupm-line shadow-uupm-active flex items-center justify-center font-black text-sm uppercase overflow-hidden",
+          isGroup
+            ? "bg-uupm-accent-soft text-uupm-accent-text"
+            : "bg-uupm-warn-soft text-uupm-warn-soft-ink"
+        )}
+      >
+        {isGroup ? (
+          <Users className="w-5 h-5 text-uupm-ink" />
+        ) : avatarUrl ? (
+          <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+        ) : (
+          <UserIcon className="w-5 h-5 text-uupm-ink" />
+        )}
+      </div>
+
+      {/* Chấm tròn trạng thái Online (Chỉ áp dụng cho chat 1-1) */}
+      {!isGroup && (
+        <span
+          className={cn(
+            "absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-uupm-line",
+            isOnline ? "bg-uupm-accent" : "bg-uupm-ink-muted"
+          )}
+          title={isOnline ? "Đang trực tuyến" : "Ngoại tuyến"}
+        />
+      )}
+    </div>
+  );
+}
+
 /**
  * Thẻ hiển thị cuộc trò chuyện trực tiếp phong cách Discord (ConversationItem)
  * Thiết kế Tactile Neo-Brutalist chuẩn UI/UX Pro Max:
@@ -38,37 +123,9 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
     ? conversation.participants.find((p) => p.id !== currentUserId) || conversation.participants[0]
     : null;
 
-  // Tên hiển thị của cuộc trò chuyện
-  const displayName = isGroup
-    ? conversation.title || "Cuộc trò chuyện nhóm"
-    : partner?.displayName || partner?.username || "Người dùng";
-
-  // Định dạng thời gian gửi tin nhắn gần nhất
-  const formatTime = (dateString?: string) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    const now = new Date();
-    const isToday =
-      date.getDate() === now.getDate() &&
-      date.getMonth() === now.getMonth() &&
-      date.getFullYear() === now.getFullYear();
-
-    if (isToday) {
-      return date.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
-    }
-    return date.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" });
-  };
-
-  // Nội dung tóm tắt tin nhắn cuối
-  const lastMessageText = conversation.lastMessage
-    ? conversation.lastMessage.type === "IMAGE"
-      ? "[Hình ảnh]"
-      : conversation.lastMessage.type === "FILE"
-      ? "[Tập tin]"
-      : conversation.lastMessage.content
-    : isOnline
-    ? "Đang trực tuyến"
-    : "Ngoại tuyến";
+  // Tên hiển thị và tóm tắt tin nhắn cuối — dùng pure helper (giảm complexity hàm cha)
+  const displayName = resolveDisplayName(conversation, partner);
+  const lastMessageText = resolveLastMessageText(conversation.lastMessage, isOnline);
 
   return (
     // Khối ngoài cùng không tương tác: nút đóng là sibling, tránh lồng điều khiển tương tác
@@ -93,38 +150,13 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
         )}
       >
-      {/* Khung Avatar kèm chỉ báo trực tuyến */}
-      <div className="relative shrink-0">
-        <div
-          className={cn(
-            "w-10 h-10 rounded-xs border-2 border-uupm-line shadow-uupm-active flex items-center justify-center font-black text-sm uppercase overflow-hidden",
-            isGroup ? "bg-uupm-accent-soft text-uupm-accent-text" : "bg-uupm-warn-soft text-uupm-warn-soft-ink"
-          )}
-        >
-          {isGroup ? (
-            <Users className="w-5 h-5 text-uupm-ink" />
-          ) : partner?.avatarUrl ? (
-            <img
-              src={partner.avatarUrl}
-              alt={displayName}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <UserIcon className="w-5 h-5 text-uupm-ink" />
-          )}
-        </div>
-
-        {/* Chấm tròn trạng thái Online (Chỉ áp dụng cho chat 1-1) */}
-        {!isGroup && (
-          <span
-            className={cn(
-              "absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-uupm-line",
-              isOnline ? "bg-uupm-accent" : "bg-uupm-ink-muted"
-            )}
-            title={isOnline ? "Đang trực tuyến" : "Ngoại tuyến"}
-          />
-        )}
-      </div>
+      {/* Khung Avatar kèm chỉ báo trực tuyến — tách sang ConversationItemAvatar */}
+      <ConversationItemAvatar
+        isGroup={isGroup}
+        avatarUrl={partner?.avatarUrl}
+        displayName={displayName}
+        isOnline={isOnline}
+      />
 
       {/* Nội dung tóm tắt cuộc hội thoại */}
       <div className="flex-1 min-w-0 pr-6">
