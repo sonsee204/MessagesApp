@@ -9,6 +9,7 @@ import { AuthPage } from "./features/auth/pages/AuthPage";
 import { ChatLayout } from "./features/chat/components/ChatLayout";
 import { ToastContainer } from "./components/ui/Toast";
 import { toast } from "./stores/toast.store";
+import { CallRoot } from "./features/call/components/CallRoot";
 
 /**
  * Ứng dụng chính (App Root) chuẩn UI/UX Pro Max - Bố cục Tràn màn hình Discord:
@@ -94,13 +95,11 @@ export function App() {
     );
   }
 
-  // Khi đã đăng nhập, hiển thị Không gian Chat tràn viền 100% màn hình
+  // Khi đã đăng nhập, hiển thị Không gian Chat tràn viền 100% màn hình bọc trong CallRoot
   return (
-    <>
+    <CallRoot>
       <div className="h-dvh w-full bg-uupm-surface text-uupm-ink flex flex-col selection:bg-uupm-accent selection:text-uupm-accent-text overflow-hidden">
-        <main className="flex-1 w-full h-full overflow-hidden">
-          <ChatLayout onLogout={handleLogout} />
-        </main>
+        <main className="flex-1 w-full h-full overflow-hidden"><ChatLayout onLogout={handleLogout} /></main>
       </div>
 
       {/* Khung hiển thị thông báo Toast Popup toàn ứng dụng */}
@@ -108,6 +107,6 @@ export function App() {
 
       {/* Thanh công cụ Agentation (Visual Feedback Toolbar cho AI Coding Agents - https://www.agentation.com/) */}
       {import.meta.env.DEV && <Agentation />}
-    </>
+    </CallRoot>
   );
 }

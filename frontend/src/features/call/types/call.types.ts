@@ -74,6 +74,8 @@ export interface UseCallReturn {
   toggleAudio: () => void;
   /** Bật/tắt camera cục bộ */
   toggleVideo: () => void;
+  /** Đặt lại trạng thái cuộc gọi về trạng thái khởi tạo mặc định (idle) */
+  resetCall: () => void;
 }
 
 /**
@@ -126,3 +128,22 @@ export interface CallErrorPayload {
   code: string;
   message: string;
 }
+
+/**
+ * Kiểu bản ghi lịch sử cuộc gọi từ REST API (GET /api/calls)
+ */
+export interface CallHistoryItem {
+  _id: string;
+  conversationId: string;
+  callerId: string | { _id?: string; id?: string; displayName?: string; username?: string; avatarUrl?: string | null };
+  calleeId: string | { _id?: string; id?: string; displayName?: string; username?: string; avatarUrl?: string | null };
+  type: CallType;
+  status: "ringing" | "answered" | "missed" | "declined" | "ended";
+  startedAt: string;
+  answeredAt?: string | null;
+  endedAt?: string | null;
+  durationSec?: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+

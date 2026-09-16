@@ -316,6 +316,14 @@ export function useCall(): UseCallReturn {
     setState((prev) => ({ ...prev, isVideoMuted: nextMuted }));
   }, []);
 
+  /**
+   * Đặt lại phiên cuộc gọi về trạng thái ban đầu (idle) và dọn dẹp tài nguyên
+   */
+  const resetCall = useCallback((): void => {
+    cleanupMediaAndPeer();
+    setState(INITIAL_CALL_STATE);
+  }, [cleanupMediaAndPeer]);
+
   // Đăng ký các bộ lắng nghe sự kiện Socket.IO Signaling
   useEffect(() => {
     const socket = getSocket();
@@ -489,5 +497,6 @@ export function useCall(): UseCallReturn {
     endCall,
     toggleAudio,
     toggleVideo,
+    resetCall,
   };
 }

@@ -3,8 +3,6 @@ import {
   ArrowLeft,
   Users,
   User as UserIcon,
-  Phone,
-  Video,
   Pin,
   UserPlus,
   UserCircle2,
@@ -18,6 +16,7 @@ import { Conversation } from "../../../types/chat.types";
 import { toast } from "../../../stores/toast.store";
 import { cn } from "../../../lib/utils";
 import { ThemeToggle } from "../../../components/ui/ThemeToggle";
+import { CallButtons } from "../../call/components/molecules/CallButtons";
 
 interface ChatHeaderProps {
   conversation: Conversation;
@@ -240,18 +239,6 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
     className?: string;
   }> = [
     {
-      label: "Bắt đầu cuộc gọi thoại",
-      icon: <Phone className="w-4 h-4 text-uupm-ink-soft" />,
-      onClick: () =>
-        toast.info(`Đang kết nối cuộc gọi thoại với ${title}...`, "Cuộc gọi thoại"),
-    },
-    {
-      label: "Bắt đầu cuộc gọi video",
-      icon: <Video className="w-4 h-4 text-uupm-ink-soft" />,
-      onClick: () =>
-        toast.info(`Đang kết nối cuộc gọi video với ${title}...`, "Cuộc gọi video"),
-    },
-    {
       label: "Tin nhắn đã ghim",
       icon: <Pin className="w-4 h-4 text-uupm-ink-soft" />,
       onClick: () =>
@@ -306,6 +293,9 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
       {/* 2. Dàn nút tác vụ bên phải kiểu Discord — render từ toolbarActions config */}
       <div className="flex items-center gap-1.5 shrink-0">
         <ThemeToggle className="mr-0.5" />
+
+        {/* Cụm nút gọi thoại và video (chỉ hiển thị cho hội thoại 1-1 trực tiếp) */}
+        <CallButtons peerId={partner?.id} conversationType={conversation.type} />
 
         {toolbarActions.map((action) => (
           <ChatHeaderActionButton
