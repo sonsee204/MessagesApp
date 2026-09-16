@@ -1,7 +1,7 @@
 ---
 name: deep-architect
 description: Senior Architect agent chuyên thiết kế hệ thống, audit bảo mật, tối ưu hóa database và xử lý bài toán kỹ thuật phức tạp.
-model: Opus || Fable
+model: opus
 tools:
   - Read
   - Edit

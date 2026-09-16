@@ -1,7 +1,7 @@
 ---
 name: quick-worker
 description: Lightweight agent chuyên đọc, tra cứu tài liệu, tìm kiếm file, grep regex và giải thích cú pháp đơn giản.
-model: Haiku
+model: haiku
 tools:
   - Read
   - Glob

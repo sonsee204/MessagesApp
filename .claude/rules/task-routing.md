@@ -4,6 +4,26 @@
 
 ---
 
+## 0. Hợp Đồng Dispatch Cho Phiên Chính (Bắt Buộc — Kiểm Trước Khi Làm)
+Phiên chính là **orchestrator**: mọi công việc Tier 1–3 phải ủy quyền qua tool `Agent` với tham số `subagent_type` đúng tên agent, KHÔNG tự làm inline (chống anti-pattern "Làm Thay Subagent" §6.2). Đây là bước kiểm tra bắt buộc TRƯỚC khi thực hiện bất kỳ thao tác đọc/ghi mã nguồn nào:
+
+| Dispatch (`subagent_type`) | Giao khi nào |
+| :--- | :--- |
+| `quick-worker` | Đọc file, grep/tra cứu, trace log, tóm tắt (Tier 1) |
+| `feature-builder` | Viết component/API/CRUD, sửa bug thông thường, chạy build/test (Tier 2) |
+| `deep-architect` | Thiết kế kiến trúc, audit bảo mật, transaction đa collection, race-condition, refactor diện rộng, soạn plan (Tier 3) |
+
+- **Model**: tuân theo frontmatter của agent (`haiku`/`sonnet`/`opus`); KHÔNG truyền tham số `model` của tool Agent đè lên trừ khi người dùng yêu cầu rõ.
+- **Mỗi dispatch** kèm Context Package 4 phần tại Mục 2 và nhận Output Contract Mục 3.
+- **Ngoại lệ được phép làm inline** (không phải dispatch):
+  1. Tác vụ governance: sửa `.claude/rules/`, `.claude/agents/`, `.claude/workflows/`, `CLAUDE.md`, docs/plans;
+  2. Tìm kiếm cơ giới một lệnh là ra kết quả (1 Grep/Glob duy nhất, không suy luận);
+  3. Sửa cực nhỏ ≤ 1 file và ≤ 5 dòng, hoặc vá tiếp nối ngay sau báo cáo của subagent trong cùng task;
+  4. Thao tác Git (commit, branch, merge) và chạy lệnh xác minh cuối task.
+- Ngoài 4 ngoại lệ trên mà làm inline là **vi phạm routing** — tự dừng và dispatch.
+
+---
+
 ## 1. Ma Trận Điều Phối (Routing Matrix)
 
 | Tầng (Tier) | Tiêu chuẩn nhận diện | Subagent mục tiêu | Model thực tế | SOP Workflow gắn kèm |
