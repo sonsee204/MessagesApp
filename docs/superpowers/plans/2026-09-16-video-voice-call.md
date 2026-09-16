@@ -55,12 +55,12 @@
 - Consumes: `callRepository`, `friendRepository`, `conversationRepository`, `blockRepository`
 - Produces: `ActiveCallRegistry`, `callService` (methods: `initiateCall`, `acceptCall`, `declineCall`, `cancelCall`, `endCall`, `getCallHistory`)
 
-- [ ] **Step 1: Viết unit test cho ActiveCallRegistry (check busy, map caller/callee)**
-- [ ] **Step 2: Viết unit test cho CallService (kiểm tra quan hệ bạn bè, chặn block, tính toán duration)**
-- [ ] **Step 3: Hiện thực ActiveCallRegistry và CallService**
-- [ ] **Step 4: Chạy test và type-check**
+- [x] **Step 1: Viết unit test cho ActiveCallRegistry (check busy, map caller/callee)**
+- [x] **Step 2: Viết unit test cho CallService (kiểm tra quan hệ bạn bè, chặn block, tính toán duration)**
+- [x] **Step 3: Hiện thực ActiveCallRegistry và CallService**
+- [x] **Step 4: Chạy test và type-check**
   - Run: `cd backend && npx vitest run src/services/call.service.test.ts src/socket/active-call.registry.test.ts`
-- [ ] **Step 5: Commit task 2**
+- [x] **Step 5: Commit task 2**
 
 ---
 
@@ -75,12 +75,12 @@
 - Consumes: `callService`, `ActiveCallRegistry`, `emitToUser`
 - Produces: 8 socket signaling events (`call:initiate`, `call:accept`, `call:decline`, `call:cancel`, `call:offer`, `call:answer`, `call:ice`, `call:end`)
 
-- [ ] **Step 1: Viết test cho luồng relay signaling (offer/answer/ice) và xử lý sự kiện ngắt kết nối đột ngột**
-- [ ] **Step 2: Đăng ký các handler cuộc gọi vào socket connection lifecycle**
-- [ ] **Step 3: Xử lý dọn dẹp các cuộc gọi mồ côi (orphan calls) khi khởi động server**
-- [ ] **Step 4: Chạy test socket handlers**
+- [x] **Step 1: Viết test cho luồng relay signaling (offer/answer/ice) và xử lý sự kiện ngắt kết nối đột ngột**
+- [x] **Step 2: Đăng ký các handler cuộc gọi vào socket connection lifecycle**
+- [x] **Step 3: Xử lý dọn dẹp các cuộc gọi mồ côi (orphan calls) khi khởi động server**
+- [x] **Step 4: Chạy test socket handlers**
   - Run: `cd backend && npx vitest run src/socket/call.handlers.test.ts`
-- [ ] **Step 5: Commit task 3**
+- [x] **Step 5: Commit task 3**
 
 ---
 
