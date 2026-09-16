@@ -9,11 +9,14 @@ async function bootstrap() {
   const app = createApp();
   const server = http.createServer(app);
 
+  // Kết nối CSDL TRƯỚC khi khởi tạo Socket.IO:
+  // initSocketServer bắn cleanupOrphanCalls() (update các call "ringing" → "missed")
+  // ngay lúc boot — nếu DB chưa sẵn sàng thì lệnh phụ thuộc buffer của mongoose,
+  // có thể trượt nếu connection timeout. Đổi thứ tự để cleanup chạy trên kết nối thật.
+  await connectDatabase();
+
   // Initialize Socket.IO Server
   initSocketServer(server);
-
-  // Connect to Database
-  await connectDatabase();
 
   server.listen(env.PORT, () => {
     logger.info(`AppMessaging Backend server is running on http://localhost:${env.PORT}`);

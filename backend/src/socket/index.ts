@@ -6,6 +6,7 @@ import { conversationRepository } from "../repositories/conversation.repository"
 import { messageService } from "../services/message.service";
 import { logger } from "../core/logger";
 import { env } from "../config/env";
+import { registerCallHandlers, cleanupOrphanCalls } from "./call.handlers";
 
 /**
  * Mở rộng giao diện Socket để lưu trữ dữ liệu xác thực người dùng
@@ -118,6 +119,9 @@ export function initSocketServer(httpServer: HttpServer): Server {
 
   ioInstance = io;
 
+  // Dọn dẹp các cuộc gọi mồ côi từ lần khởi động trước (orphan calls)
+  cleanupOrphanCalls().catch((err) => logger.error("Lỗi dọn dẹp orphan calls", err));
+
   // Middleware xác thực JWT trong quá trình bắt tay kết nối (Handshake Authentication)
   io.use((socket: AuthenticatedSocket, next) => {
     // Trích xuất cookie nếu có trong handshake headers
@@ -175,6 +179,9 @@ export function initSocketServer(httpServer: HttpServer): Server {
 
     // Bước 2: Tự động gia nhập phòng cá nhân để nhận các thông báo trực tiếp
     socket.join(`user:${user.userId}`);
+
+    // Bước 2b: Đăng ký các sự kiện WebRTC signaling cho cuộc gọi (call:*)
+    registerCallHandlers(socket);
 
     // Bước 3: Xử lý sự kiện tham gia phòng cuộc trò chuyện cụ thể
     socket.on("join_conversation", async (payload: string | { conversationId?: string }) => {
