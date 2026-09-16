@@ -33,13 +33,13 @@
 - Consumes: Mongoose connection, `IUser` model
 - Produces: `ICall`, `IDeviceToken`, `callRepository`, `deviceTokenRepository`
 
-- [ ] **Step 1: Viết test thất bại cho CallRepository**
-- [ ] **Step 2: Chạy test để xác nhận thất bại**
+- [x] **Step 1: Viết test thất bại cho CallRepository**
+- [x] **Step 2: Chạy test để xác nhận thất bại**
   - Run: `cd backend && npx vitest run src/repositories/call.repository.test.ts`
-- [ ] **Step 3: Định nghĩa Schema & khởi tạo Repository**
-- [ ] **Step 4: Chạy lại test đảm bảo pass**
+- [x] **Step 3: Định nghĩa Schema & khởi tạo Repository**
+- [x] **Step 4: Chạy lại test đảm bảo pass**
   - Run: `cd backend && npx vitest run src/repositories/call.repository.test.ts`
-- [ ] **Step 5: Commit task 1**
+- [x] **Step 5: Commit task 1**
 
 ---
 
