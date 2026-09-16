@@ -120,10 +120,10 @@
 - Consumes: `getSocket` từ `lib/socket.ts`, trình duyệt `navigator.mediaDevices`, `RTCPeerConnection`
 - Produces: State machine `status` (`idle`, `dialing`, `ringing`, `connecting`, `active`, `ended`), `localStream`, `remoteStream`, các hành động `initiateCall`, `acceptCall`, `declineCall`, `endCall`, `toggleAudio`, `toggleVideo`
 
-- [ ] **Step 1: Viết test giả lập trạng thái WebRTC hook (chuyển đổi dialing -> active -> cleanup tracks)**
-- [ ] **Step 2: Hiện thực hóa `useCall` với logic hủy sau 30 giây (ring timeout) và dọn sạch media stream**
-- [ ] **Step 3: Chạy test hook**
-- [ ] **Step 4: Commit task 5**
+- [x] **Step 1: Viết test giả lập trạng thái WebRTC hook (chuyển đổi dialing -> active -> cleanup tracks)**
+- [x] **Step 2: Hiện thực hóa `useCall` với logic hủy sau 30 giây (ring timeout) và dọn sạch media stream**
+- [x] **Step 3: Chạy test hook**
+- [x] **Step 4: Commit task 5**
 
 ---
 
