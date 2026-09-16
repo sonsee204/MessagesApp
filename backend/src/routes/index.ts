@@ -7,6 +7,7 @@ import { friendRoutes } from "./friend.routes";
 import { notificationRoutes } from "./notification.routes";
 import { docsRoutes } from "./docs.routes";
 import { uploadRoutes } from "./upload.routes";
+import { callRoutes } from "./call.routes";
 
 const apiRouter = Router();
 
@@ -20,5 +21,6 @@ apiRouter.use("/conversations", conversationRoutes);
 apiRouter.use("/friends", friendRoutes);
 apiRouter.use("/notifications", notificationRoutes);
 apiRouter.use("/uploads", uploadRoutes);
+apiRouter.use("/calls", callRoutes);
 
 export { apiRouter };

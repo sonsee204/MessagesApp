@@ -87,6 +87,8 @@ describe("registerCallHandlers", () => {
     getCallId: ReturnType<typeof vi.fn>;
     clearUser: ReturnType<typeof vi.fn>;
   };
+  let mockNotifSvc: { createNotification: ReturnType<typeof vi.fn> };
+  let mockPushSvc: { sendToDeviceTokens: ReturnType<typeof vi.fn> };
   let emitToUserFn: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
@@ -101,6 +103,8 @@ describe("registerCallHandlers", () => {
     };
     mockCallRepo = { findById: vi.fn() };
     mockRegistry = { getCallId: vi.fn(), clearUser: vi.fn() };
+    mockNotifSvc = { createNotification: vi.fn().mockResolvedValue({}) };
+    mockPushSvc = { sendToDeviceTokens: vi.fn().mockResolvedValue(undefined) };
     emitToUserFn = vi.fn();
   });
 
@@ -117,6 +121,8 @@ describe("registerCallHandlers", () => {
     registry: mockRegistry as unknown as CallHandlerDeps["registry"],
     emitToUserFn: emitToUserFn as unknown as CallHandlerDeps["emitToUserFn"],
     isUserOnlineFn,
+    notifSvc: mockNotifSvc as unknown as CallHandlerDeps["notifSvc"],
+    pushSvc: mockPushSvc as unknown as CallHandlerDeps["pushSvc"],
   });
 
   it("đăng ký đủ 8 sự kiện call:* kèm xử lý disconnect", () => {
@@ -152,12 +158,34 @@ describe("registerCallHandlers", () => {
     expect(emitToUserFn).not.toHaveBeenCalledWith(callerId, "call:offline", expect.anything());
   });
 
-  it("call:initiate khi người nhận offline -> người gọi nhận call:offline", async () => {
+  it("call:initiate khi người nhận offline -> người gọi nhận call:offline và gửi CALL_MISSED notif/push", async () => {
     mockCallSvc.initiateCall.mockResolvedValue(createCallDoc());
     const { trigger } = setup(false);
 
     await trigger("call:initiate", { calleeId, type: "audio" });
 
+    expect(emitToUserFn).toHaveBeenCalledWith(callerId, "call:offline", { callId, calleeId });
+    expect(mockNotifSvc.createNotification).toHaveBeenCalledWith({
+      recipientId: calleeId,
+      senderId: callerId,
+      type: "CALL_MISSED",
+      title: "Cuộc gọi nhỡ",
+      content: "NguoiGoi đã gọi thoại cho bạn",
+      data: { conversationId, url: `/chat/${conversationId}` },
+    });
+    expect(mockPushSvc.sendToDeviceTokens).toHaveBeenCalledWith(calleeId, {
+      title: "Cuộc gọi nhỡ",
+      body: "NguoiGoi gọi thoại cho bạn",
+      data: { type: "CALL_MISSED", callId, callerId, conversationId },
+    });
+  });
+
+  it("call:initiate khi người nhận offline nhưng push/notif lỗi -> best-effort không ném lỗi", async () => {
+    mockCallSvc.initiateCall.mockResolvedValue(createCallDoc());
+    mockNotifSvc.createNotification.mockRejectedValue(new Error("DB error"));
+    const { trigger } = setup(false);
+
+    await expect(trigger("call:initiate", { calleeId, type: "video" })).resolves.not.toThrow();
     expect(emitToUserFn).toHaveBeenCalledWith(callerId, "call:offline", { callId, calleeId });
   });
 

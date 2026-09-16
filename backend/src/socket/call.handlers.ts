@@ -4,6 +4,8 @@ import { callService } from "../services/call.service";
 import { callRepository } from "../repositories/call.repository";
 import { activeCallRegistry } from "./active-call.registry";
 import { CallModel, CallType, ICall } from "../models/call.model";
+import { pushService } from "../services/push.service";
+import { notificationService } from "../services/notification.service";
 import { AppError, ConflictError } from "../core/errors";
 import { logger } from "../core/logger";
 
@@ -42,6 +44,8 @@ export interface CallHandlerDeps {
   registry?: typeof activeCallRegistry;
   emitToUserFn?: typeof emitToUser;
   isUserOnlineFn?: (userId: string) => boolean;
+  pushSvc?: typeof pushService;
+  notifSvc?: typeof notificationService;
 }
 
 /**
@@ -82,6 +86,8 @@ export function registerCallHandlers(
   const registry = deps.registry ?? activeCallRegistry;
   const emitToUserFn = deps.emitToUserFn ?? emitToUser;
   const isUserOnlineFn = deps.isUserOnlineFn ?? isUserOnline;
+  const pushSvc = deps.pushSvc ?? pushService;
+  const notifSvc = deps.notifSvc ?? notificationService;
 
   const userId = socket.user!.userId;
   const username = socket.user!.username;
@@ -185,6 +191,25 @@ export function registerCallHandlers(
       // KHÔNG ghi nhận missed ngay: FE hết 30s sẽ tự phát call:cancel và cancelCall mới ghi missed.
       if (!isUserOnlineFn(calleeId)) {
         emitToUserFn(userId, "call:offline", { callId, calleeId });
+
+        // Callee offline: tạo notification CALL_MISSED + gửi FCM push (best-effort)
+        try {
+          await notifSvc.createNotification({
+            recipientId: calleeId,
+            senderId: userId,
+            type: "CALL_MISSED",
+            title: "Cuộc gọi nhỡ",
+            content: `${username} đã gọi ${type === "video" ? "video" : "thoại"} cho bạn`,
+            data: { conversationId: String(call.conversationId), url: `/chat/${call.conversationId}` },
+          });
+          await pushSvc.sendToDeviceTokens(calleeId, {
+            title: "Cuộc gọi nhỡ",
+            body: `${username} gọi ${type === "video" ? "video" : "thoại"} cho bạn`,
+            data: { type: "CALL_MISSED", callId, callerId: userId, conversationId: String(call.conversationId) },
+          });
+        } catch (err) {
+          logger.error(`Lỗi gửi thông báo cuộc gọi nhỡ cho ${calleeId}`, err);
+        }
       }
     } catch (error) {
       // Hai cuộc gọi chéo chiều gần đồng thời: request đến sau nhận ConflictError từ registry bận

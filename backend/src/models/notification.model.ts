@@ -6,12 +6,14 @@ import { Schema, model, Document, Types } from "mongoose";
  * - FRIEND_REQUEST_ACCEPTED: Lời mời kết bạn đã gửi được đối phương chấp nhận
  * - MESSAGE_MENTION: Được nhắc tên (@username) trong một tin nhắn cuộc trò chuyện
  * - SYSTEM_ALERT: Cảnh báo hoặc thông báo quan trọng từ quản trị viên/hệ thống
+ * - CALL_MISSED: Thông báo cuộc gọi thoại hoặc video bị nhỡ
  */
 export type NotificationType =
   | "FRIEND_REQUEST_RECEIVED"
   | "FRIEND_REQUEST_ACCEPTED"
   | "MESSAGE_MENTION"
-  | "SYSTEM_ALERT";
+  | "SYSTEM_ALERT"
+  | "CALL_MISSED";
 
 /**
  * Cấu trúc dữ liệu metadata đính kèm phục vụ điều hướng (Deep link)
@@ -62,6 +64,7 @@ const NotificationSchema = new Schema<INotification>(
         "FRIEND_REQUEST_ACCEPTED",
         "MESSAGE_MENTION",
         "SYSTEM_ALERT",
+        "CALL_MISSED",
       ],
       required: [true, "Loại thông báo là bắt buộc"],
       index: true,
