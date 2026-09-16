@@ -142,10 +142,10 @@
 - Consumes: `useCall` hook, `useAuthStore`
 - Produces: Giao diện cuộc gọi Fullscreen chuẩn a11y, Modal chuông reo `alertdialog`, lịch sử cuộc gọi
 
-- [ ] **Step 1: Xây dựng các Atomic components (Timer, Controls với aria-labels)**
-- [ ] **Step 2: Dựng Modal chuông reo với Focus-trap và phím tắt (Enter: nhận, Esc: từ chối)**
-- [ ] **Step 3: Dựng màn hình gọi toàn diện (100dvh, Remote stream fullscreen, Local stream PiP)**
-- [ ] **Step 4: Gắn nút gọi vào `ChatHeader.tsx` và gắn modal toàn cục vào `App.tsx`**
-- [ ] **Step 5: Kiểm tra xác minh React Doctor & Typecheck**
+- [x] **Step 1: Xây dựng các Atomic components (Timer, Controls với aria-labels)**
+- [x] **Step 2: Dựng Modal chuông reo với Focus-trap và phím tắt (Enter: nhận, Esc: từ chối)**
+- [x] **Step 3: Dựng màn hình gọi toàn diện (100dvh, Remote stream fullscreen, Local stream PiP)**
+- [x] **Step 4: Gắn nút gọi vào `ChatHeader.tsx` và gắn modal toàn cục vào `App.tsx`**
+- [x] **Step 5: Kiểm tra xác minh React Doctor & Typecheck**
   - Run: `cd frontend && npm run build && npx react-doctor@latest`
-- [ ] **Step 6: Commit task 6**
+- [x] **Step 6: Commit task 6**
