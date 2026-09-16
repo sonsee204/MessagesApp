@@ -6,3 +6,5 @@ export * from "./friend-request.model";
 export * from "./friend.model";
 export * from "./block.model";
 export * from "./notification.model";
+export * from "./call.model";
+export * from "./device-token.model";
