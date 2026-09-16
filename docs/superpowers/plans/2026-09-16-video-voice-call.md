@@ -99,12 +99,12 @@
 - Consumes: `callService`, `deviceTokenRepository`, Firebase Admin SDK
 - Produces: `/api/calls`, `/api/device-tokens`
 
-- [ ] **Step 1: Viết test kiểm tra phân trang lịch sử cuộc gọi và bảo mật token thiết bị**
-- [ ] **Step 2: Khởi tạo module Firebase Admin cấu hình lười (lazy evaluation)**
-- [ ] **Step 3: Tạo routes, controller và validate request bằng Zod Schema**
-- [ ] **Step 4: Chạy kiểm thử API và type-check**
+- [x] **Step 1: Viết test kiểm tra phân trang lịch sử cuộc gọi và bảo mật token thiết bị**
+- [x] **Step 2: Khởi tạo module Firebase Admin cấu hình lười (lazy evaluation)**
+- [x] **Step 3: Tạo routes, controller và validate request bằng Zod Schema**
+- [x] **Step 4: Chạy kiểm thử API và type-check**
   - Run: `cd backend && npx vitest run src/controllers/call.controller.test.ts && npm run build`
-- [ ] **Step 5: Commit task 4**
+- [x] **Step 5: Commit task 4**
 
 ---
 
