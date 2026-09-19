@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { Phone, PhoneOff, Video } from "lucide-react";
 import { CallType } from "../../types/call.types";
+import { useRingtone } from "../../hooks/useRingtone";
 import { cn } from "../../../../lib/utils";
 
 interface IncomingCallModalProps {
@@ -29,6 +30,9 @@ export const IncomingCallModal: React.FC<IncomingCallModalProps> = ({
 }) => {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const acceptButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Phát nhạc chuông khi modal cuộc gọi đến hiển thị (enable=true)
+  useRingtone(true);
 
   // Mở modal và khóa focus ngay khi component được render
   useEffect(() => {

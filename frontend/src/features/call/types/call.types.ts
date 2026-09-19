@@ -52,6 +52,8 @@ export interface CallState {
   isAudioMuted: boolean;
   /** Trạng thái tắt camera/hình ảnh */
   isVideoMuted: boolean;
+  /** Người dùng có video track cục bộ hay không (false khi thiết bị không có camera / chưa bật cam giữa phiên) */
+  hasLocalVideo: boolean;
   /** Thông điệp lỗi nếu phiên cuộc gọi gặp sự cố */
   error: string | null;
 }
@@ -76,6 +78,14 @@ export interface UseCallReturn {
   toggleVideo: () => void;
   /** Đặt lại trạng thái cuộc gọi về trạng thái khởi tạo mặc định (idle) */
   resetCall: () => void;
+}
+
+/**
+ * Payload trả callId về cho caller ngay sau khi server tạo bản ghi cuộc gọi (call:initiated).
+ * Sự kiện này dùng để đồng bộ callIdRef ở caller, phục vụ cho call:cancel và timeout 30s.
+ */
+export interface CallInitiatedPayload {
+  callId: string;
 }
 
 /**

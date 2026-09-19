@@ -1,16 +1,17 @@
 import React from "react";
-import { Users, Bell, Mail } from "lucide-react";
+import { Users, Bell, Mail, PhoneCall } from "lucide-react";
 import { toast } from "../../../stores/toast.store";
 import { cn } from "../../../lib/utils";
 
 interface SidebarQuickLinksProps {
-  activeView: "friends" | "chat";
+  activeView: "friends" | "chat" | "calls";
   activeConversationId: string | null;
   receivedRequestsCount: number;
   unreadCount: number;
   isNotificationsOpen: boolean;
   onSelectFriendsView: () => void;
   onOpenNotifications: () => void;
+  onSelectCallsView?: () => void;
 }
 
 /**
@@ -25,6 +26,7 @@ export const SidebarQuickLinks: React.FC<SidebarQuickLinksProps> = ({
   isNotificationsOpen,
   onSelectFriendsView,
   onOpenNotifications,
+  onSelectCallsView,
 }) => (
   <div className="space-y-1.5">
     {/* Nút Bạn bè */}
@@ -99,5 +101,26 @@ export const SidebarQuickLinks: React.FC<SidebarQuickLinksProps> = ({
       </div>
       <span>Yêu cầu tin nhắn</span>
     </button>
+
+    {/* Nút Lịch sử cuộc gọi */}
+    {onSelectCallsView && (
+      <button
+        type="button"
+        onClick={onSelectCallsView}
+        className={cn(
+          "w-full flex items-center justify-between px-3 py-2 rounded-xs border-2 text-xs font-black transition-[background-color,box-shadow,transform] cursor-pointer",
+          activeView === "calls" && !activeConversationId
+            ? "bg-uupm-accent/20 border-uupm-line shadow-uupm-active text-uupm-ink translate-x-[1px] translate-y-[1px]"
+            : "bg-uupm-surface border-uupm-line shadow-uupm-active hover:bg-uupm-surface-hover hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[2px] active:translate-y-[2px] text-uupm-ink"
+        )}
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-6 h-6 rounded-xs bg-uupm-accent-soft border-2 border-uupm-line flex items-center justify-center shrink-0">
+            <PhoneCall className="w-3.5 h-3.5 text-uupm-ink" />
+          </div>
+          <span>Lịch sử cuộc gọi</span>
+        </div>
+      </button>
+    )}
   </div>
 );

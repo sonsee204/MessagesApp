@@ -23,9 +23,10 @@ interface ConversationSidebarProps {
   onlineUsers: Record<string, boolean>;
   currentUser: User | null;
   isLoading?: boolean;
-  activeView?: "friends" | "chat";
+  activeView?: "friends" | "chat" | "calls";
   onSelectConversation: (id: string) => void;
   onSelectFriendsView?: () => void;
+  onSelectCallsView?: () => void;
   onOpenNewChatModal: () => void;
   onLogout?: () => void;
 }
@@ -47,6 +48,7 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
   activeView = "chat",
   onSelectConversation,
   onSelectFriendsView,
+  onSelectCallsView,
   onOpenNewChatModal,
   onLogout,
 }) => {
@@ -114,6 +116,7 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
           isNotificationsOpen={isModalOpen}
           onSelectFriendsView={() => onSelectFriendsView?.()}
           onOpenNotifications={openModal}
+          onSelectCallsView={onSelectCallsView}
         />
 
         {/* Đường kẻ phân cách tinh tế giữa Danh mục điều hướng và Danh sách tin nhắn */}

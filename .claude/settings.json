@@ -1,4 +1,17 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(ocr delegate *)",
+      "Bash(npx vitest *)",
+      "Bash(python3 -)",
+      "Bash(node -e ' *)",
+      "Bash(git subtree *)",
+      "Bash(echo \"---SUBTREE EXIT: $?\")",
+      "Bash(git stash *)",
+      "Bash(echo \"STASH EXIT: $?\")",
+      "Bash(tasklist)"
+    ]
+  },
   "worktree": {
     "bgIsolation": "none"
   }

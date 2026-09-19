@@ -1,12 +1,14 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { getSocket } from "@/lib/socket";
 import { RTC_PEER_CONFIG } from "../lib/webrtc-config";
+import { toast } from "../../../stores/toast.store";
 import type {
   CallState,
   CallStatus,
   CallType,
   UseCallReturn,
   IncomingCallPayload,
+  CallInitiatedPayload,
   CallAcceptedPayload,
   SignalingSdpPayload,
   SignalingIcePayload,
@@ -28,6 +30,7 @@ const INITIAL_CALL_STATE: CallState = {
   remoteStream: null,
   isAudioMuted: false,
   isVideoMuted: false,
+  hasLocalVideo: false,
   error: null,
 };
 
@@ -54,12 +57,16 @@ export function useCall(): UseCallReturn {
   const remoteStreamRef = useRef<MediaStream | null>(null);
   const ringTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const iceDisconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const connectionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingIceCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
+  const makingOfferRef = useRef(false); // cờ chống double-offer khi renegotiation
+  const acquiringCameraRef = useRef(false); // cờ đang lấy camera giữa phiên (chống bấm đôi)
 
   /**
    * Giải phóng và dọn dẹp toàn bộ tài nguyên WebRTC, media tracks và timers
    */
   const cleanupMediaAndPeer = useCallback((): void => {
+    acquiringCameraRef.current = false;
     if (ringTimeoutRef.current) {
       clearTimeout(ringTimeoutRef.current);
       ringTimeoutRef.current = null;
@@ -68,11 +75,16 @@ export function useCall(): UseCallReturn {
       clearTimeout(iceDisconnectTimeoutRef.current);
       iceDisconnectTimeoutRef.current = null;
     }
+    if (connectionTimeoutRef.current) {
+      clearTimeout(connectionTimeoutRef.current);
+      connectionTimeoutRef.current = null;
+    }
 
     if (pcRef.current) {
       pcRef.current.onicecandidate = null;
       pcRef.current.ontrack = null;
       pcRef.current.oniceconnectionstatechange = null;
+      pcRef.current.onnegotiationneeded = null;
       pcRef.current.close();
       pcRef.current = null;
     }
@@ -91,21 +103,61 @@ export function useCall(): UseCallReturn {
   }, []);
 
   /**
-   * Chấm dứt phiên cuộc gọi tại chỗ và cập nhật trạng thái mới
+   * Chấm dứt phiên cuộc gọi tại chỗ, dọn dẹp kết nối và đặt lại toàn bộ trạng thái phiên
    */
   const terminateSession = useCallback(
     (targetStatus: CallStatus, error: string | null = null): void => {
       cleanupMediaAndPeer();
+      callIdRef.current = null;
+      // ponytail:KHÔNG xóa calleeId/type — CallErrorModal cần 2 giá trị này để kích hoạt nút
+      // "Thử lại" (call.state.calleeId !== null). callIdRef đã cắt đứt nên không rò rỉ sang
+      // phiên mới; resetCall() sẽ xoá nốt khi người dùng đóng modal.
       setState((prev) => ({
         ...prev,
         status: targetStatus,
         error,
+        callId: null,
+        callerId: null,
+        callerName: null,
+        calleeId: prev.calleeId,
+        type: prev.type,
         localStream: null,
         remoteStream: null,
+        hasLocalVideo: false,
+        isVideoMuted: false,
+        isAudioMuted: false,
       }));
     },
     [cleanupMediaAndPeer]
   );
+
+  /**
+   * Hủy bộ hẹn giờ giám sát trạng thái connecting
+   */
+  const clearConnectionWatchdog = useCallback((): void => {
+    if (connectionTimeoutRef.current) {
+      clearTimeout(connectionTimeoutRef.current);
+      connectionTimeoutRef.current = null;
+    }
+  }, []);
+
+  /**
+   * Khởi động watchdog 10s: nếu sau 10s vẫn connecting (ICE không kết nối được) -> đóng phiên kèm thông báo lỗi
+   */
+  const startConnectionWatchdog = useCallback((): void => {
+    clearConnectionWatchdog();
+    connectionTimeoutRef.current = setTimeout(() => {
+      // Chỉ đóng phiên khi vẫn đang ở trạng thái connecting
+      if (stateRef.current.status === "connecting") {
+        const socket = getSocket();
+        const activeCallId = callIdRef.current;
+        if (activeCallId) {
+          socket.emit("call:end", { callId: activeCallId });
+        }
+        terminateSession("ended", "Không thể thiết lập kết nối. Vui lòng thử lại.");
+      }
+    }, 10_000);
+  }, [clearConnectionWatchdog, terminateSession]);
 
   /**
    * Khởi tạo đối tượng RTCPeerConnection và gắn các bộ lắng nghe sự kiện mạng P2P
@@ -145,10 +197,41 @@ export function useCall(): UseCallReturn {
         }
       };
 
+      // Renegotiation: tạo SDP Offer mới khi add/remove track GIỮA phiên call (vd: bật cam giữa
+      // phiên) và gửi qua signaling đã có. CHỈ dùng cho trường hợp mid-call toggle camera.
+      // Lúc bắt tay initial, caller mới là người tạo offer (handleAccepted), callee chỉ trả lời
+      // bằng answer -> callee (và caller) TUYỆT ĐỐI KHÔNG được tự tạo offer thêm, nếu không sẽ
+      // glare với offer ban đầu (setRemoteDescription lỗi -> terminateSession -> màn hình call
+      // biến mất ngay khi ấn nghe). pc.addTrack() LẦN ĐẦU lúc accept cũng fire sự kiện này, nên
+      // phải chặn bằng status: chỉ cho renegotiate khi đã vào phiên active (bắt tay xong).
+      // ponytail: va chạm offer đồng thời 2 chiều cùng bật cam 1 sát giờ rất hiếm — ngoài scope,
+      // upgrade path là perfect negotiation đầy đủ.
+      const negotiate = async (): Promise<void> => {
+        // Chỉ renegotiate khi đã active: bật cam giữa phiên. Lúc connecting/initial, caller tự
+        // drive offer, callee chỉ answer -> cấm tự tạo offer tránh glare crash màn hình gọi.
+        if (stateRef.current.status !== "active") return;
+        if (makingOfferRef.current || pc.signalingState !== "stable") return;
+        if (!pc.remoteDescription) return; // chưa bắt tay xong -> chưa được renegotiate
+        try {
+          makingOfferRef.current = true;
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          socket.emit("call:offer", { callId: callIdRef.current ?? currentCallId, sdp: offer });
+        } catch {
+          // Bỏ qua lỗi tạo offer tạm thời (sẽ retry qua renegotiationQueued ở answer kế tiếp)
+        } finally {
+          makingOfferRef.current = false;
+        }
+      };
+      pc.onnegotiationneeded = () => {
+        void negotiate();
+      };
+
       // Theo dõi trạng thái kết nối ICE
       pc.oniceconnectionstatechange = () => {
         const iceState = pc.iceConnectionState;
         if (iceState === "connected" || iceState === "completed") {
+          clearConnectionWatchdog();
           if (iceDisconnectTimeoutRef.current) {
             clearTimeout(iceDisconnectTimeoutRef.current);
             iceDisconnectTimeoutRef.current = null;
@@ -166,18 +249,43 @@ export function useCall(): UseCallReturn {
             }, 3000);
           }
         } else if (iceState === "failed") {
+          clearConnectionWatchdog();
           const activeCallId = callIdRef.current ?? currentCallId;
           if (activeCallId) {
             socket.emit("call:end", { callId: activeCallId });
           }
-          terminateSession("ended");
+          terminateSession("ended", "Kết nối bị gián đoạn.");
         }
       };
 
       return pc;
     },
-    [terminateSession]
+    [clearConnectionWatchdog, terminateSession]
   );
+
+  /**
+   * Phân loại lỗi getUserMedia thành thông điệp thân thiện cho người dùng Việt.
+   * DOMException.name quyết định nguyên nhân: từ chối quyền, không có thiết bị, thiết bị bận...
+   */
+  const describeMediaError = (err: unknown, type: CallType): string => {
+    const needCamera = type === "video";
+    const device = needCamera ? "camera/micro" : "micro";
+    const name = err instanceof DOMException ? err.name : "";
+    switch (name) {
+      case "NotAllowedError":
+      case "SecurityError":
+        return `Bạn đã chặn quyền truy cập ${device}. Hãy cấp quyền ${device} cho trình duyệt rồi thử lại.`;
+      case "NotFoundError":
+      case "OverconstrainedError":
+        return `Không tìm thấy ${device} trên thiết bị này.`;
+      case "NotReadableError":
+        return `${needCamera ? "Camera hoặc micro" : "Micro"} đang bị ứng dụng khác sử dụng.`;
+      default:
+        return err instanceof Error && err.message
+          ? err.message
+          : `Không thể truy cập ${device}.`;
+    }
+  };
 
   /**
    * Phía Người gọi (Caller): Khởi tạo cuộc gọi và bật đếm ngược chuông 30 giây
@@ -187,44 +295,90 @@ export function useCall(): UseCallReturn {
       cleanupMediaAndPeer();
       callIdRef.current = null;
 
+      // Đặt trạng thái "dialing" NGAY TRƯỚC khi gọi getUserMedia để CallScreen mount tức thì.
+      // Nếu để sau await: lúc trình duyệt đang hiện hộp thoại xin quyền camera (hoặc treo ở
+      // bước này) người dùng bấm nút mà không thấy màn hình nào -> tưởng app bị lỗi.
+      setState({
+        status: "dialing",
+        callId: null,
+        callerId: null,
+        callerName: null,
+        calleeId,
+        type,
+        localStream: null,
+        remoteStream: null,
+        isAudioMuted: false,
+        isVideoMuted: false,
+        // Khi bắt đầu gọi video, tạm thời coi hasLocalVideo = true để mount CallScreenActiveVideo; với gọi thoại là false
+        hasLocalVideo: type === "video",
+        error: null,
+      });
+
+      let stream: MediaStream | null = null;
+
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
+        stream = await navigator.mediaDevices.getUserMedia({
           audio: true,
           video: type === "video",
         });
-
-        localStreamRef.current = stream;
-        const socket = getSocket();
-        socket.emit("call:initiate", { calleeId, type });
-
-        setState({
-          status: "dialing",
-          callId: null,
-          callerId: null,
-          callerName: null,
-          calleeId,
-          type,
-          localStream: stream,
-          remoteStream: null,
-          isAudioMuted: false,
-          isVideoMuted: false,
-          error: null,
-        });
-
-        // Hẹn giờ 30s đổ chuông: nếu đối phương không nhấc máy, caller tự hủy và set missed
-        ringTimeoutRef.current = setTimeout(() => {
-          const currentCallId = callIdRef.current;
-          socket.emit("call:cancel", { callId: currentCallId ?? "" });
-          terminateSession("missed");
-        }, 30000);
       } catch (err) {
-        cleanupMediaAndPeer();
-        setState((prev) => ({
-          ...prev,
-          status: "idle",
-          error: err instanceof Error ? err.message : "Không thể truy cập micro/camera",
-        }));
+        // Thiết bị không có camera hoặc camera đang bận: fallback sang audio-only nhưng giữ nguyên video call
+        const isCameraUnavailable =
+          type === "video" &&
+          err instanceof DOMException &&
+          ["NotReadableError", "NotFoundError", "OverconstrainedError"].includes(err.name);
+
+        if (isCameraUnavailable) {
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            if (err.name === "NotReadableError") {
+              toast.info(
+                "Camera đang bị ứng dụng khác chiếm — bạn vẫn vào cuộc gọi video bằng giọng nói và nhìn thấy đối phương.",
+                "Camera đang bận"
+              );
+            } else {
+              toast.info(
+                "Không tìm thấy camera — bạn sẽ tham gia bằng giọng nói, vẫn nhìn thấy đối phương.",
+                "Không tìm thấy camera"
+              );
+            }
+          } catch {
+            // Micro cũng không truy cập được → thất bại hoàn toàn
+            stream = null;
+          }
+        }
+        // Các lỗi khác (NotAllowed/Security) hoặc audio fallback cũng fail → báo lỗi
+        if (!stream) {
+          cleanupMediaAndPeer();
+          const message = describeMediaError(err, type);
+          setState((prev) => ({ ...prev, status: "idle", error: message }));
+          toast.error(message, "Không thể bắt đầu cuộc gọi");
+          return;
+        }
       }
+
+      // Xác định hasLocalVideo chuẩn xác dựa trên số lượng video tracks thực tế trong stream
+      // (Đúng cho cả gọi thoại lẫn video, kể cả khi gọi video bị fallback sang audio)
+      const hasLocalVideo = (stream?.getVideoTracks().length ?? 0) > 0;
+
+      localStreamRef.current = stream;
+      const socket = getSocket();
+      socket.emit("call:initiate", { calleeId, type });
+
+      // Cập nhật trạng thái cuộc gọi và luồng media cục bộ
+      setState((prev) => ({
+        ...prev,
+        type,
+        hasLocalVideo,
+        localStream: stream,
+      }));
+
+      // Hẹn giờ 30s đổ chuông: nếu đối phương không nhấc máy, caller tự hủy và set missed
+      ringTimeoutRef.current = setTimeout(() => {
+        const currentCallId = callIdRef.current;
+        socket.emit("call:cancel", { callId: currentCallId ?? "" });
+        terminateSession("missed");
+      }, 30000);
     },
     [cleanupMediaAndPeer, terminateSession]
   );
@@ -236,34 +390,68 @@ export function useCall(): UseCallReturn {
     const currentCallId = callIdRef.current;
     if (!currentCallId) return;
 
+    const callType = stateRef.current.type ?? "audio";
+    let stream: MediaStream | null = null;
+
     try {
-      const callType = stateRef.current.type ?? "audio";
-      const stream = await navigator.mediaDevices.getUserMedia({
+      stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
         video: callType === "video",
       });
-
-      localStreamRef.current = stream;
-      const pc = createPeerConnection(currentCallId);
-      stream.getTracks().forEach((track) => pc.addTrack(track, stream));
-
-      const socket = getSocket();
-      socket.emit("call:accept", { callId: currentCallId });
-
-      setState((prev) => ({
-        ...prev,
-        status: "connecting",
-        localStream: stream,
-      }));
     } catch (err) {
-      cleanupMediaAndPeer();
-      setState((prev) => ({
-        ...prev,
-        status: "idle",
-        error: err instanceof Error ? err.message : "Không thể truy cập micro/camera",
-      }));
+      // Thiết bị nhận không có camera hoặc camera bận: fallback sang audio-only nhưng giữ nguyên video call
+      const isCameraUnavailable =
+        callType === "video" &&
+        err instanceof DOMException &&
+        ["NotReadableError", "NotFoundError", "OverconstrainedError"].includes(err.name);
+
+      if (isCameraUnavailable) {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          if (err.name === "NotReadableError") {
+            toast.info(
+              "Camera đang bị ứng dụng khác chiếm — bạn vẫn vào cuộc gọi video bằng giọng nói và nhìn thấy đối phương.",
+              "Camera đang bận"
+            );
+          } else {
+            toast.info(
+              "Không tìm thấy camera — bạn sẽ tham gia bằng giọng nói, vẫn nhìn thấy đối phương.",
+              "Không tìm thấy camera"
+            );
+          }
+        } catch {
+          stream = null;
+        }
+      }
+
+      if (!stream) {
+        const message = describeMediaError(err, callType);
+        // KHÔNG dừng cuộc gọi: giữ nguyên callIdRef để modal còn hiển thị và người dùng thử lại.
+        // Trước đây cleanupMediaAndPeer + về idle làm mất luôn state -> không hiện màn hình.
+        setState((prev) => ({ ...prev, error: message }));
+        toast.error(message, "Không thể truy cập thiết bị");
+        return;
+      }
     }
-  }, [createPeerConnection, cleanupMediaAndPeer]);
+
+    // Xác định hasLocalVideo chuẩn xác dựa trên số lượng video tracks thực tế trong stream
+    // (Đúng cho cả gọi thoại lẫn video, kể cả khi gọi video bị fallback sang audio)
+    const hasLocalVideo = (stream?.getVideoTracks().length ?? 0) > 0;
+
+    localStreamRef.current = stream;
+    const pc = createPeerConnection(currentCallId);
+    stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+
+    const socket = getSocket();
+    socket.emit("call:accept", { callId: currentCallId });
+
+    setState((prev) => ({
+      ...prev,
+      status: "connecting",
+      hasLocalVideo,
+      localStream: stream,
+    }));
+  }, [createPeerConnection]);
 
   /**
    * Phía Người nhận (Callee): Từ chối cuộc gọi đến
@@ -280,6 +468,19 @@ export function useCall(): UseCallReturn {
    * Kết thúc cuộc gọi đang diễn ra hoặc hủy cuộc gọi đang gọi
    */
   const endCall = useCallback((): void => {
+    // Guard idempotent: đã terminal thì không emit nữa (chặn gửi call:end lên call đã kết thúc).
+    // Bao gồm cả "offline": BE coi offline chưa terminal nên endCall sẽ ghi đè ended/endedAt
+    // sai sự thật lên một cuộc gọi thực chất không diễn ra.
+    if (
+      stateRef.current.status === "ended" ||
+      stateRef.current.status === "rejected" ||
+      stateRef.current.status === "missed" ||
+      stateRef.current.status === "busy" ||
+      stateRef.current.status === "offline"
+    ) {
+      return;
+    }
+
     const currentCallId = callIdRef.current;
     const socket = getSocket();
 
@@ -305,15 +506,55 @@ export function useCall(): UseCallReturn {
   }, []);
 
   /**
-   * Bật/tắt camera cục bộ
+   * Bật/tắt camera cục bộ:
+   * - Nếu đã có video track: chỉ bật/tắt enabled (gửi khung hình đen khi tắt, không cần renegotiation)
+   * - Nếu chưa có video track (vào call không camera): xin cấp camera giữa phiên và addTrack, WebRTC renegotiation tự kích hoạt
    */
   const toggleVideo = useCallback((): void => {
-    if (!localStreamRef.current) return;
-    const nextMuted = !stateRef.current.isVideoMuted;
-    localStreamRef.current.getVideoTracks().forEach((track) => {
-      track.enabled = !nextMuted;
-    });
-    setState((prev) => ({ ...prev, isVideoMuted: nextMuted }));
+    if (!localStreamRef.current || !pcRef.current) return;
+    const videoTracks = localStreamRef.current.getVideoTracks();
+    if (videoTracks.length > 0) {
+      // Đã có track: chỉ bật/tắt enabled (gửi khung hình đen khi tắt - không cần renegotiation)
+      const nextMuted = !stateRef.current.isVideoMuted;
+      videoTracks.forEach((track) => {
+        track.enabled = !nextMuted;
+      });
+      setState((prev) => ({ ...prev, isVideoMuted: nextMuted }));
+      return;
+    }
+    // Chưa có video track (vào call không cam): xin camera giữa phiên + addTrack -> negotiationneeded tự fire
+    if (acquiringCameraRef.current) return;
+    acquiringCameraRef.current = true;
+    void navigator.mediaDevices
+      .getUserMedia({ video: true })
+      .then((camStream) => {
+        const stream = localStreamRef.current;
+        const pc = pcRef.current;
+        if (!stream || !pc) {
+          camStream.getTracks().forEach((t) => t.stop()); // phiên đã kết thúc
+          return;
+        }
+        camStream.getVideoTracks().forEach((track) => {
+          stream.addTrack(track);
+          pc.addTrack(track, stream);
+        });
+        // BẮT BUỘC truyền lại localStream: dù cùng reference, cần setState để trigger effect
+        // gán srcObject vào videoEl (deps [state.localStream] — React giữ nguyên reference nên
+        // nếu không setState, video mới add sẽ không hiển thị trên PiP → camera "bật ra xong ẩn").
+        // BẮT BUỘC tạo MediaStream mới: React state dùng Object.is để so sánh, nếu truyền
+        // cùng reference thì CallScreen effect [state.localStream] sẽ KHÔNG re-fire → video
+        // mới add vào stream không gắn được vào videoEl (camera bật ra xong rồi ẩn).
+        setState((prev) => ({ ...prev, localStream: new MediaStream(stream.getTracks()), hasLocalVideo: true, isVideoMuted: false }));
+      })
+      .catch(() => {
+        toast.error(
+          "Không thể bật camera. Hãy kiểm tra lại thiết bị và quyền truy cập.",
+          "Không tìm thấy camera"
+        );
+      })
+      .finally(() => {
+        acquiringCameraRef.current = false;
+      });
   }, []);
 
   /**
@@ -321,6 +562,7 @@ export function useCall(): UseCallReturn {
    */
   const resetCall = useCallback((): void => {
     cleanupMediaAndPeer();
+    callIdRef.current = null;
     setState(INITIAL_CALL_STATE);
   }, [cleanupMediaAndPeer]);
 
@@ -330,6 +572,11 @@ export function useCall(): UseCallReturn {
 
     // 1. Nhận cuộc gọi đến (Callee)
     const handleIncoming = (data: IncomingCallPayload): void => {
+      // Đang trong cuộc gọi khác → bỏ qua incoming mới (server-side đã chặn ConflictError,
+      // đây là lớp phòng thứ 2 cho race condition khi 2 client emit gần như đồng thời —
+      // nếu cho qua, cuộc gọi active sẽ bị state incoming ghi đè và crash màn hình).
+      if (stateRef.current.status !== "idle") return;
+
       callIdRef.current = data.callId;
       setState((prev) => ({
         ...prev,
@@ -340,6 +587,16 @@ export function useCall(): UseCallReturn {
         type: data.type,
         error: null,
       }));
+    };
+
+    // 1b. Nhận callId trả về từ server sau khi initiate (Caller).
+    // Quan trọng: caller dùng callId này để phát call:cancel / timeout, nếu thiếu thì
+    // server từ chối cancel -> callee không nhận được call:canceled -> modal reo mãi.
+    const handleInitiated = (data: CallInitiatedPayload): void => {
+      if (data?.callId) {
+        callIdRef.current = data.callId;
+        setState((prev) => ({ ...prev, callId: data.callId }));
+      }
     };
 
     // 2. Phía Caller nhận sự kiện đối phương đã chấp nhận cuộc gọi
@@ -357,6 +614,7 @@ export function useCall(): UseCallReturn {
 
       try {
         const pc = createPeerConnection(data.callId);
+        startConnectionWatchdog();
         if (localStreamRef.current) {
           localStreamRef.current.getTracks().forEach((track) => {
             pc.addTrack(track, localStreamRef.current!);
@@ -459,6 +717,7 @@ export function useCall(): UseCallReturn {
 
     // Đăng ký toàn bộ sự kiện Socket.IO
     socket.on("call:incoming", handleIncoming);
+    socket.on("call:initiated", handleInitiated);
     socket.on("call:accepted", handleAccepted);
     socket.on("call:offer", handleOffer);
     socket.on("call:answer", handleAnswer);
@@ -474,6 +733,7 @@ export function useCall(): UseCallReturn {
     // Hủy đăng ký đối ứng toàn bộ sự kiện khi unmount
     return () => {
       socket.off("call:incoming", handleIncoming);
+      socket.off("call:initiated", handleInitiated);
       socket.off("call:accepted", handleAccepted);
       socket.off("call:offer", handleOffer);
       socket.off("call:answer", handleAnswer);
@@ -487,7 +747,7 @@ export function useCall(): UseCallReturn {
       socket.off("call:peer_disconnected", handlePeerDisconnected);
       cleanupMediaAndPeer();
     };
-  }, [createPeerConnection, cleanupMediaAndPeer, terminateSession]);
+  }, [createPeerConnection, cleanupMediaAndPeer, terminateSession, startConnectionWatchdog]);
 
   return {
     state,

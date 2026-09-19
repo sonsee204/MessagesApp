@@ -13,7 +13,8 @@ Phiên chính là **orchestrator**: mọi công việc Tier 1–3 phải ủy qu
 | `feature-builder` | Viết component/API/CRUD, sửa bug thông thường, chạy build/test (Tier 2) |
 | `deep-architect` | Thiết kế kiến trúc, audit bảo mật, transaction đa collection, race-condition, refactor diện rộng, soạn plan (Tier 3) |
 
-- **Model**: tuân theo frontmatter của agent (`haiku`/`sonnet`/`opus`); KHÔNG truyền tham số `model` của tool Agent đè lên trừ khi người dùng yêu cầu rõ.
+- **Model**: tuân theo frontmatter của agent (`fable`/`sonnet`/`opus`); KHÔNG truyền tham số `model` của tool Agent đè lên trừ khi người dùng yêu cầu rõ.
+- **Lưu ý hành vi Fable**: model này thinking luôn bật và không chấp nhận `tool_choice: any`/`tool`. Khi dispatch agent chạy Fable (`quick-worker`), dùng `tool_choice: auto` + câu lệnh nêu rõ tool, KHÔNG ép buộc.
 - **Mỗi dispatch** kèm Context Package 4 phần tại Mục 2 và nhận Output Contract Mục 3.
 - **Ngoại lệ được phép làm inline** (không phải dispatch):
   1. Tác vụ governance: sửa `.claude/rules/`, `.claude/agents/`, `.claude/workflows/`, `CLAUDE.md`, docs/plans;
@@ -28,9 +29,11 @@ Phiên chính là **orchestrator**: mọi công việc Tier 1–3 phải ủy qu
 
 | Tầng (Tier) | Tiêu chuẩn nhận diện | Subagent mục tiêu | Model thực tế | SOP Workflow gắn kèm |
 | :--- | :--- | :--- | :--- | :--- |
-| **Tier 1 (Nhẹ)** | Đọc file, tra cứu regex/text, tóm tắt dữ liệu, giải thích cú pháp, trace log | `quick-worker` | `haiku` (`BAi/qwen3.8-flash`) | Tra cứu đơn lẻ |
+| **Tier 1 (Nhẹ)** | Đọc file, tra cứu regex/text, tóm tắt dữ liệu, giải thích cú pháp, trace log | `quick-worker` | `fable` (`Cb2` qua `ANTHROPIC_DEFAULT_FABLE_MODEL`) | Tra cứu đơn lẻ |
 | **Tier 2 (Chuẩn)** | Viết CRUD, tạo API endpoint, dựng React component, sửa bug thông thường | `feature-builder` | `sonnet` (`ag/gemini-3.8-flash-high`) | `create-api-endpoint.md`, `create-component.md`, `fix-bug.md` |
 | **Tier 3 (Phức tạp)** | Thiết kế kiến trúc, audit bảo mật, transaction DB đa collection, xử lý race-condition, refactor diện rộng, soạn kế hoạch triển khai | `deep-architect` | `opus` (`BAi/deepseek-v4.1-flash`) | `code-review-audit.md`, `write-implementation-plan.md` |
+
+> **Soạn Plan với model Fable**: tác vụ lên kế hoạch triển khai (≥ 3 tầng) có thể chạy trên model **Fable**. Bắt buộc nạp cấu hình kỹ thuật + khung prompt tại `.claude/agents/fable-plan-guide.md` trước khi bắt đầu — Fable khác họ Opus/Sonnet ở hành vi reasoning (thinking luôn bật, không ép buộc tool, prompt dạng spec-dày).
 
 ---
 

@@ -6,7 +6,7 @@ import { env } from "./config/env";
 import { apiRouter } from "./routes";
 import { notFoundHandler } from "./middlewares/not-found";
 import { errorHandler } from "./middlewares/error-handler";
-import { csrfOriginGuard } from "./middlewares/csrf";
+import { csrfOriginGuard, isDevTunnelOrigin } from "./middlewares/csrf";
 import { UPLOAD_DIR, UPLOAD_URL_PREFIX } from "./config/upload";
 
 /**
@@ -15,13 +15,27 @@ import { UPLOAD_DIR, UPLOAD_URL_PREFIX } from "./config/upload";
 export function createApp(): Express {
   const app = express();
 
+  // Tin cậy 1 proxy đứng trước (vite dev server / cloudflared tunnel) để đọc đúng
+  // X-Forwarded-For. Nếu không, express-rate-limit báo lỗi ERR_ERL_UNEXPECTED_X_FORWARDED_FOR
+  // và rate-limit tính theo IP proxy (127.0.0.1) thay vì IP người dùng thật.
+  // CHỈ bật ngoài production: nếu app chạy trực tiếp mà tin X-Forwarded-For thì client
+  // có thể gửi header giả để bypass rate-limit (IP spoofing).
+  app.set("trust proxy", env.NODE_ENV === "production" ? false : 1);
+
   // Middleware bảo mật HTTP Headers với Helmet
   app.use(helmet());
 
   // Middleware cấu hình CORS cho phép gửi nhận cookie qua credentials
+  // Callback origin: ngoài CORS_ORIGIN cấu hình, DEV còn chấp nhận origin tunnel
+  // (cloudflared/ngrok/loca.lt) để test trên điện thoại; production giữ whitelist cứng.
   app.use(
     cors({
-      origin: env.CORS_ORIGIN,
+      origin: (origin, callback) => {
+        if (!origin || origin === env.CORS_ORIGIN || isDevTunnelOrigin(origin)) {
+          return callback(null, true);
+        }
+        callback(null, false);
+      },
       credentials: true,
     })
   );

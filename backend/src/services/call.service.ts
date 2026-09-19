@@ -25,6 +25,7 @@ import {
   NotFoundError,
   ConflictError,
 } from "../core/errors";
+import { logger } from "../core/logger";
 
 /**
  * Service xử lý toàn bộ logic nghiệp vụ về Cuộc gọi (Video & Voice Call)
@@ -78,12 +79,57 @@ export class CallService {
       throw new ForbiddenError("Chỉ bạn bè mới được gọi nhau");
     }
 
-    // Bước 4: Kiểm tra trạng thái bận của cả 2 người dùng qua in-memory registry
-    if (
-      this.callRegistry.isBusy(callerId) ||
-      this.callRegistry.isBusy(calleeId)
-    ) {
-      throw new ConflictError("Một trong hai người đang bận một cuộc gọi khác");
+    // Bước 4: Kiểm tra trạng thái bận qua registry in-memory, kèm TỰ CHỮA entry ma.
+    // busyMap có thể treo bản ghi đã kết thúc (race hai phía cùng bấm end, rớt mạng, tab bị
+    // kill không kịp phát call:end) -> nếu callId treo trong registry đã chuyển sang trạng
+    // thái kết thúc trong CSDL (hoặc không còn tồn tại) thì dọn sạch và cho phép gọi mới,
+    // thay vì chặn vĩnh viễn bằng thông báo "đang có cuộc gọi khác".
+    //
+    // Thu thập callIds đang treo rồi batch query $in (chống N+1 — backend.md §4)
+    const busyCallIds: string[] = [];
+    for (const participantId of [callerId, calleeId]) {
+      const busyCallId = this.callRegistry.getCallId(participantId);
+      if (busyCallId) busyCallIds.push(busyCallId);
+    }
+
+    if (busyCallIds.length > 0) {
+      // Batch query tất cả calls đang treo trong registry cùng lúc (1 câu query duy nhất)
+      const busyCallsMap = await this.callRepo.findByIds(busyCallIds);
+
+      for (const participantId of [callerId, calleeId]) {
+        const busyCallId = this.callRegistry.getCallId(participantId);
+        if (!busyCallId) continue;
+
+        const busyCall = busyCallsMap.get(busyCallId) ?? null;
+
+        // Ringing treo quá 60s (caller rớt mạng không kịp cancel — phía FE timeout chỉ 30s):
+        // coi là bản ghi ma vì không còn cuộc gọi nào đổ chuông lâu đến thế.
+        const isStaleRing =
+          !!busyCall &&
+          busyCall.status === "ringing" &&
+          busyCall.startedAt.getTime() < Date.now() - 60_000;
+
+        // Answered treo quá 30 phút: double-disconnect / restart server khiến registry vẫn giữ
+        // callId nhưng không còn ai kết nối thật — cần dọn để tránh block gọi lại vĩnh viễn.
+        const isStaleAnswered =
+          !!busyCall &&
+          busyCall.status === "answered" &&
+          busyCall.answeredAt &&
+          new Date(busyCall.answeredAt).getTime() < Date.now() - 30 * 60_000;
+
+        const isGhostEntry =
+          !busyCall ||
+          isStaleRing ||
+          isStaleAnswered ||
+          busyCall.status === "ended" ||
+          busyCall.status === "declined" ||
+          busyCall.status === "missed";
+        if (isGhostEntry) {
+          this.callRegistry.clearCall(busyCallId);
+          continue;
+        }
+        throw new ConflictError("Một trong hai người đang bận một cuộc gọi khác");
+      }
     }
 
     // Bước 5: Tìm kiếm cuộc hội thoại DIRECT sẵn có hoặc tạo mới nếu chưa tồn tại
@@ -274,13 +320,19 @@ export class CallService {
       throw new ForbiddenError("Bạn không phải thành viên của cuộc gọi này");
     }
 
-    // Bước 3: Kiểm tra cuộc gọi chưa bị đóng trước đó
+    // Bước 3: Kiểm tra cuộc gọi chưa bị đóng trước đó (hỗ trợ Idempotency)
+    // Nếu cuộc gọi đã ở trạng thái kết thúc (ended, declined, missed), giải phóng registry và trả về bản ghi hiện tại
+    // thay vì ném lỗi ConflictError, tránh gây vòng lặp lỗi ở client
     if (
       call.status === "ended" ||
       call.status === "declined" ||
       call.status === "missed"
     ) {
-      throw new ConflictError("Cuộc gọi đã kết thúc trước đó");
+      logger.warn(
+        `Cuộc gọi ${callId} đã kết thúc với trạng thái '${call.status}', kích hoạt nhánh idempotent`
+      );
+      this.callRegistry.clearCall(callId);
+      return call;
     }
 
     // Bước 4: Tính toán thời lượng cuộc gọi (durationSec) nếu người nhận đã nhấc máy

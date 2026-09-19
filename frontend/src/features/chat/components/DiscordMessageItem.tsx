@@ -19,12 +19,12 @@ interface DiscordMessageItemProps {
 }
 
 /**
- * Thành phần dòng tin nhắn theo phong cách Dòng thời gian Discord (DiscordMessageItem)
+ * Thành phần dòng tin nhắn theo phong cách 2 cột kiểu Messenger (DiscordMessageItem)
  * Thiết kế Tactile Neo-Brutalist chuẩn UI/UX Pro Max:
- * - Hiển thị tên người gửi, huy hiệu và mốc thời gian ở đầu mỗi tin nhắn
- * - Đã lược bỏ avatar để tối ưu không gian hiển thị theo yêu cầu người dùng
- * - Thanh công cụ phản ứng nhanh (Hover Action Bar): Thả cảm xúc, Trả lời, Thu hồi
- * - Hỗ trợ hiển thị sự kiện cuộc gọi thoại hệ thống (Call Log)
+ * - isMe=true  → bubble nằm BÊN PHẢI, nền bg-uupm-accent, text tương phản
+ * - isMe=false → bubble nằm BÊN TRÁI,  nền bg-uupm-page, text chuẩn
+ * - Hover Action Bar: phải với tin của mình, trái với tin người khác
+ * - Hỗ trợ Call Log (sự kiện cuộc gọi hệ thống) — không có bubble
  */
 export const DiscordMessageItem: React.FC<DiscordMessageItemProps> = ({
   message,
@@ -92,52 +92,85 @@ export const DiscordMessageItem: React.FC<DiscordMessageItemProps> = ({
     );
   }
 
-  // 2. Dòng tin nhắn hiển thị tên người gửi ở đầu (không hiển thị avatar)
+  // 2. Dòng tin nhắn 2 cột kiểu Messenger
+  // - isMe=true  → wrapper justify-end, bubble phải (bg-uupm-accent)
+  // - isMe=false → wrapper justify-start, bubble trái (bg-uupm-page)
   return (
     <div
       className={cn(
-        "group relative flex flex-col px-4 py-1.5 hover:bg-uupm-surface-hover/60 rounded-xs transition-colors select-text",
-        isCompact ? "mt-1" : "mt-2"
+        // Wrapper ngoài: chiều rộng đầy đủ, flex ngang để bubble trái/phải
+        "group relative flex w-full px-4 py-1",
+        isCompact ? "mt-0.5" : "mt-2",
+        isMe ? "justify-end" : "justify-start"
       )}
     >
-      {/* Khối nội dung tin nhắn */}
-      <div className="w-full min-w-0">
-        {/* Dòng tiêu đề: Tên người gửi ở đầu + Huy hiệu + Giờ gửi */}
-        <div className="flex items-center gap-2 mb-1 leading-none">
-          <span className="text-sm font-black text-uupm-ink hover:underline cursor-pointer">
-            {senderName}
-          </span>
+      {/* Bubble container: giới hạn max-width để không chiếm toàn màn hình */}
+      <div className={cn("relative max-w-[72%] min-w-0 flex flex-col", isMe ? "items-end" : "items-start")}>
 
-          {!isMe && (
-            <span className="text-xs" title="Biểu tượng">
-              🌸
+        {/* Dòng tiêu đề: tên + badge + giờ — chỉ hiển thị ở tin đầu nhóm */}
+        {!isCompact && (
+          <div className={cn("flex items-center gap-2 mb-1 leading-none", isMe ? "flex-row-reverse" : "flex-row")}>
+            {/* Tên người gửi — ẩn với isMe vì đã có badge "Bạn" */}
+            {!isMe && (
+              <span className="text-sm font-black text-uupm-ink hover:underline cursor-pointer">
+                {senderName}
+              </span>
+            )}
+
+            {/* Emoji trang trí chỉ cho tin người khác */}
+            {!isMe && (
+              <span className="text-xs" title="Biểu tượng">
+                🌸
+              </span>
+            )}
+
+            {/* Badge "Bạn" cho tin của mình */}
+            {isMe && (
+              <span className="px-1.5 py-[2px] rounded-xs bg-uupm-accent border border-uupm-line text-[9px] font-black text-uupm-accent-text uppercase">
+                Bạn
+              </span>
+            )}
+
+            {/* Giờ gửi */}
+            <span className="text-[11px] font-bold text-uupm-ink-muted">
+              {formatTime(message.createdAt)}
             </span>
-          )}
-
-          {isMe && (
-            <span className="px-1.5 py-[2px] rounded-xs bg-uupm-accent border border-uupm-line text-[9px] font-black text-uupm-accent-text uppercase">
-              Bạn
-            </span>
-          )}
-
-          <span className="text-[11px] font-bold text-uupm-ink-muted ml-1">
-            {formatTime(message.createdAt)}
-          </span>
-        </div>
-
-        {/* Nội dung văn bản (luôn hiển thị, kể cả khi có attachments — mixed content) */}
-        {message.content && (
-          <p className="text-sm font-semibold text-uupm-ink whitespace-pre-wrap break-words leading-relaxed">
-            {message.content}
-          </p>
+          </div>
         )}
 
-        {/* Attachments: render qua AttachmentRenderer (phân loại ảnh/video/file) */}
-        <AttachmentRenderer attachments={message.attachments ?? []} />
+        {/* Bubble tin nhắn chính
+            - isMe    → nền uupm-accent, bo góc: tròn đều trừ góc dưới-phải nhỏ hơn
+            - !isMe   → nền uupm-page,   bo góc: tròn đều trừ góc dưới-trái nhỏ hơn
+        */}
+        <div
+          className={cn(
+            "px-3 py-2 border-2 border-uupm-line shadow-uupm-active transition-colors",
+            isMe
+              ? "bg-uupm-accent text-uupm-accent-text rounded-xl rounded-br-sm"
+              : "bg-uupm-page text-uupm-ink rounded-xl rounded-bl-sm"
+          )}
+        >
+          {/* Nội dung văn bản */}
+          {message.content && (
+            <p className="text-sm font-semibold whitespace-pre-wrap break-words leading-relaxed">
+              {message.content}
+            </p>
+          )}
+
+          {/* Attachments: ảnh/video/file */}
+          <AttachmentRenderer attachments={message.attachments ?? []} />
+        </div>
+
+        {/* Giờ gửi nhỏ bên dưới bubble — chỉ hiển thị khi isCompact (không có header) */}
+        {isCompact && (
+          <span className="text-[10px] font-semibold text-uupm-ink-muted mt-0.5">
+            {formatTime(message.createdAt)}
+          </span>
+        )}
 
         {/* Dải cảm xúc đã thả nếu có */}
         {Object.keys(reactions).length > 0 && (
-          <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+          <div className={cn("flex items-center gap-1 mt-1.5 flex-wrap", isMe ? "justify-end" : "justify-start")}>
             {Object.entries(reactions).map(([emoji, count]) => (
               <button
                 key={emoji}
@@ -153,8 +186,16 @@ export const DiscordMessageItem: React.FC<DiscordMessageItemProps> = ({
         )}
       </div>
 
-      {/* Thanh tác vụ nổi xuất hiện khi hover ở góc trên bên phải */}
-      <div className="absolute right-4 -top-3 hidden group-hover:flex items-center bg-uupm-surface border-2 border-uupm-line rounded-xs shadow-uupm-active p-0.5 gap-0.5 z-10 select-none">
+      {/* Thanh tác vụ nổi (Hover Action Bar):
+          - isMe=true  → right-4 (góc phải bên ngoài bubble)
+          - isMe=false → left-4  (góc trái bên ngoài bubble)
+      */}
+      <div
+        className={cn(
+          "absolute -top-3 hidden group-hover:flex items-center bg-uupm-surface border-2 border-uupm-line rounded-xs shadow-uupm-active p-0.5 gap-0.5 z-10 select-none",
+          isMe ? "right-4" : "left-4"
+        )}
+      >
         <button
           type="button"
           onClick={() => handleAddReaction("👍")}

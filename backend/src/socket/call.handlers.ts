@@ -187,6 +187,11 @@ export function registerCallHandlers(
         type,
       });
 
+      // Trả callId về cho chính người gọi để máy trạng thái phía caller nắm được mã cuộc gọi.
+      // Nếu không, khi caller bấm hủy (call:cancel) sẽ gửi callId rỗng -> server không thể
+      // forward "call:canceled" sang callee -> modal cuộc gọi đến của callee reo mãi không tắt.
+      emitToUserFn(userId, "call:initiated", { callId });
+
       // Người nhận ngoại tuyến: báo cho người gọi để hiển thị "Đối phương offline" + FCM push.
       // KHÔNG ghi nhận missed ngay: FE hết 30s sẽ tự phát call:cancel và cancelCall mới ghi missed.
       if (!isUserOnlineFn(calleeId)) {
@@ -336,13 +341,35 @@ export function registerCallHandlers(
     const activeCallId = registry.getCallId(userId);
     if (!activeCallId || isUserOnlineFn(userId)) return;
 
-    registry.clearUser(userId);
+    // Lấy thông tin cuộc gọi TRƯỚC khi clear registry (cần biết status để xử lý)
+    const call = await callRepo.findById(activeCallId);
+
+    // clearCall giải phóng CẢ HAI phía caller + callee khỏi registry busy;
+    // clearUser chỉ xóa 1 người -> peer vẫn treo bận -> lần gọi sau dính ConflictError "đang bận"
+    registry.clearCall(activeCallId);
     logger.warn(`Người dùng ${username} mất kết nối giữa cuộc gọi ${activeCallId}`);
 
-    // Báo phía đối diện đóng phiên WebRTC đang treo (chỉ báo tín hiệu, không đổi trạng thái CSDL)
-    const call = await callRepo.findById(activeCallId);
     if (!call) return;
-    emitToUserFn(getOtherUserId(call), "call:peer_disconnected", { callId: activeCallId });
+
+    // Nếu cuộc gọi vẫn đang "ringing" (caller disconnect chưa kịp cancel → callee modal treo):
+    // cập nhật DB sang "missed" + emit call:canceled để FE callee đóng modal ngay.
+    if (call.status === "ringing") {
+      try {
+        await callSvc.cancelCall(activeCallId, userId);
+        emitToUserFn(getOtherUserId(call), "call:canceled", { callId: activeCallId });
+      } catch (err) {
+        logger.warn(`Không thể cancel call ${activeCallId} khi disconnect:`, err);
+      }
+    } else {
+      // Cuộc gọi đã answered/active: cập nhật trạng thái 'ended' và lưu thời lượng vào CSDL,
+      // sau đó gửi tín hiệu call:peer_disconnected để đối phương dọn dẹp phiên WebRTC
+      try {
+        await callSvc.endCall(activeCallId, userId);
+      } catch (err) {
+        logger.warn(`Không thể end call ${activeCallId} khi disconnect:`, err);
+      }
+      emitToUserFn(getOtherUserId(call), "call:peer_disconnected", { callId: activeCallId });
+    }
   });
 }
 
@@ -361,12 +388,22 @@ export async function cleanupOrphanCalls(): Promise<void> {
   activeCallRegistry.clearAll();
 
   // Chuyển toàn bộ cuộc gọi còn đổ chuông sang trạng thái nhỡ
-  const result = await CallModel.updateMany(
+  const ringingResult = await CallModel.updateMany(
     { status: "ringing" },
     { $set: { status: "missed", endedAt: new Date() } }
   ).exec();
 
+  // Kết thúc các cuộc gọi đã được nhận máy nhưng treo sau restart (registry đã clearAll).
+  // Nếu không xử lý, chúng sẽ tồn tại vĩnh viễn ở trạng thái "answered" trong CSDL
+  // và ghost entry self-heal runtime sẽ block gọi lại (ConflictError).
+  const answeredResult = await CallModel.updateMany(
+    { status: "answered" },
+    { $set: { status: "ended", endedAt: new Date() } }
+  ).exec();
+
+  const totalCleaned = ringingResult.modifiedCount + answeredResult.modifiedCount;
   logger.info(
-    `Dọn dẹp cuộc gọi mồ côi: ${result.modifiedCount} cuộc gọi "ringing" đã chuyển sang "missed"`
+    `Dọn dẹp cuộc gọi mồ côi: ${ringingResult.modifiedCount} "ringing" → "missed", ` +
+    `${answeredResult.modifiedCount} "answered" → "ended" (tổng: ${totalCleaned})`
   );
 }

@@ -1,6 +1,8 @@
 # Workflow: Soạn Thảo Kế Hoạch Triển Khai (Write Implementation Plan)
 
-> **Mục tiêu**: `deep-architect` phân tích yêu cầu phức tạp và sản xuất bản kế hoạch triển khai (Implementation Plan) dạng bước-ready, đóng vai trò hợp đồng chuyển giao cho `feature-builder` thực thi. Kế hoạch KHÔNG thực thi code, chỉ vạch đường đi.
+> **Mục tiêu**: phân tích yêu cầu phức tạp và sản xuất bản kế hoạch triển khai (Implementation Plan) dạng bước-ready, đóng vai trò hợp đồng chuyển giao cho `feature-builder` thực thi. Kế hoạch KHÔNG thực thi code, chỉ vạch đường đi.
+>
+> **Model**: mặc định `deep-architect` (opus). Tác vụ plan ≥ 3 tầng có thể chạy trên **Fable** — bắt buộc đọc `.claude/agents/fable-plan-guide.md` trước khi bắt đầu (Fable khác họ Opus/Sonnet ở hành vi reasoning: thinking luôn bật, không ép buộc tool, prompt dạng spec-dày).
 
 ---
 
@@ -15,8 +17,12 @@
 ## Quy Trình Thực Hiện (SOP Flow)
 
 ```
-[Bước 1: Khảo Sát Hiện Trạng Trong Phạm Vi] ──> [Bước 2: Quyết Định Kiến Trúc & Trade-off] ──> [Bước 3: Soạn Plan Cấu Trúc Chuẩn] ──> [Bước 4: Định Nghĩa Test Gate & Handoff Contract]
+[Bước 0: Xác định phạm vi & model] ──> [Bước 1: Khảo Sát Hiện Trạng Trong Phạm Vi] ──> [Bước 2: Quyết Định Kiến Trúc & Trade-off] ──> [Bước 3: Soạn Plan Cấu Trúc Chuẩn] ──> [Bước 4: Định Nghĩa Test Gate & Handoff Contract]
 ```
+
+### Bước 0: Xác Định Phạm Vi & Chọn Model
+1. Chốt danh sách module/tầng bị ảnh hưởng; nếu < 3 tầng thì trả về Tier 2 (`task-routing.md`).
+2. Nếu chạy trên Fable: nạp `.claude/agents/fable-plan-guide.md` — không truyền `thinking`/`budget_tokens`, không ép `tool_choice`, prompt dạng spec-dày, `max_tokens ≥ 32000` + streaming.
 
 ---
 
@@ -24,6 +30,7 @@
 1. Chỉ đọc các file/thư mục nằm trong `[PHẠM VI]` của Context Package.
 2. Lập bản đồ ánh xạ: endpoint/schema/store/event hiện có nào sẽ bị ảnh hưởng (kèm `file:line`).
 3. Ghi chú điểm xung đột tiềm tàng: migration dữ liệu, hợp đồng FE-BE đang chạy, auth/permission hiện hành.
+4. Khảo sát diện rộng → dispatch `quick-worker` song song (Tier 1), không tự quét toàn repo.
 
 ---
 
@@ -63,9 +70,10 @@ Plan lưu tại `docs/plans/<kebab-case-ten-tinh-nang>.md`, cấu trúc:
 ---
 
 ### Bước 4: Test Gate & Handoff Contract
-1. `deep-architect` KHÔNG tự code toàn bộ plan; các task gắn `feature-builder` được dispatch tuần tự theo thứ tự phụ thuộc, mỗi lượt kèm Context Package trỏ thẳng tới `docs/plans/<file>.md` + mục task tương ứng.
+1. Agent soạn plan KHÔNG tự code toàn bộ; các task gắn `feature-builder` được dispatch tuần tự theo thứ tự phụ thuộc, mỗi lượt kèm Context Package trỏ thẳng tới `docs/plans/<file>.md` + mục task tương ứng.
 2. Task của Tier 1 (đọc/tra cứu đối chứng) -> dispatch `quick-worker` song song trước khi vào Tier 2.
 3. Kết thúc plan phải ghi rõ giả định (assumptions) để người dùng phản biện trước khi tốn token thực thi.
+4. Nếu chạy Fable: kiểm `stop_reason` cuối cùng trước khi trả kết quả (xử lý `refusal`/`max_tokens` theo `fable-plan-guide.md` Mục 6).
 
 ---
 
@@ -80,4 +88,5 @@ TRẠNG THÁI: DONE | PROPOSAL_PENDING | BLOCKED
 TÓM TẮT KIẾN TRÚC: 2-4 gạch đầu dòng quyết định cốt lõi.
 Bảng task -> tier phụ trách -> độ phụ thuộc.
 GIẢ ĐỊNH CẦN XÁC NHẬN: liệt kê hoặc "None".
+STOP_REASON (nếu chạy Fable): <end_turn | refusal | max_tokens>.
 ```

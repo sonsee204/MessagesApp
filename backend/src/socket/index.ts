@@ -7,6 +7,8 @@ import { messageService } from "../services/message.service";
 import { logger } from "../core/logger";
 import { env } from "../config/env";
 import { registerCallHandlers, cleanupOrphanCalls } from "./call.handlers";
+import { isDevTunnelOrigin } from "../middlewares/csrf";
+import { isParticipant } from "../utils/participant.util";
 
 /**
  * Mở rộng giao diện Socket để lưu trữ dữ liệu xác thực người dùng
@@ -84,26 +86,9 @@ export function normalizeHandshakeToken(rawToken: unknown): string | undefined {
   return rawToken.startsWith("Bearer ") ? rawToken.slice(7) : rawToken;
 }
 
-/**
- * Kiểm tra một người dùng có nằm trong danh sách thành viên của cuộc trò chuyện hay không.
- * Danh sách `participants` có thể chứa ObjectId thô hoặc document User đã populate,
- * nên phải chuẩn hóa về chuỗi ID trước khi so sánh.
- * @param participants Mảng thành viên lấy từ document Conversation
- * @param userId ID người dùng cần kiểm tra
- * @returns true nếu người dùng là thành viên hợp lệ
- */
-export function isParticipant(participants: unknown[], userId: string): boolean {
-  if (!Array.isArray(participants)) return false;
-
-  return participants.some((participant) => {
-    if (!participant) return false;
-    const participantId =
-      (participant as { _id?: unknown })._id?.toString() ||
-      (participant as { id?: unknown }).id?.toString() ||
-      participant.toString();
-    return participantId === userId;
-  });
-}
+// Re-export từ utils để cắt circular import (service -> socket -> message.service).
+// Tạm giữ re-export này cho backward compat; sẽ xoá khi xác nhận không còn ai import từ socket.
+export { isParticipant } from "../utils/participant.util";
 
 /**
  * Khởi tạo Socket.IO Server và thiết lập các sự kiện Real-Time
@@ -111,7 +96,13 @@ export function isParticipant(participants: unknown[], userId: string): boolean 
 export function initSocketServer(httpServer: HttpServer): Server {
   const io = new Server(httpServer, {
     cors: {
-      origin: env.CORS_ORIGIN,
+      // Callback: DEV chấp nhận thêm origin tunnel (test điện thoại), production chỉ whitelist cứng
+      origin: (origin, callback) => {
+        if (!origin || origin === env.CORS_ORIGIN || isDevTunnelOrigin(origin)) {
+          return callback(null, true);
+        }
+        callback(null, false);
+      },
       methods: ["GET", "POST"],
       credentials: true,
     },

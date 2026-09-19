@@ -3,6 +3,7 @@ import {
   OpenApiGeneratorV3,
   extendZodWithOpenApi,
   type RouteConfig,
+  type ZodRequestBody,
 } from "@asteasolutions/zod-to-openapi";
 import { z } from "zod";
 
@@ -369,8 +370,9 @@ registry.registerPath({
 });
 
 // Multipart upload không dùng toRequest() vì body là tệp nhị phân, không phải JSON.
-// Khai báo requestBody thủ công theo đúng chuẩn OpenAPI 3 cho multipart/form-data.
-const avatarUploadRequestBody = {
+// Register của zod-to-openapi yêu cầu bọc trong khóa `body` (kiểu ZodRequestBody),
+// nên ta giữ phần content multipart và truyền qua `request: { body: ... }` ở dưới.
+const avatarUploadRequestBody: ZodRequestBody = {
   required: true,
   content: {
     "multipart/form-data": {
@@ -400,7 +402,7 @@ registry.registerPath({
   description:
     "Nhận multipart/form-data với trường 'file'. Ảnh được cắt vuông 256x256 và nén sang WEBP. Tối đa 5MB, chấp nhận JPG/PNG/WEBP.",
   security: [{ [bearerAuth.name]: [] }],
-  request: avatarUploadRequestBody,
+  request: { body: avatarUploadRequestBody },
   responses: {
     200: withUserData("Tải ảnh đại diện thành công"),
     ...errors("400", "401", "404", "500"),
@@ -415,7 +417,7 @@ registry.registerPath({
   description:
     "Nhận multipart/form-data với trường 'file'. Ảnh được thu nhỏ về tối đa 1200x400 và nén sang WEBP. Tối đa 5MB, chấp nhận JPG/PNG/WEBP.",
   security: [{ [bearerAuth.name]: [] }],
-  request: avatarUploadRequestBody,
+  request: { body: avatarUploadRequestBody },
   responses: {
     200: withUserData("Tải ảnh bìa thành công"),
     ...errors("400", "401", "404", "500"),

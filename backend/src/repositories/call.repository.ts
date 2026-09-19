@@ -52,6 +52,12 @@ export interface ICallRepository {
   findById(id: string): Promise<ICall | null>;
 
   /**
+   * Batch query nhiều cuộc gọi theo IDs (dùng $in để tránh N+1 query — backend.md §4)
+   * @param ids Danh sách ID cần truy vấn
+   */
+  findByIds(ids: string[]): Promise<Map<string, ICall>>;
+
+  /**
    * Cập nhật trạng thái cuộc gọi cùng các mốc thời gian liên quan
    */
   updateStatus(
@@ -105,6 +111,17 @@ export class MongooseCallRepository implements ICallRepository {
    */
   async findById(id: string): Promise<ICall | null> {
     return CallModel.findById(id).exec();
+  }
+
+  /**
+   * Batch query nhiều cuộc gọi theo IDs — dùng $in để tránh N+1 query trong loop.
+   * Trả về Map<string, ICall> phục vụ lookup nhanh (backend.md §4).
+   * @param ids Danh sách ID cần truy vấn (tối đa 2 trong ngữ cảnh hiện tại)
+   */
+  async findByIds(ids: string[]): Promise<Map<string, ICall>> {
+    if (ids.length === 0) return new Map();
+    const calls = await CallModel.find({ _id: { $in: ids } }).exec();
+    return new Map(calls.map((c) => [c._id.toString(), c]));
   }
 
   /**

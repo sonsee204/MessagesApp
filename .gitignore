@@ -71,3 +71,6 @@ frontend/*.png
 
 # Cache build cua Vite (Playwright/vitest deps)
 .vite/
+
+# Open-Codereview output (tam thoi, khong commit)
+result.json

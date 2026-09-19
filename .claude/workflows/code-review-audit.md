@@ -7,8 +7,10 @@
 ## Quy Trình Thực Hiện (SOP Flow)
 
 ```
-[Bước 1: Rà Soát Type Safety] ──> [Bước 2: Quét Bảo Mật & Secrets] ──> [Bước 3: Dọn Rác & Debug Code] ──> [Bước 4: Kiểm Toán Chú Thích Tiếng Việt & Rules]
+[Bước 1: Rà Soát Type Safety] ──> [Bước 2: Quét Bảo Mật & Secrets] ──> [Bước 3: Dọn Rác & Debug Code] ──> [Bước 4: Kiểm Toán Chú Thích Tiếng Việt & Rules] ──> [Bước 5: Chạy Open-Codereview Bắt Buộc]
 ```
+
+> **Bước 5 là cổng chặn (hard gate)**: Tuyệt đối không báo task hoàn thành khi chưa chạy xong `ocr` theo hướng dẫn Bước 5.
 
 ---
 
@@ -60,3 +62,62 @@
    - Có nguy cơ N+1 query không? Thao tác ghi đa bảng đã bọc trong Transaction chưa?
 4. **Xuất Báo Cáo Audit**:
    - Tóm tắt kết quả theo định dạng ngắn gọn: [PASS] / [ACTION REQUIRED], kèm số dòng cụ thể cần sửa.
+
+---
+
+### Bước 5: Chạy Open-Codereview Bắt Buộc (Gate Hoàn Thành Task)
+
+> **Công cụ**: `@alibaba-group/open-code-review` (CLI `ocr`) — <https://github.com/alibaba/open-code-review>.
+> Đây là **cổng chặn cuối cùng**: mọi task có thay đổi mã nguồn (backend/frontend) đều phải chạy xong bước này mới được báo DONE.
+
+#### 5.1. Cài đặt & cấu hình (lần đầu)
+```bash
+npm install -g @alibaba-group/open-code-review
+
+# Bắt buộc cấu hình LLM trước khi review (trừ khi dùng Delegation Mode)
+ocr config provider          # chọn provider built-in hoặc thêm custom
+ocr config model             # chọn model cho provider đang active
+```
+- Lưu ý: không hardcode API key vào mã nguồn hay commit cấu hình chứa key; đặt key trong biến môi trường.
+- Xác nhận key đã nằm trong `.gitignore` nếu cấu hình ghi ra file local.
+
+#### 5.2. Chạy review
+```bash
+cd your-project
+
+# Workspace mode — review toàn bộ thay đổi staged, unstaged, untracked
+ocr review
+
+# Khoảng branch — review diff của feature-branch kể từ khi tách khỏi main
+ocr review --from main --to feature-branch
+
+# Commit đơn lẻ
+ocr review --commit abc123
+
+# Quét toàn file thay vì diff (không cần git history)
+ocr scan                          # quét toàn repo
+ocr scan --path internal/agent    # quét theo thư mục/file cụ thể
+
+# Lưu kết quả ra file (bắt buộc đối với AI host agent)
+ocr review --format json --output result.json
+```
+
+- **Resume**: dùng `ocr session list` và `--resume <session-id>` để nối lại review bị gián đoạn.
+- **Delegation Mode** (khi chưa cấu hình LLM): `ocr delegate preview` / `ocr delegate rule <files...>` — OCR lo phần chọn file và giải quy tắc, AI agent thực hiện review.
+
+#### 5.3. Xử lý kết quả
+1. Phân loại từng finding theo mức độ: **critical / major / minor**.
+2. **Critical & major**: bắt buộc sửa hoặc đưa ra lý do kỹ thuật chính đáng (kèm chú thích Tiếng Việt tại chỗ) trước khi báo DONE.
+3. **Minor**: ghi nhận vào danh sách tồn đọng; không được phép bỏ qua im lặng.
+4. Xoá file `result.json` tạm khỏi working tree sau khi đã trích xuất kết quả (nếu đã thêm vào `.gitignore` thì bỏ qua bước này).
+
+#### 5.4. Báo cáo kết quả OCR trong Output Contract
+Mọi báo cáo hoàn thành task phải kèm dòng xác minh:
+```
+VERIFICATION (Open-Codereview):
+- ocr review --format json --output result.json: <số> findings (critical=<x>, major=<y>, minor=<z>)
+- Đã xử lý: <mô tả ngắn> | Tồn đọng: <mô tả hoặc "None">
+```
+
+#### 5.5. Ngoại lệ không chạy OCR
+Chỉ được bỏ qua khi task **không động đến mã nguồn**, ví dụ: sửa docs thuần (`.md`), governance files (`.claude/rules`, `.claude/workflows`, `CLAUDE.md`), hoặc tác vụ Git/CI. Nếu bỏ qua, phải ghi rõ lý do trong báo cáo.

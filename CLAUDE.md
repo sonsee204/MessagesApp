@@ -32,5 +32,6 @@
   - Frontend tasks: Tuân thủ `.claude/rules/frontend.md`.
   - Backend tasks: Tuân thủ `.claude/rules/backend.md`.
   - Mọi task (code mới/sửa): Tuân thủ danh mục CẤM tại `.claude/rules/hard-bans.md`.
+  - **Open-Codereview Gate**: Mọi task có thay đổi mã nguồn **bắt buộc chạy `ocr`** trước khi báo hoàn thành (xem `.claude/workflows/code-review-audit.md` Bước 5). Cài: `npm install -g @alibaba-group/open-code-review`; chạy `ocr review --format json --output result.json` và kèm kết quả vào báo cáo dưới dạng `VERIFICATION (Open-Codereview)`. Ngoại lệ: task chỉ chạm docs/governance files hoặc Git/CI — ghi rõ lý do bỏ qua.
   - Git Workflow: KHÔNG được tạo worktree (`EnterWorktree`). Tách biệt công việc bằng cách tạo branch mới trên cùng checkout. Merge vào `main` khi hoàn tất rồi xoá branch.
 - **Workflows SOP**: Phân tích và thực thi theo các kịch bản chuẩn trong `.claude/workflows/` (`create-component.md`, `create-api-endpoint.md`, `fix-bug.md`, `code-review-audit.md`, `write-implementation-plan.md`).

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Agentation } from "agentation";
 import { apiClient } from "./lib/axios";
 import { disconnectSocket } from "./lib/socket";
@@ -10,6 +10,11 @@ import { ChatLayout } from "./features/chat/components/ChatLayout";
 import { ToastContainer } from "./components/ui/Toast";
 import { toast } from "./stores/toast.store";
 import { CallRoot } from "./features/call/components/CallRoot";
+import {
+  requestNotificationPermission,
+  isFirebaseConfigured,
+} from "./lib/firebase";
+import { callService } from "./features/call/services/call.service";
 
 /**
  * Ứng dụng chính (App Root) chuẩn UI/UX Pro Max - Bố cục Tràn màn hình Discord:
@@ -22,6 +27,9 @@ export function App() {
   const clearChatStore = useChatStore((state) => state.clearChatStore);
 
   const [isCheckingSession, setIsCheckingSession] = useState<boolean>(true);
+
+  // Ref lưu FCM token hiện tại để xóa khỏi server khi logout (null nếu chưa đăng ký push)
+  const fcmTokenRef = useRef<string | null>(null);
 
   // 1. Thử khôi phục phiên làm việc khi người dùng tải lại trang (Silent Session Restoration)
   useEffect(() => {
@@ -52,6 +60,15 @@ export function App() {
   // 2. Xử lý hành động Đăng xuất (Logout)
   const handleLogout = async () => {
     try {
+      // Xóa FCM device token khỏi server trước khi thu hồi phiên (best-effort, không chặn logout)
+      if (fcmTokenRef.current) {
+        try {
+          await callService.removeDeviceToken(fcmTokenRef.current);
+        } catch {
+          console.warn("[FCM] Không thể xóa device token khi logout");
+        }
+        fcmTokenRef.current = null;
+      }
       // Gọi API đăng xuất để thu hồi Refresh Token trong DB và xóa Signed Cookie
       await authService.logout();
     } catch (err) {
@@ -67,6 +84,35 @@ export function App() {
       toast.info("Đã đăng xuất tài khoản an toàn khỏi hệ thống.", "Đăng xuất thành công");
     }
   };
+
+  // 3. Đăng ký FCM push notification khi người dùng đã xác thực phiên thành công
+  useEffect(() => {
+    // Bỏ qua nếu chưa cấu hình Firebase hoặc chưa đăng nhập
+    if (!isAuthenticated || !isFirebaseConfigured) return;
+
+    // Cờ huỷ: tránh gọi API sau khi effect cleanup (user logout nhanh / unmount)
+    let cancelled = false;
+
+    const registerFcmToken = async () => {
+      try {
+        // Xin quyền Notification + nhận FCM registration token từ Firebase SDK
+        const token = await requestNotificationPermission();
+        if (cancelled || !token) return;
+
+        // Gửi token lên backend lưu vào DeviceTokenModel (POST /api/calls/device-tokens)
+        await callService.registerDeviceToken(token, "web");
+        // Giữ reference để xóa token khi logout
+        fcmTokenRef.current = token;
+      } catch (err) {
+        console.error("[FCM] Đăng ký device token thất bại:", err);
+      }
+    };
+
+    void registerFcmToken();
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated]);
 
   // Màn hình chờ khởi tạo khi đang kiểm tra khôi phục phiên làm việc
   if (isCheckingSession) {

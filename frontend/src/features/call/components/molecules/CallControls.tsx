@@ -8,11 +8,11 @@ interface CallControlsProps {
   type: CallType;
   /** Trạng thái micro đang bật hay tắt */
   micOn: boolean;
-  /** Trạng thái camera đang bật hay tắt (chỉ áp dụng cho video call) */
+  /** Trạng thái camera đang bật hay tắt */
   camOn: boolean;
   /** Hàm callback bật/tắt micro */
   onToggleAudio: () => void;
-  /** Hàm callback bật/tắt camera */
+  /** Hàm callback bật/tắt camera (hỗ trợ nâng cấp cuộc gọi thoại lên video) */
   onToggleVideo: () => void;
   /** Hàm callback kết thúc cuộc gọi */
   onEnd: () => void;
@@ -22,7 +22,7 @@ interface CallControlsProps {
 
 /**
  * Thanh điều khiển cuộc gọi (CallControls - Molecule)
- * - Điều khiển Micro, Camera (đối với Video Call) và nút Kết thúc
+ * - Điều khiển Micro, Camera (cho cả Audio và Video Call để hỗ trợ nâng cấp giữa phiên) và nút Kết thúc
  * - Đáp ứng chuẩn tiếp cận a11y với touch target >= 44px và aria-label rõ ràng
  * - Sử dụng hoàn toàn Semantic Design Tokens và phong cách xúc giác Tactile
  */
@@ -39,6 +39,7 @@ export const CallControls: React.FC<CallControlsProps> = ({
     <div
       role="toolbar"
       aria-label="Bảng điều khiển cuộc gọi"
+      data-call-type={type}
       className={cn(
         "flex items-center justify-center gap-4 p-3 bg-uupm-surface/90 backdrop-blur-md border-2 border-uupm-line rounded-sm shadow-uupm-1",
         className
@@ -60,23 +61,21 @@ export const CallControls: React.FC<CallControlsProps> = ({
         {micOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
       </button>
 
-      {/* Nút bật/tắt Camera (chỉ hiển thị khi là cuộc gọi Video) */}
-      {type === "video" && (
-        <button
-          type="button"
-          onClick={onToggleVideo}
-          aria-label={camOn ? "Tắt camera" : "Bật camera"}
-          title={camOn ? "Tắt camera" : "Bật camera"}
-          className={cn(
-            "w-12 h-12 min-w-[44px] min-h-[44px] rounded-xs border-2 border-uupm-line shadow-uupm-active flex items-center justify-center cursor-pointer transition-[background-color,box-shadow,transform] active:translate-x-[1px] active:translate-y-[1px]",
-            camOn
-              ? "bg-uupm-surface hover:bg-uupm-surface-hover text-uupm-ink"
-              : "bg-uupm-danger/20 text-uupm-danger-text border-uupm-danger"
-          )}
-        >
-          {camOn ? <VideoIcon className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
-        </button>
-      )}
+      {/* Nút bật/tắt Camera (hiển thị cho cả cuộc gọi thoại và video để cho phép bật cam giữa phiên giống Messenger) */}
+      <button
+        type="button"
+        onClick={onToggleVideo}
+        aria-label={camOn ? "Tắt camera" : "Bật camera"}
+        title={camOn ? "Tắt camera" : "Bật camera"}
+        className={cn(
+          "w-12 h-12 min-w-[44px] min-h-[44px] rounded-xs border-2 border-uupm-line shadow-uupm-active flex items-center justify-center cursor-pointer transition-[background-color,box-shadow,transform] active:translate-x-[1px] active:translate-y-[1px]",
+          camOn
+            ? "bg-uupm-surface hover:bg-uupm-surface-hover text-uupm-ink"
+            : "bg-uupm-danger/20 text-uupm-danger-text border-uupm-danger"
+        )}
+      >
+        {camOn ? <VideoIcon className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
+      </button>
 
       {/* Nút Kết thúc cuộc gọi */}
       <button

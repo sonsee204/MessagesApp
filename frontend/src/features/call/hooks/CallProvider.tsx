@@ -1,7 +1,9 @@
 import React, { createContext, useContext } from "react";
 import { useCall } from "./useCall";
+import { useRingtone } from "./useRingtone";
 import { UseCallReturn } from "../types/call.types";
 import { IncomingCallModal } from "../components/molecules/IncomingCallModal";
+import { CallErrorModal } from "../components/molecules/CallErrorModal";
 import { CallScreen } from "../components/organisms/CallScreen";
 
 /**
@@ -21,6 +23,10 @@ interface CallProviderProps {
  */
 export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
   const call = useCall();
+
+  // Phát nhạc chuông đổ máy (ringback tone) khi người gọi đang chờ đối phương nhấc máy
+  // Dừng ngay khi trạng thái chuyển sang connecting/active hoặc bị huỷ
+  useRingtone(call.state.status === "dialing");
 
   const handleDeclineIncoming = () => {
     call.declineCall();
@@ -50,6 +56,32 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
           onToggleAudio={call.toggleAudio}
           onToggleVideo={call.toggleVideo}
           onCancel={call.endCall}
+          onClose={call.resetCall}
+        />
+      )}
+
+      {/* 3. Modal lỗi kỹ thuật cuộc gọi (watchdog timeout / ICE failed / lỗi thiết bị) — chỉ hiện khi
+           có error và phiên chưa idle. busy/offline/rejected có error === null nên KHÔNG hiện modal
+           (chỉ hiện statusMessage + nút Đóng ở CallScreen).
+           canRetry: caller giữ calleeId+type → thử lại bằng initiateCall; callee giữ callId
+           của phiên tới → thử lại bằng acceptCall (tiếp tục phiên đang ring thay vì tạo mới). */}
+      {call.state.error && call.state.status !== "idle" && (
+        <CallErrorModal
+          message={call.state.error}
+          canRetry={
+            (call.state.calleeId !== null && call.state.type !== null) ||
+            call.state.callId !== null
+          }
+          onRetry={() => {
+            const { calleeId, type, callId } = call.state;
+            call.resetCall();
+            if (calleeId && type) {
+              void call.initiateCall(calleeId, type);
+            } else if (callId) {
+              // Callee: chấp nhận lại chính phiên đang đổ chuông (callIdRef phải khớp callId).
+              call.acceptCall();
+            }
+          }}
           onClose={call.resetCall}
         />
       )}

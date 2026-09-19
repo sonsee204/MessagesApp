@@ -86,6 +86,7 @@ describe("registerCallHandlers", () => {
   let mockRegistry: {
     getCallId: ReturnType<typeof vi.fn>;
     clearUser: ReturnType<typeof vi.fn>;
+    clearCall: ReturnType<typeof vi.fn>;
   };
   let mockNotifSvc: { createNotification: ReturnType<typeof vi.fn> };
   let mockPushSvc: { sendToDeviceTokens: ReturnType<typeof vi.fn> };
@@ -102,7 +103,8 @@ describe("registerCallHandlers", () => {
       endCall: vi.fn(),
     };
     mockCallRepo = { findById: vi.fn() };
-    mockRegistry = { getCallId: vi.fn(), clearUser: vi.fn() };
+    // clearCall dùng để giải phóng CẢ HAI phía caller + callee khi disconnect (thay vì clearUser chỉ xóa 1 người)
+    mockRegistry = { getCallId: vi.fn(), clearUser: vi.fn(), clearCall: vi.fn() };
     mockNotifSvc = { createNotification: vi.fn().mockResolvedValue({}) };
     mockPushSvc = { sendToDeviceTokens: vi.fn().mockResolvedValue(undefined) };
     emitToUserFn = vi.fn();
@@ -156,6 +158,10 @@ describe("registerCallHandlers", () => {
     });
     // Người nhận online nên KHÔNG phát call:offline
     expect(emitToUserFn).not.toHaveBeenCalledWith(callerId, "call:offline", expect.anything());
+    // Regression: server phải trả callId về cho caller (call:initiated) để caller có mã hủy cuộc gọi.
+    // Thiếu event này thì caller bấm tắt sẽ gửi callId rỗng -> server không forward call:canceled
+    // -> modal cuộc gọi đến của callee reo mãi không tắt.
+    expect(emitToUserFn).toHaveBeenCalledWith(callerId, "call:initiated", { callId });
   });
 
   it("call:initiate khi người nhận offline -> người gọi nhận call:offline và gửi CALL_MISSED notif/push", async () => {
@@ -374,17 +380,38 @@ describe("registerCallHandlers", () => {
     expect(emitToUserFn).not.toHaveBeenCalled();
   });
 
-  it("disconnect kết nối cuối cùng -> giải phóng registry và báo đối phương call:peer_disconnected", async () => {
+  it("disconnect cuối cùng khi đang ringing -> cancelCall + emit call:canceled cho callee", async () => {
     mockRegistry.getCallId.mockReturnValue(callId);
-    mockCallRepo.findById.mockResolvedValue(createCallDoc());
+    mockCallRepo.findById.mockResolvedValue(createCallDoc({ status: "ringing" }));
+    mockCallSvc.cancelCall.mockResolvedValue(createCallDoc({ status: "missed" }));
     const mock = createMockSocket();
     mock.rooms.add(`user:${callerId}`);
     registerCallHandlers(mock.socket, deps(() => false));
 
     await mock.disconnect();
 
-    expect(mockRegistry.clearUser).toHaveBeenCalledWith(callerId);
+    // disconnect giải phóng CẢ HAI phía (caller + callee) qua clearCall, tránh peer treo bận
+    expect(mockRegistry.clearCall).toHaveBeenCalledWith(callId);
+    expect(mockRegistry.clearUser).not.toHaveBeenCalled();
+    // Đang ringing -> cancelCall cập nhật DB sang missed + emit call:canceled để FE callee đóng modal
+    expect(mockCallSvc.cancelCall).toHaveBeenCalledWith(callId, callerId);
+    expect(emitToUserFn).toHaveBeenCalledWith(calleeId, "call:canceled", { callId });
+  });
+
+  it("disconnect cuối cùng khi đang active -> emit call:peer_disconnected cho đối phương", async () => {
+    mockRegistry.getCallId.mockReturnValue(callId);
+    mockCallRepo.findById.mockResolvedValue(createCallDoc({ status: "answered" }));
+    const mock = createMockSocket();
+    mock.rooms.add(`user:${callerId}`);
+    registerCallHandlers(mock.socket, deps(() => false));
+
+    await mock.disconnect();
+
+    expect(mockRegistry.clearCall).toHaveBeenCalledWith(callId);
+    expect(mockCallSvc.endCall).toHaveBeenCalledWith(callId, callerId);
     expect(emitToUserFn).toHaveBeenCalledWith(calleeId, "call:peer_disconnected", { callId });
+    // Không gọi cancelCall khi đã active — chỉ báo tín hiệu đóng WebRTC
+    expect(mockCallSvc.cancelCall).not.toHaveBeenCalled();
   });
 
   it("disconnect khi không có cuộc gọi -> không làm gì", async () => {

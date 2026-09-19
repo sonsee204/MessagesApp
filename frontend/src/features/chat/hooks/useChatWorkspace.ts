@@ -70,7 +70,7 @@ export function useChatWorkspace(
   const fetchBlockedUsers = useFriendStore((state) => state.fetchBlockedUsers);
 
   // State điều hướng giao diện
-  const [activeView, setActiveView] = useState<"friends" | "chat">("friends");
+  const [activeView, setActiveView] = useState<"friends" | "chat" | "calls">("friends");
   const [isMobileFriendsActive, setIsMobileFriendsActive] = useState<boolean>(false);
   const [profileModalUser, setProfileModalUser] = useState<User | null>(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState<boolean>(false);
@@ -105,7 +105,7 @@ export function useChatWorkspace(
 
   const isMobileShowingContent =
     Boolean(activeConversationId) ||
-    (activeView === "friends" && isMobileFriendsActive);
+    ((activeView === "friends" || activeView === "calls") && isMobileFriendsActive);
 
   // ===== Handlers =====
 
@@ -205,6 +205,13 @@ export function useChatWorkspace(
     void selectConversation(null);
   };
 
+  // Mở Lịch sử cuộc gọi từ Sidebar
+  const handleSelectCallsView = () => {
+    setActiveView("calls");
+    setIsMobileFriendsActive(true);
+    void selectConversation(null);
+  };
+
   return {
     // Auth
     user,
@@ -240,6 +247,7 @@ export function useChatWorkspace(
     handleOpenProfile,
     handleSelectConversation,
     handleSelectFriendsView,
+    handleSelectCallsView,
     handleCloseConversation: () => void selectConversation(null),
   };
 }

@@ -15,6 +15,7 @@ describe("CallService", () => {
   let mockCallRepo: {
     create: ReturnType<typeof vi.fn>;
     findById: ReturnType<typeof vi.fn>;
+    findByIds: ReturnType<typeof vi.fn>;
     updateStatus: ReturnType<typeof vi.fn>;
     findRecentByUser: ReturnType<typeof vi.fn>;
     countMissed: ReturnType<typeof vi.fn>;
@@ -58,6 +59,7 @@ describe("CallService", () => {
     mockCallRepo = {
       create: vi.fn(),
       findById: vi.fn(),
+      findByIds: vi.fn().mockResolvedValue(new Map()),
       updateStatus: vi.fn(),
       findRecentByUser: vi.fn(),
       countMissed: vi.fn(),
@@ -121,8 +123,12 @@ describe("CallService", () => {
       expect(mockCallRepo.create).not.toHaveBeenCalled();
     });
 
-    it("ném ConflictError khi người gọi đang bận một cuộc gọi khác", async () => {
-      callRegistry.setBusy(callerId, "existing-call-1");
+    it("ném ConflictError khi người gọi đang bận một cuộc gọi khác (còn sống)", async () => {
+      callRegistry.setBusy(callerId, callId);
+      // Cuộc gọi trong registry vẫn ở trạng thái hoạt động -> phải chặn (batch query via findByIds)
+      mockCallRepo.findByIds.mockResolvedValueOnce(
+        new Map([[callId, createMockCallDoc({ status: "answered" })]])
+      );
 
       await expect(
         callService.initiateCall(callerId, calleeId, "audio")
@@ -131,12 +137,92 @@ describe("CallService", () => {
       expect(mockCallRepo.create).not.toHaveBeenCalled();
     });
 
-    it("ném ConflictError khi người nhận đang bận một cuộc gọi khác", async () => {
-      callRegistry.setBusy(calleeId, "existing-call-2");
+    it("ném ConflictError khi người nhận đang bận một cuộc gọi khác (còn sống)", async () => {
+      callRegistry.setBusy(calleeId, callId);
+      mockCallRepo.findByIds.mockResolvedValueOnce(
+        new Map([[callId, createMockCallDoc({ status: "answered" })]])
+      );
 
       await expect(
         callService.initiateCall(callerId, calleeId, "video")
       ).rejects.toThrow(ConflictError);
+
+      expect(mockCallRepo.create).not.toHaveBeenCalled();
+    });
+
+    it("tự chữa entry ma: callId treo đã 'ended' trong CSDL -> clear registry và cho gọi mới", async () => {
+      // Mô phỏng đúng bug thực tế: kết thúc cuộc gọi xong gọi lại bị chặn "đang có cuộc gọi khác"
+      callRegistry.setBusy(calleeId, callId);
+      mockCallRepo.findByIds.mockResolvedValueOnce(
+        new Map([[callId, createMockCallDoc({ status: "ended" })]])
+      );
+      mockCallRepo.create.mockResolvedValueOnce(createMockCallDoc());
+
+      await callService.initiateCall(callerId, calleeId, "video");
+
+      // Entry ma đã được self-heal -> cuộc gọi MỚI tạo thành công (registry giờ bận vì call mới)
+      expect(mockCallRepo.create).toHaveBeenCalled();
+    });
+
+    it("tự chữa entry ma: 'ringing' treo quá 60s -> clear registry và cho gọi mới", async () => {
+      callRegistry.setBusy(callerId, callId);
+      mockCallRepo.findByIds.mockResolvedValueOnce(
+        new Map([
+          [
+            callId,
+            createMockCallDoc({
+              status: "ringing",
+              startedAt: new Date(Date.now() - 120_000),
+            }),
+          ],
+        ])
+      );
+      mockCallRepo.create.mockResolvedValueOnce(createMockCallDoc());
+
+      await callService.initiateCall(callerId, calleeId, "audio");
+
+      // Entry ma đã được self-heal -> cuộc gọi MỚI tạo thành công
+      expect(mockCallRepo.create).toHaveBeenCalled();
+    });
+
+    it("tự chữa entry ma: 'answered' treo quá 30 phút -> clear registry và cho gọi mới", async () => {
+      callRegistry.setBusy(calleeId, callId);
+      mockCallRepo.findByIds.mockResolvedValueOnce(
+        new Map([
+          [
+            callId,
+            createMockCallDoc({
+              status: "answered",
+              answeredAt: new Date(Date.now() - 31 * 60_000), // > 30 phút
+            }),
+          ],
+        ])
+      );
+      mockCallRepo.create.mockResolvedValueOnce(createMockCallDoc());
+
+      await callService.initiateCall(callerId, calleeId, "video");
+
+      // Stale answered entry đã được self-heal -> cuộc gọi MỚI tạo thành công
+      expect(mockCallRepo.create).toHaveBeenCalled();
+    });
+
+    it("KHÔNG chữa 'answered' non-stale (< 30 phút) -> vẫn throw ConflictError", async () => {
+      callRegistry.setBusy(callerId, callId);
+      mockCallRepo.findByIds.mockResolvedValueOnce(
+        new Map([
+          [
+            callId,
+            createMockCallDoc({
+              status: "answered",
+              answeredAt: new Date(Date.now() - 5 * 60_000), // < 30 phút → còn sống
+            }),
+          ],
+        ])
+      );
+
+      await expect(
+        callService.initiateCall(callerId, calleeId, "audio")
+      ).rejects.toThrow("Một trong hai người đang bận một cuộc gọi khác");
 
       expect(mockCallRepo.create).not.toHaveBeenCalled();
     });
@@ -380,13 +466,18 @@ describe("CallService", () => {
       );
     });
 
-    it("ném ConflictError nếu cuộc gọi đã kết thúc trước đó", async () => {
+    it("trả về bản ghi và giải phóng registry nếu cuộc gọi đã kết thúc trước đó (idempotent)", async () => {
       const mockCall = createMockCallDoc({ status: "ended" });
       mockCallRepo.findById.mockResolvedValueOnce(mockCall);
+      callRegistry.setBusy(callerId, callId);
+      callRegistry.setBusy(calleeId, callId);
 
-      await expect(callService.endCall(callId, callerId)).rejects.toThrow(
-        ConflictError
-      );
+      const result = await callService.endCall(callId, callerId);
+
+      expect(result).toEqual(mockCall);
+      expect(callRegistry.isBusy(callerId)).toBe(false);
+      expect(callRegistry.isBusy(calleeId)).toBe(false);
+      expect(mockCallRepo.updateStatus).not.toHaveBeenCalled();
     });
 
     it("kết thúc cuộc gọi và tính đúng durationSec khi answeredAt có giá trị", async () => {

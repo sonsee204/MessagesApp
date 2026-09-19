@@ -9,6 +9,9 @@ import { WelcomeScreen } from "./WelcomeScreen";
 import { NewConversationModal } from "./NewConversationModal";
 import { FriendsView } from "../../friends/components/FriendsView";
 import { FullUserProfileModal } from "../../users/components/FullUserProfileModal";
+import { CallHistoryList } from "../../call/components/organisms/CallHistoryList";
+import { useCallContext } from "../../call/hooks/CallProvider";
+import type { CallType } from "../../call/types/call.types";
 
 interface ChatLayoutProps {
   onLogout?: () => void;
@@ -28,6 +31,14 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({ onLogout }) => {
 
   // Controller headless của workspace chat
   const ws = useChatWorkspace(emitTyping);
+
+  // Hook cuộc gọi toàn cục (CallProvider context)
+  const { initiateCall } = useCallContext();
+
+  // Callback bắt đầu cuộc gọi lại từ lịch sử cuộc gọi
+  const handleCallFromHistory = (peerId: string, type: CallType) => {
+    void initiateCall(peerId, type);
+  };
 
   // Hàng đợi upload media dùng chung cho khung nhập + vùng kéo-thả (lift state).
   // Owner ở ChatLayout để MessageInput chỉ render; conversationId rỗng → hook không ký được.
@@ -54,6 +65,7 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({ onLogout }) => {
             ws.handleSelectConversation(id);
           }}
           onSelectFriendsView={ws.handleSelectFriendsView}
+          onSelectCallsView={ws.handleSelectCallsView}
           onOpenNewChatModal={() => ws.setIsModalOpen(true)}
           onLogout={onLogout}
         />
@@ -91,6 +103,18 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({ onLogout }) => {
             onOpenProfile={ws.handleOpenProfile}
             onBack={() => ws.handleSelectConversation("")}
           />
+        ) : ws.activeView === "calls" ? (
+          /* Màn hình trung tâm Lịch sử Cuộc gọi */
+          <div className="flex flex-col h-full min-w-0">
+            <div className="h-14 px-4 border-b-2 border-uupm-line flex items-center shrink-0">
+              <h2 className="text-sm font-black uppercase tracking-wider text-uupm-ink">
+                Lịch sử cuộc gọi
+              </h2>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              <CallHistoryList onCallPeer={handleCallFromHistory} />
+            </div>
+          </div>
         ) : (
           /* Màn hình chào mừng khi chưa chọn cuộc trò chuyện nào */
           <WelcomeScreen onStartNewChat={() => ws.setIsModalOpen(true)} />
