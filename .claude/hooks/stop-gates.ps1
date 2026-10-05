@@ -1,10 +1,10 @@
 ﻿# Hook Stop: Kiểm tra chất lượng mã nguồn trước khi kết thúc task
 # Mục đích: Tự động chạy các gate kiểm tra nhẹ (diff-bans, size-gate, tsc-gate) khi có thay đổi trong backend/src hoặc frontend/src
 
-# Lấy danh sách các tệp có thay đổi trong working directory và staging
+# Lấy danh sách các tệp có thay đổi (tracked) và tệp mới chưa theo dõi (untracked)
 $diffFiles = git diff --name-only HEAD
-$stagedFiles = git diff --name-only --staged
-$allDiff = ($diffFiles + "`n" + $stagedFiles) -split "`n" | Where-Object { $_ -ne "" }
+$untrackedFiles = git ls-files --others --exclude-standard | Where-Object { $_ -ne "" }
+$allDiff = ($diffFiles + "`n" + $untrackedFiles) -split "`n" | Where-Object { $_ -ne "" }
 
 # Lọc các tệp mã nguồn TypeScript thuộc backend hoặc frontend
 $sourceChanged = $allDiff | Where-Object { $_ -match "^(backend|frontend)/src/.*\.(ts|tsx)$" }
