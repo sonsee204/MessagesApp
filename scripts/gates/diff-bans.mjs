@@ -5,6 +5,7 @@
  */
 
 import { execSync } from "node:child_process";
+import { readFileSync, existsSync } from "node:fs";
 
 export function inspectDiffLines(filename, diffContent) {
   // Chỉ quét mã nguồn TypeScript/JavaScript thực sự; bỏ qua test spec và file không phải TS
@@ -55,8 +56,46 @@ function runGitDiff() {
   }
 }
 
+/**
+ * Liệt kê các file untracked (chưa git add, chưa thuộc index) có thể bị lọt qua
+ * git diff thông thường, rồi đọc nội dung file đó trực tiếp và quay thành diff
+ * giả lập để đưa vào cùng luồng kiểm tra inspectDiffLines.
+ * Toàn bộ dòng trong file untracked được coi như dòng mới thêm (+).
+ *
+ * Trả về chuỗi diff giả lập theo định dạng "diff --git a/<file> b/<file>" + nội dung.
+ */
+function runUntrackedScan() {
+  try {
+    const untracked = execSync("git ls-files --others --exclude-standard", {
+      encoding: "utf-8",
+      maxBuffer: 1024 * 1024 * 50,
+    });
+    const chunks = [];
+
+    for (const filename of untracked.split("\n").map((f) => f.trim()).filter(Boolean)) {
+      // Chỉ quét file TypeScript, bỏ qua test spec như inspectDiffLines đã làm
+      if (!/\.(ts|tsx|mts|cts)$/.test(filename)) continue;
+      if (filename.includes(".test.") || filename.includes(".spec.")) continue;
+      if (!existsSync(filename)) continue;
+
+      const content = readFileSync(filename, { encoding: "utf-8" });
+      // Mỗi dòng nội dung file untracked coi như dòng mới thêm (+)
+      const addedLines = content
+        .split("\n")
+        .map((line) => "+" + line)
+        .join("\n");
+
+      chunks.push(`diff --git a/${filename} b/${filename}\n${addedLines}`);
+    }
+
+    return chunks.join("\n");
+  } catch {
+    return "";
+  }
+}
+
 function main() {
-  const diff = runGitDiff();
+  const diff = runGitDiff() + "\n" + runUntrackedScan();
   if (!diff.trim()) {
     console.log("✅ diff-bans: Không phát hiện thay đổi mã nguồn nào.");
     process.exit(0);
