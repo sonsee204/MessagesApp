@@ -4,8 +4,8 @@
  *
  * Luồng nghiệp vụ:
  * - Chạy `tsc --noEmit` cho backend qua script `type-check` (không sinh artifact).
- * - Chạy `tsc -b` cho frontend qua `npm exec` (build theo project references,
- *   tuy nhiên chỉ kiểm tra type, KHÔNG chạy `vite build` như script `build`).
+ * - Chạy `tsc -b` cho frontend qua script `type-check` (build theo project references,
+ *   chỉ kiểm tra type, KHÔNG chạy `vite build` như script `build`).
  * - Gom kết quả: nếu một trong hai thất bại thì exit 1, ngược lại exit 0.
  */
 
