@@ -31,7 +31,7 @@
   - Task Routing: Tuân thủ nghiêm ngặt quy tắc tự động phân loại và dispatch subagents tại `.claude/rules/task-routing.md`.
   - Frontend tasks: Tuân thủ `.claude/rules/frontend.md`.
   - Backend tasks: Tuân thủ `.claude/rules/backend.md`.
-  - Mọi task (code mới/sửa): Tuân thủ danh mục CẤM tại `.claude/rules/hard-bans.md`.
-  - **Open-Codereview Gate**: Mọi task có thay đổi mã nguồn **bắt buộc chạy `ocr`** trước khi báo hoàn thành (xem `.claude/workflows/code-review-audit.md` Bước 5). Cài: `npm install -g @alibaba-group/open-code-review`; chạy `ocr review --format json --output result.json` và kèm kết quả vào báo cáo dưới dạng `VERIFICATION (Open-Codereview)`. Ngoại lệ: task chỉ chạm docs/governance files hoặc Git/CI — ghi rõ lý do bỏ qua.
+  - Mọi task (code mới/sửa): Tuân thủ danh mục CẤM tại `.claude/rules/hard-bans.md` (kiểm soát tự động qua `scripts/gates/diff-bans.mjs`, `scripts/gates/size-gate.mjs`; xem chi tiết tại `.claude/rules/gates.md`).
+  - **Open-Codereview Gate**: Mọi task có thay đổi mã nguồn **bắt buộc vượt qua OCR gate** qua `node scripts/gates/ocr-gate.mjs` hoặc CI workflow (xem `.claude/rules/gates.md` và `.claude/workflows/code-review-audit.md` Bước 5). Trường hợp chạy local không có binary `ocr`, gate tự động delegation preview an toàn. Ngoại lệ: task chỉ chạm docs thuần (`.md`), governance files (`.claude/rules/`, `.claude/workflows/`, `CLAUDE.md`) hoặc tác vụ Git/CI — ghi rõ lý do bỏ qua.
   - Git Workflow: KHÔNG được tạo worktree (`EnterWorktree`). Tách biệt công việc bằng cách tạo branch mới trên cùng checkout. Merge vào `main` khi hoàn tất rồi xoá branch.
 - **Workflows SOP**: Phân tích và thực thi theo các kịch bản chuẩn trong `.claude/workflows/` (`create-component.md`, `create-api-endpoint.md`, `fix-bug.md`, `code-review-audit.md`, `write-implementation-plan.md`).

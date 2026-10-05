@@ -31,3 +31,9 @@
   - Không dùng các câu đệm: "Chắc chắn rồi", "Tôi sẽ làm việc này ngay bây giờ", "Rất vui được hỗ trợ bạn".
 - **Code Là Câu Trả Lời**: Kết quả thực thi, mã nguồn chuẩn xác và kết quả test là thước đo duy nhất.
 - **Không Cắt Giảm Comment Trong Mã Nguồn**: Token Economy nhằm loại bỏ văn phong rườm rà trong phản hồi chat và tránh in lặp lại toàn bộ file, TUYỆT ĐỐI KHÔNG đồng nghĩa với việc xóa bỏ comment trong file mã nguồn. Chú thích code bằng Tiếng Việt là yêu cầu bắt buộc và không được lược bớt.
+
+---
+
+## 4. Tối Ưu Hóa Bằng Hooks & Shared Gates Tự Động
+- **Giải phóng thao tác thủ công**: Hệ thống hook tự động (`.claude/hooks/stop-gates.ps1`) và các shared gate scripts (`scripts/gates/`) đã tự động hóa việc kiểm định chất lượng mã nguồn (`diff-bans`, `size-gate`, `tsc-gate`).
+- **Tiết kiệm token & context**: AI Agent không cần chủ động gõ và chạy lặp đi lặp lại các câu lệnh kiểm tra type-check hay linting rải rác thủ công trong chuỗi đối thoại. Mọi kiểm tra cần thiết sẽ tự động kích hoạt khi kết thúc task qua Stop hook, giảm thiểu đáng kể số lượt gọi lệnh và token tiêu thụ trong ngữ cảnh.

@@ -98,3 +98,14 @@ RỦI RO / CÒN TỒN TẠI:
 - **Cách tách biệt công việc**: Tạo branch mới từ `main` (`git checkout -b <tên-branch>`) để làm việc độc lập; không dùng worktree để cô lập.
 - **Hoàn tất**: Merge branch vào `main` (ưu tiên fast-forward hoặc squash với message chuẩn), sau đó xoá branch (`git branch -d <tên-branch>`).
 - **Lý do**: Worktree để lại thư mục vật lý bị khoá bởi OS/session cũ, gây rác và không thể xoá sạch qua git, gây lộn xộn cây thư mục. Branch tối giản hơn và dễ dọn dẹp.
+
+---
+
+## 8. Chính Sách Phân Công Model & Trách Nhiệm Phiên (Phiên Bản Tối Ưu)
+- **Phân công theo thế mạnh model**:
+  - **Phiên chính (Haiku / Sonnet)**: Đóng vai trò orchestrator, chịu trách nhiệm rà soát bối cảnh, đọc file, thiết kế kiến trúc (design), viết tài liệu (spec, plan, governance, documentation dạng markdown), và điều phối subagents.
+  - **Opus (thông qua subagent `deep-architect` hoặc agent `Plan`)**: Chuyên trách **thinking** — suy luận chuyên sâu, phân tích cấu trúc kiến trúc phức tạp, giải quyết race-condition hoặc audit bảo mật. Opus **chỉ chuyển giao kết quả phân tích dạng text trở lại phiên chính** để phiên chính tổng hợp và xuất file markdown, **tuyệt đối KHÔNG tự ý tạo commit hoặc viết file triển khai trực tiếp**.
+- **Hệ thống Hooks hỗ trợ tự động (Enforced qua `.claude/settings.json`)**:
+  - `block-worktree.ps1` (PreToolUse `EnterWorktree`): Chặn đứng mọi hành vi tạo worktree, bảo đảm làm việc trên branch duy nhất của working checkout.
+  - `stop-gates.ps1` (Stop hook): Tự động kích hoạt các gate kiểm tra nhẹ (`diff-bans`, `size-gate`, `tsc-gate`) mỗi khi có thay đổi mã nguồn trước khi kết thúc task.
+  - `routing-reminder.ps1` (UserPromptSubmit hook): Tự động hiển thị lời nhắc nhở đối chiếu Tier nhiệm vụ ngay khi người dùng gửi prompt.
