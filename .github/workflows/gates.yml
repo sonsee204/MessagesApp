@@ -56,6 +56,15 @@ jobs:
       - name: Run Tests (affected-tests)
         run: node scripts/gates/affected-tests.mjs
 
-      # Bước 9: Xem trước ủy quyền code review tự động (ocr-gate preview) theo chuẩn kiểm tra mã nguồn
+      # Bước 9: React Doctor — chỉ chạy khi diff chạm frontend/src (rule frontend.md §6)
+      - name: Run React Doctor (Frontend only)
+        run: |
+          if git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -qE '^frontend/src/.*\.(ts|tsx)$'; then
+            npm --prefix frontend run react-doctor
+          else
+            echo "Bỏ qua React Doctor: diff không chạm frontend/src/"
+          fi
+
+      # Bước 10: Xem trước ủy quyền code review tự động (ocr-gate preview) theo chuẩn kiểm tra mã nguồn
       - name: Run Open-Code-Review Delegation Preview
         run: node scripts/gates/ocr-gate.mjs

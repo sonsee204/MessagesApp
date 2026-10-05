@@ -118,7 +118,10 @@ for (const file of files) {
   const effective = countEffectiveLines(content);
   current[rel] = effective;
 
-  const limit = baseline[rel] ?? MAX_EFFECTIVE_LINES;
+  // Ratchet chỉ chốt ceiling CAO cho file nợ cũ vượt ngưỡng 400 dòng;
+  // file nhỏ luôn dùng ngưỡng chuẩn để tránh phải chạy --update vô nghĩa.
+  const baseLimit = baseline[rel] ?? null;
+  const limit = baseLimit !== null && baseLimit > MAX_EFFECTIVE_LINES ? baseLimit : MAX_EFFECTIVE_LINES;
   if (effective > limit) {
     violations.push({ file: rel, effective, limit });
   }

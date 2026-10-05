@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "size-gate": "node ../scripts/gates/size-gate.mjs --src src --baseline size-gate-baseline.json",
     "size-gate:strict": "node ../scripts/gates/size-gate.mjs --src src --baseline size-gate-baseline.json --strict",
-    "size-gate:update": "node ../scripts/gates/size-gate.mjs --src src --baseline size-gate-baseline.json --update"
+    "size-gate:update": "node ../scripts/gates/size-gate.mjs --src src --baseline size-gate-baseline.json --update",
+    "react-doctor": "react-doctor"
   },
   "dependencies": {
     "@emoji-mart/data": "^1.2.1",

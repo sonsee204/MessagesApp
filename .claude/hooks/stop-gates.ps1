@@ -4,7 +4,15 @@
 # Lấy danh sách các tệp có thay đổi (tracked) và tệp mới chưa theo dõi (untracked)
 $diffFiles = git diff --name-only HEAD
 $untrackedFiles = git ls-files --others --exclude-standard | Where-Object { $_ -ne "" }
-$allDiff = ($diffFiles + "`n" + $untrackedFiles) -split "`n" | Where-Object { $_ -ne "" }
+
+# Agent thường commit trước khi kết thúc turn, làm working tree sạch và
+# $diffFiles rỗng. Bù thêm diff của commit mới nhất để gate không bị bỏ qua.
+$committedFiles = @()
+if ((git log -1 --format="%P") -ne "") {
+    $committedFiles = git diff --name-only HEAD~1 HEAD
+}
+
+$allDiff = ($diffFiles + "`n" + $untrackedFiles + "`n" + ($committedFiles -join "`n")) -split "`n" | Where-Object { $_ -ne "" }
 
 # Lọc các tệp mã nguồn TypeScript thuộc backend hoặc frontend
 $sourceChanged = $allDiff | Where-Object { $_ -match "^(backend|frontend)/src/.*\.(ts|tsx)$" }

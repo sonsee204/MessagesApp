@@ -94,8 +94,31 @@ function runUntrackedScan() {
   }
 }
 
+/**
+ * Chế độ CI: khi GitHub Actions checkout, working tree luôn sạch nên
+ * runGitDiff() không thu được gì (luôn exit 0 — gate bị tê liệt).
+ * Thay vào đó lấy diff tích lũy từ điểm phân nhánh của PR.
+ */
+function runCommitRangeDiff(baseRef) {
+  try {
+    return execSync(`git diff ${baseRef}...HEAD -U0`, { encoding: "utf-8" });
+  } catch {
+    return "";
+  }
+}
+
 function main() {
-  const diff = runGitDiff() + "\n" + runUntrackedScan();
+  // CI mode: base ref của PR do GitHub Actions cung cấp qua env.
+  // Local mode: quét staged + unstaged + untracked.
+  const ciBase = process.env.GITHUB_BASE_REF;
+  const diff = ciBase
+    ? runCommitRangeDiff(`origin/${ciBase}`)
+    : runGitDiff() + "\n" + runUntrackedScan();
+
+  if (ciBase) {
+    console.log(`🔍 diff-bans (CI mode): quét commit range origin/${ciBase}...HEAD`);
+  }
+
   if (!diff.trim()) {
     console.log("✅ diff-bans: Không phát hiện thay đổi mã nguồn nào.");
     process.exit(0);
