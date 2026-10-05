@@ -124,6 +124,12 @@ for (const file of files) {
   }
 }
 
+// Guard: --update bắt buộc phải có --baseline, nếu không sẽ lặng lẽ chạy check thường gây hiểu nhầm đã update
+if (isUpdate && !BASELINE_PATH) {
+  console.error("❌ Cờ --update yêu cầu --baseline <đường_dẫn_file>");
+  process.exit(1);
+}
+
 if (isUpdate && BASELINE_PATH) {
   writeFileSync(BASELINE_PATH, JSON.stringify(current, null, 2) + "\n", "utf-8");
   console.log(`✅ Baseline đã cập nhật: ${Object.keys(current).length} file → ${BASELINE_PATH}`);
