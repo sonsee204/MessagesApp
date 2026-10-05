@@ -59,4 +59,5 @@ node scripts/gates/ocr-gate.mjs
 - **Bypass Diff Bans**: Chỉ áp dụng khi có lý do kỹ thuật chính đáng và bắt buộc phải kèm chú thích tiếng Việt giải thích:
   - `// allow-any: <lý do kỹ thuật bắt buộc dùng any>`
   - `// allow-ts-ignore: <lý do lỗi thư viện bên thứ ba>`
+  - `// allow-ts-nocheck: <lý do file cũ chưa kịp sửa type>`
   - `// allow-console: <lý do debug trong môi trường dev/script>`
