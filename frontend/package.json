@@ -8,9 +8,9 @@
     "build": "tsc -b && vite build",
     "test": "vitest run",
     "preview": "vite preview",
-    "size-gate": "node scripts/size-gate.mjs",
-    "size-gate:strict": "node scripts/size-gate.mjs --strict",
-    "size-gate:update": "node scripts/size-gate.mjs --update"
+    "size-gate": "node ../scripts/gates/size-gate.mjs --src src --baseline size-gate-baseline.json",
+    "size-gate:strict": "node ../scripts/gates/size-gate.mjs --src src --baseline size-gate-baseline.json --strict",
+    "size-gate:update": "node ../scripts/gates/size-gate.mjs --src src --baseline size-gate-baseline.json --update"
   },
   "dependencies": {
     "@emoji-mart/data": "^1.2.1",
